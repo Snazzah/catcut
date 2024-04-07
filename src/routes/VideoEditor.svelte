@@ -10,11 +10,15 @@
 	export let file: File | RemoteFile;
 	export let blobURL: string;
 
+	const isRemote = file instanceof RemoteFile;
+
 	let currentTime = 0;
 	let duration = 0;
 	let paused = true;
 
 	let video: HTMLVideoElement;
+	let videoWidth: number;
+	let videoHeight: number;
 	let timelineElement: HTMLDivElement;
 
 	let hoveredTime = -1;
@@ -24,9 +28,17 @@
 <section class="w-full flex flex-col justify-center px-2 gap-4 py-4">
 	<div class="flex flex-col items-center justify-center">
 		<span class="text-violet-300 no-ligatures w-full text-center truncate">{file.name}</span>
-		<div class="flex gap-4 text-sm">
+		<div class="flex gap-4 text-xs">
 			<span>{filesize(file.size, { standard: 'jedec' })}</span>
+			{#if video}
+				<span>{videoWidth}x{videoHeight}</span>
+			{/if}
+		</div>
+		<div class="flex gap-4 text-sm mt-2">
 			<button class="transition-colors hover:text-red-400" on:click={() => dispatch('close')}>close</button>
+			{#if isRemote}
+				<a href={blobURL} download={file.name} class="transition-colors hover:text-violet-400">download</a>
+			{/if}
 		</div>
 	</div>
 
@@ -40,6 +52,8 @@
 		bind:currentTime={currentTime}
 		bind:duration={duration}
 		bind:paused={paused}
+		bind:videoHeight={videoHeight}
+		bind:videoWidth={videoWidth}
 		bind:this={video}
 	/>
 
