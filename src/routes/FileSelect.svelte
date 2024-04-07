@@ -12,15 +12,12 @@
 
 	let dispatch = createEventDispatcher();
 
-	const ALLOWED_TYPES = ['video/mp4', 'video/webm'];
+	const ALLOWED_TYPES = ['video/mp4', 'video/webm', 'video/mov', 'video/m4v'];
 
 	let inputFile: File | RemoteFile | undefined = undefined;
 	let files: FileList | undefined = undefined;
 	let input: HTMLInputElement;
-	$: if (files && files[0]) {
-		// TODO send reject popups on size and wrong types
-		if (ALLOWED_TYPES.includes(files[0].type)) inputFile = files[0];
-	};
+	$: if (files && files[0] && typeAllowed(files[0].type)) inputFile = files[0];
 	$: if (inputFile && $ffmpegReady) dispatch('file', inputFile);
 
 	let droppingFile = false;
@@ -30,6 +27,7 @@
 	let dropboxAvailable = false;
 
 	let modalOpen = false;
+	let rejectionMessage = '';
 
 	async function load() {
 		try {
@@ -43,13 +41,25 @@
 		}
 	}
 
+	function typeAllowed(type: string) {
+		rejectionMessage = '';
+		if (type === '') rejectionMessage = 'Unknown file type.';
+		else if (!ALLOWED_TYPES.includes(type)) rejectionMessage = `The file type "${type}" is not supported.`;
+
+		if (rejectionMessage) modalOpen = true;
+		return !rejectionMessage;
+	}
+
 	function chooseDropbox() {
 		if (!dropboxAvailable) return;
 
 		(window as unknown as { Dropbox: DropboxChooser }).Dropbox.choose({
 			async success(files) {
 				noSelect = true;
-				if (files[0]) inputFile = await RemoteFile.fetch(files[0].link, files[0].name);
+				if (files[0]) {
+					const type = RemoteFile.extensionToType(files[0].name.split('.').reverse()[0]);
+					if (typeAllowed(type)) inputFile = await RemoteFile.fetch(files[0].link, files[0].name);
+				}
 				noSelect = false;
     	},
 			cancel() {
@@ -143,16 +153,14 @@
 	</span>
 </div>
 
-<button on:click={() => modalOpen = true}>test modal</button>
-
 <Modal
 	open={modalOpen}
 	on:clickout={() => modalOpen = false}
-	className="w-96 border-2 px-2 py-4 rounded-xl shadow-md flex-col justify-center items-center inline-flex bg-gradient-to-t from-red-950 via-red-950 to-[#1f0202] border-red-800"
+	className="w-96 border-2 px-2 py-4 rounded-xl shadow-md flex-col justify-center items-center inline-flex bg-red-950 border-red-800"
 >
 	<Icon icon={worryIcon} class="w-32 h-32 mb-4 -mt-24" />
 	<h2 class="font-bold tracking-wide text-2xl">Failed to use that file...</h2>
-	<span>That file type is not supported!</span>
+	<span>{rejectionMessage}</span>
 </Modal>
 
 <style>

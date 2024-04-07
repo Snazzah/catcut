@@ -17,7 +17,7 @@ export class RemoteFile {
 	}
 
 	static extensionToType(extension: string) {
-		if (['webm', 'mp4', 'mkv'].includes(extension)) return `video/${extension}`;
+		if (['webm', 'mp4', 'mkv', 'm4a'].includes(extension)) return `video/${extension}`;
 		return '';
 	}
 
