@@ -25,8 +25,8 @@
 	<meta property="twitter:card" content="summary_large_image">
 </svelte:head> -->
 
-<main class={`flex flex-col items-center min-h-screen overflow-x-hidden${!inputFile ? ' justify-center px-6 py-4 gap-4' : ''}`} class:justify-center={!inputFile}>
-	<header class={inputFile ? 'px-6 py-4 w-full flex items-center justify-center gap-2 bg-black' : ''}>
+<main class={`flex flex-col items-center min-h-screen overflow-x-hidden ${!inputFile ? ' justify-center px-6 py-4 gap-4' : ''}`} class:justify-center={!inputFile}>
+	<header class={`flex items-center justify-center ${inputFile ? 'px-6 py-4 w-full gap-2 bg-black' : 'flex-col'}`}>
 		<!-- <a class="focus:outline focus:outline-2 focus:rounded font-bold bg-clip-text bg-gradient-to-b decoration-clone focus:outline-offset-4 focus:outline-red-200/50 from-red-400 text-transparent to-red-500" href="https://snazzah.com">
 			Snazzah
 		</a> -->

@@ -2,11 +2,13 @@
 	import Icon from "@iconify/svelte";
 	import fileIcon from "@iconify-icons/mdi/file";
 	import dropboxIcon from "@iconify-icons/mdi/dropbox";
+	import worryIcon from "@iconify-icons/fluent-emoji/worried-face";
 	import { downloadedBytes, ffmpegReady, loadFFmpeg, totalBytes } from "$lib/ffmpeg";
 	import { filesize } from "filesize";
 	import { createEventDispatcher, onMount } from "svelte";
 	import { loadDropbox, type DropboxChooser } from "$lib/dropbox";
 	import { RemoteFile } from "$lib/util";
+	import Modal from "./Modal.svelte";
 
 	let dispatch = createEventDispatcher();
 
@@ -26,6 +28,8 @@
 	let noSelect = false;
 	let ffmpegLoadFail = false;
 	let dropboxAvailable = false;
+
+	let modalOpen = false;
 
 	async function load() {
 		try {
@@ -138,6 +142,18 @@
 		{/if}
 	</span>
 </div>
+
+<button on:click={() => modalOpen = true}>test modal</button>
+
+<Modal
+	open={modalOpen}
+	on:clickout={() => modalOpen = false}
+	className="w-96 border-2 px-2 py-4 rounded-xl shadow-md flex-col justify-center items-center inline-flex bg-gradient-to-t from-red-950 via-red-950 to-[#1f0202] border-red-800"
+>
+	<Icon icon={worryIcon} class="w-32 h-32 mb-4 -mt-24" />
+	<h2 class="font-bold tracking-wide text-2xl">Failed to use that file...</h2>
+	<span>That file type is not supported!</span>
+</Modal>
 
 <style>
 	.filedropper {
