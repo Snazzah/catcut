@@ -2,6 +2,7 @@
 	import Icon from "@iconify/svelte";
 	import fileIcon from "@iconify-icons/mdi/file";
 	import dropboxIcon from "@iconify-icons/mdi/dropbox";
+	import mtIcon from "@iconify-icons/fluent-emoji/high-voltage";
 	import worryIcon from "@iconify-icons/fluent-emoji/worried-face";
 	import { downloadedBytes, ffmpegReady, loadFFmpeg, totalBytes } from "$lib/ffmpeg";
 	import { filesize } from "filesize";
@@ -9,6 +10,7 @@
 	import { loadDropbox, type DropboxChooser } from "$lib/dropbox";
 	import { RemoteFile } from "$lib/util";
 	import Modal from "./Modal.svelte";
+	import { ffmpegMultithreaded } from "$lib/data";
 
 	let dispatch = createEventDispatcher();
 
@@ -28,12 +30,13 @@
 
 	let modalOpen = false;
 	let rejectionMessage = '';
+	$: if (!$ffmpegReady) load($ffmpegMultithreaded);
 
-	async function load() {
+	async function load(mt = false) {
 		try {
 			ffmpegLoadFail = false;
 			noSelect = true;
-			await loadFFmpeg();
+			await loadFFmpeg(mt);
 			noSelect = false;
 		} catch (e) {
 			console.error('Failed to load ffmpeg.wasm', e);
@@ -74,8 +77,6 @@
 
 	onMount(async () => {
 		loadDropbox().then(() => dropboxAvailable = true);
-		if ($ffmpegReady) return;
-		load();
 	});
 </script>
 
@@ -94,6 +95,19 @@
 		if (e.relatedTarget === null) droppingFile = false;
 	}}
 />
+
+<button
+	class="flex gap-1 px-1 justify-center items-center transition-all disabled:opacity-50"
+	class:text-orange-200={$ffmpegMultithreaded}
+	disabled={!$ffmpegReady && !ffmpegLoadFail}
+	on:click={() => {
+		ffmpegMultithreaded.set(!$ffmpegMultithreaded);
+		ffmpegReady.set(false);
+	}}
+>
+	<Icon icon={mtIcon} class={`w-6 h-6 transition-all${!$ffmpegMultithreaded ? ' grayscale' : ''}`} />
+	<span>multi-threaded {$ffmpegMultithreaded ? 'on' : 'off'}</span>
+</button>
 
 <div class="flex flex-col items-center justify-center w-full gap-2">
 	<input
