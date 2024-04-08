@@ -33,6 +33,8 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-svelte": "^2.35.1",
     "filesize": "^10.1.1",
+    "just-debounce-it": "^3.2.0",
+    "just-range": "^4.2.0",
     "postcss-import": "^16.1.0",
     "prettier": "^3.2.5",
     "prettier-plugin-svelte": "^3.2.2",

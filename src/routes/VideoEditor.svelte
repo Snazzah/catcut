@@ -11,6 +11,7 @@
 	import trimIcon from "@iconify-icons/mdi/content-cut";
 	import PlayerButton from '$lib/components/PlayerButton.svelte';
 	import Icon from '@iconify/svelte';
+	import PreviewStillContainer from './PreviewStillContainer.svelte';
 
 	const msOptions = { colonNotation: true, secondsDecimalDigits: 2, keepDecimalsOnWholeSeconds: true };
 
@@ -37,7 +38,7 @@
 		video.pause();
 	}
 
-	$: handlesClose = !timelineElement ? 0 : (((trimEnd - trimStart) / duration) * timelineElement.clientWidth);
+	$: handleDistance = ((trimEnd - trimStart) / duration) * timelineWidth;
 	$: willBeTrimmed = trimStart !== 0 || trimEnd !== duration;
 
 	let trimStartHandleDragOffset = -1;
@@ -51,6 +52,7 @@
 	let videoWidth: number;
 	let videoHeight: number;
 	let timelineElement: HTMLButtonElement;
+	let timelineWidth = 0;
 
 	let hoveredTime = -1;
 
@@ -176,7 +178,7 @@
 			id="timeline"
 			on:mousemove={(e) => {
 				if (isDraggingTrimHandle) hoveredTime = -1;
-				else if (e.target === timelineElement) hoveredTime = (e.offsetX / timelineElement.clientWidth) * duration;
+				else if (e.target === timelineElement) hoveredTime = (e.offsetX / timelineWidth) * duration;
 				else {
 					const timelineBox = timelineElement.getBoundingClientRect();
 					hoveredTime = Math.max(0, Math.min(duration, ((e.clientX - timelineBox.left) / timelineBox.width) * duration))
@@ -193,61 +195,69 @@
 				else if (hoveredTime < trimStart) trimStart = hoveredTime;
 			}}
 			bind:this={timelineElement}
+			bind:clientWidth={timelineWidth}
 		>
+			<!-- Preview Stills -->
+			<PreviewStillContainer {videoWidth} {videoHeight} {duration} src={blobURL} />
+
 			<!-- Trim Shadows -->
-			<div class="bg-black/25 h-full absolute top-0 left-0 pointer-events-none"  style:width={`${(trimStart / duration) * 100}%`} />
-			<div class="bg-black/25 h-full absolute top-0 right-0 pointer-events-none"  style:width={`${((duration - trimEnd) / duration) * 100}%`} />
+			<div class="bg-black/75 h-full absolute top-0 left-0 pointer-events-none"  style:width={`${(trimStart / duration) * 100}%`} />
+			<div class="bg-black/75 h-full absolute top-0 right-0 pointer-events-none"  style:width={`${((duration - trimEnd) / duration) * 100}%`} />
 
 			<!-- Trim Handles -->
-			<button
-				class="w-px h-full text-center absolute top-0 trim-handle"
+			<div
+				class="w-px h-full text-center absolute top-0"
 				class:pointer-events-none={trimStartHandleDragOffset >= 0}
 				style:left={`${(trimStart / duration) * 100}%`}
-				on:mousedown={(e) => {
-					trimStartHandleDragOffset = e.offsetX;
-					hoveredTime = -1;
-					seek(trimStart);
-				}}
-				bind:this={trimStartHandle}
 			>
 				<div class="flex justify-center h-full relative">
-					<div class="absolute right-full h-full w-1.5 bg-violet-500 rounded-l" />
+					<button
+						class="absolute right-full h-full w-1.5 bg-violet-500 rounded-l outline-none ring-0 transition-all ring-violet-500/25 focus:ring-4"
+						on:mousedown={(e) => {
+							trimStartHandleDragOffset = e.offsetX;
+							hoveredTime = -1;
+							seek(trimStart);
+						}}
+						bind:this={trimStartHandle}
+					/>
 					<code
 						class="absolute top-full text-violet-300 px-1 rounded transition-all"
 						class:opacity-0={trimStart === 0}
-						class:-ml-16={handlesClose < 100}
+						class:-ml-16={handleDistance < 100}
 					>
 						{ms(trimStart * 1000, msOptions)}
 					</code>
 				</div>
-			</button>
-			<button
-				class="w-px h-full text-center absolute top-0 trim-handle"
+			</div>
+			<div
+				class="w-px h-full text-center absolute top-0"
 				class:pointer-events-none={trimEndHandleDragOffset >= 0}
 				style:left={`${(trimEnd / duration) * 100}%`}
-				on:mousedown={(e) => {
-					trimEndHandleDragOffset = e.offsetX;
-					hoveredTime = -1;
-					seek(trimEnd);
-				}}
-				bind:this={trimEndHandle}
 			>
 				<div class="flex justify-center h-full relative">
-					<div class="absolute left-full h-full w-1.5 bg-violet-500 rounded-r" />
+					<button
+						class="absolute left-full h-full w-1.5 bg-violet-500 rounded-r outline-none ring-0 transition-all ring-violet-500/25 focus:ring-4"
+						on:mousedown={(e) => {
+							trimEndHandleDragOffset = e.offsetX;
+							hoveredTime = -1;
+							seek(trimEnd);
+						}}
+						bind:this={trimEndHandle}
+					/>
 					<code
 						class="absolute top-full text-violet-300 px-1 rounded transition-all"
 						class:opacity-0={trimEnd === duration}
-						class:ml-16={handlesClose < 100}
+						class:ml-16={handleDistance < 100}
 					>
 						{ms(trimEnd * 1000, msOptions)}
 					</code>
 				</div>
-			</button>
+			</div>
 
 			<!-- Trim Duration -->
 			<div class="w-px h-full text-center absolute top-0 pointer-events-none" style:left={`${((trimStart + (trimEnd - trimStart) / 2) / duration) * 100}%`}>
 				<div class="flex justify-center h-full relative">
-					<code class="absolute top-full text-white/25 px-1 rounded text-xs transition-opacity" class:opacity-0={!willBeTrimmed || handlesClose < 140}>
+					<code class="absolute top-full text-white/25 px-1 rounded text-xs transition-opacity" class:opacity-0={!willBeTrimmed || handleDistance < 140}>
 						{ms((trimEnd - trimStart) * 1000, msOptions)}
 					</code>
 				</div>
@@ -296,13 +306,3 @@
 ] -->
 
 </section>
-
-<style>
-	.trim-handle {
-		@apply outline-none;
-
-		&:focus > div > div {
-			@apply ring-4 ring-violet-500/25;
-		}
-	}
-</style>

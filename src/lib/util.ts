@@ -7,6 +7,15 @@ export function relativeTime(rtf: Intl.RelativeTimeFormat, seconds: number) {
 	return rtf.format(Math.round(seconds / 31536000), 'year');
 }
 
+export function blobToDataURL(blob: Blob):Promise<string> {
+	return new Promise((resolve, reject) => {
+		const reader = new FileReader();
+		reader.onload = () => resolve(reader.result as string);
+		reader.onerror = reject;
+		reader.readAsDataURL(blob);
+	});
+}
+
 export class RemoteFile {
 	type: string;
 	originalURL?: string;
