@@ -1,0 +1,13 @@
+import type { IconifyIcon } from "@iconify/svelte";
+
+export const skipPrevious: IconifyIcon = {
+	"width": 24,
+	"height": 24,
+	"body": "<path fill=\"currentColor\" d=\"M6 18V6h2v12zm3.5-6L18 6v12z\" />"
+}
+
+export const skipNext: IconifyIcon = {
+	"width": 24,
+	"height": 24,
+	"body": "<path fill=\"currentColor\" d=\"M16 18h2V6h-2M6 18l8.5-6L6 6z\" />"
+}
