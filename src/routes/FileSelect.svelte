@@ -11,6 +11,7 @@
 	import { RemoteFile } from "$lib/util";
 	import Modal from "./Modal.svelte";
 	import { ffmpegMultithreaded } from "$lib/data";
+	import { replaceState } from "$app/navigation";
 
 	let dispatch = createEventDispatcher();
 
@@ -36,11 +37,35 @@
 		try {
 			ffmpegLoadFail = false;
 			noSelect = true;
-			await loadFFmpeg(mt);
+			await loadFFmpeg(window.crossOriginIsolated ? mt : false);
 			noSelect = false;
+
+			if (location.search) await getQueuedFile();
 		} catch (e) {
 			console.error('Failed to load ffmpeg.wasm', e);
 			ffmpegLoadFail = true;
+		}
+	}
+
+	async function getQueuedFile() {
+		const url = new URL(location.href);
+		const fileURL = url.searchParams.get('file');
+		const fileName = url.searchParams.get('filename');
+		url.search = '';
+		replaceState(url, {});
+
+		if (fileURL) {
+			noSelect = true;
+			try {
+				const name = fileName || fileURL.split('/').reverse()[0];
+				const remoteFile = await RemoteFile.fetch(fileURL, name);
+				if (typeAllowed(remoteFile.type)) inputFile = remoteFile;
+			} catch (e) {
+				console.error(e);
+				modalOpen = true;
+				rejectionMessage = 'Could not fetch remote file.';
+			}
+			noSelect = false;
 		}
 	}
 
@@ -55,6 +80,7 @@
 
 	function chooseDropbox() {
 		if (!dropboxAvailable) return;
+		if (window.crossOriginIsolated) return void (location.href = '/dropbox');
 
 		(window as unknown as { Dropbox: DropboxChooser }).Dropbox.choose({
 			async success(files) {
@@ -76,7 +102,8 @@
 	}
 
 	onMount(async () => {
-		loadDropbox().then(() => dropboxAvailable = true);
+		if (!window.crossOriginIsolated) await loadDropbox();
+		dropboxAvailable = true
 	});
 </script>
 
@@ -96,18 +123,20 @@
 	}}
 />
 
-<button
-	class="flex gap-1 px-1 justify-center items-center transition-all disabled:opacity-50"
-	class:text-orange-200={$ffmpegMultithreaded}
-	disabled={!$ffmpegReady && !ffmpegLoadFail}
-	on:click={() => {
-		ffmpegMultithreaded.set(!$ffmpegMultithreaded);
-		ffmpegReady.set(false);
-	}}
->
-	<Icon icon={mtIcon} class={`w-6 h-6 transition-all${!$ffmpegMultithreaded ? ' grayscale' : ''}`} />
-	<span>multi-threaded {$ffmpegMultithreaded ? 'on' : 'off'}</span>
-</button>
+{#if window.crossOriginIsolated}
+	<button
+		class="flex gap-1 px-1 justify-center items-center transition-all disabled:opacity-50"
+		class:text-orange-200={$ffmpegMultithreaded}
+		disabled={!$ffmpegReady && !ffmpegLoadFail}
+		on:click={() => {
+			ffmpegMultithreaded.set(!$ffmpegMultithreaded);
+			ffmpegReady.set(false);
+		}}
+	>
+		<Icon icon={mtIcon} class={`w-6 h-6 transition-all${!$ffmpegMultithreaded ? ' grayscale' : ''}`} />
+		<span>multi-threaded {$ffmpegMultithreaded ? 'on' : 'off'}</span>
+	</button>
+{/if}
 
 <div class="flex flex-col items-center justify-center w-full gap-2">
 	<input
@@ -124,7 +153,7 @@
 		class:--failed={ffmpegLoadFail}
 		disabled={noSelect && !ffmpegLoadFail}
 		on:click={() => {
-			if (ffmpegLoadFail) load();
+			if (ffmpegLoadFail) load($ffmpegMultithreaded);
 			else input.click();
 		}}
 	>
