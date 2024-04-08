@@ -7,10 +7,11 @@
 	import pauseIcon from "@iconify-icons/mdi/pause";
 	import back10Icon from "@iconify-icons/mdi/rewind-10";
 	import forward10Icon from "@iconify-icons/mdi/fast-forward-10";
-	import { skipNext, skipPrevious } from '$lib/icons';
+	import { skipNext, skipPrevious, windowClose as closeIcon } from '$lib/icons';
 	import trimIcon from "@iconify-icons/mdi/content-cut";
+	import addIcon from "@iconify-icons/mdi/plus";
 	import PlayerButton from '$lib/components/PlayerButton.svelte';
-	import Icon from '@iconify/svelte';
+	import Icon, { type IconifyIcon } from '@iconify/svelte';
 	import PreviewStillContainer from './PreviewStillContainer.svelte';
 
 	const msOptions = { colonNotation: true, secondsDecimalDigits: 2, keepDecimalsOnWholeSeconds: true };
@@ -55,6 +56,14 @@
 	let timelineWidth = 0;
 
 	let hoveredTime = -1;
+
+	$: showTrimHandles = currentTab === 'trim';
+	let currentTab = 'trim';
+	let shownTabs = ['trim', 'new'];
+	const allTabs: Record<string, [string, IconifyIcon]> = {
+		new: ['New', addIcon],
+		trim: ['Trim', trimIcon],
+	}
 
 	function onKeyPress(e: KeyboardEvent) {
 		if (document.activeElement && ['A', 'BUTTON', 'INPUT'].includes(document.activeElement.tagName) && document.activeElement !== timelineElement && !timelineElement.contains(document.activeElement)) return;
@@ -212,7 +221,8 @@
 			>
 				<div class="flex justify-center h-full relative">
 					<button
-						class="absolute right-full h-full w-1.5 bg-violet-500 rounded-l outline-none ring-0 transition-all ring-violet-500/25 focus:ring-4"
+						class="absolute right-full h-full w-1.5 bg-violet-500 rounded-l outline-none ring-0 transition-all ring-violet-500/25 focus:ring-4 disabled:opacity-0"
+						disabled={!showTrimHandles}
 						on:mousedown={(e) => {
 							trimStartHandleDragOffset = e.offsetX;
 							hoveredTime = -1;
@@ -236,7 +246,8 @@
 			>
 				<div class="flex justify-center h-full relative">
 					<button
-						class="absolute left-full h-full w-1.5 bg-violet-500 rounded-r outline-none ring-0 transition-all ring-violet-500/25 focus:ring-4"
+						class="absolute left-full h-full w-1.5 bg-violet-500 rounded-r outline-none ring-0 transition-all ring-violet-500/25 focus:ring-4 disabled:opacity-0"
+						disabled={!showTrimHandles}
 						on:mousedown={(e) => {
 							trimEndHandleDragOffset = e.offsetX;
 							hoveredTime = -1;
@@ -290,10 +301,43 @@
 		</label>
 	</div>
 
-	<button class="flex gap-2 justify-center items-center rounded-md p-2 bg-neutral-800">
-		<Icon icon={trimIcon} />
-		<span>Trim</span>
-	</button>
+	<div class="flex flex-col">
+		<div class="flex justify-between">
+			<div class="flex gap-0.5 overflow-hidden">
+				{#each shownTabs as tab}
+					<button
+						class="flex gap-2 justify-center items-center rounded-t-md px-4 py-2 transition-all"
+						class:bg-neutral-800={currentTab === tab}
+						class:text-white={currentTab === tab}
+						class:bg-neutral-900={currentTab !== tab}
+						class:translate-y-1={currentTab !== tab}
+						on:click={() => currentTab = tab}
+					>
+						<Icon icon={allTabs[tab][1]} />
+						<span>{allTabs[tab][0]}</span>
+						{#if tab !== 'new'}
+							<button class="rounded-full transition-colors bg-neutral-400 text-neutral-800 hover:bg-red-600 hover:text-white" on:click|stopPropagation>
+								<Icon icon={closeIcon} />
+							</button>
+						{/if}
+					</button>
+				{/each}
+			</div>
+			<button class="rounded-lg bg-violet-600 text-white px-4 my-0.5 font-bold">
+				<span>Save</span>
+			</button>
+		</div>
+		<div class="rounded-b-md rounded-tr-md bg-neutral-800 p-4 flex h-24">
+			{#if currentTab === 'trim'}
+				Trimming!
+			{:else if currentTab === 'new'}
+				<button class="rounded-lg bg-violet-600 text-white px-6 text-sm flex flex-col gap-2 justify-center items-center">
+					<Icon icon={trimIcon} class="w-6 h-6" />
+					<span>Trim</span>
+				</button>
+			{/if}
+		</div>
+	</div>
 
 	<!-- [
   "-i",

@@ -15,15 +15,15 @@
 	}
 </script>
 
-<!-- <svelte:head>
-	<title>steam.exposed</title>
-	<meta content="steam.exposed" property="og:title" />
+<svelte:head>
+	<title>catcut</title>
+	<!-- <meta content="steam.exposed" property="og:title" />
 	<meta content="https://steam.exposed/images/social.png" property="og:image" />
 	<meta content="image/png" property="og:image:type" />
 	<meta content="Breakdowns of Steam's Year in Reviews" property="og:description" />
 	<meta content="https://steam.exposed" property="og:url" />
-	<meta property="twitter:card" content="summary_large_image">
-</svelte:head> -->
+	<meta property="twitter:card" content="summary_large_image"> -->
+</svelte:head>
 
 <main class={`flex flex-col items-center min-h-screen overflow-x-hidden ${!inputFile ? ' justify-center px-6 py-4 gap-4' : ''}`} class:justify-center={!inputFile}>
 	<header class={`flex items-center justify-center ${inputFile ? 'px-6 py-4 w-full gap-2 bg-black' : 'flex-col'}`}>
