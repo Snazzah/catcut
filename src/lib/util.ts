@@ -1,3 +1,9 @@
+export const MS_OPTIONS = { colonNotation: true, secondsDecimalDigits: 2, keepDecimalsOnWholeSeconds: true };
+
+export function validEvent(e: MouseEvent) {
+	return (e as any).pointerType !== '';
+}
+
 export function relativeTime(rtf: Intl.RelativeTimeFormat, seconds: number) {
 	if (Math.abs(seconds) < 60) return rtf.format(seconds, 'second');
 	if (Math.abs(seconds) <= 3600) return rtf.format(Math.round(seconds / 60), 'minute');

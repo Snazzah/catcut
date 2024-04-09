@@ -5,7 +5,8 @@
 	import { fade, fly } from 'svelte/transition';
 
 	export let open = true;
-	export let className = '';
+	let className = '';
+	export { className as class };
 
 	let dispatch = createEventDispatcher();
 
