@@ -1,3 +1,8 @@
+import { get } from "svelte/store";
+import { googleDriveData } from "./data";
+
+export const ALLOWED_TYPES = ['video/mp4', 'video/webm', 'video/mov', 'video/m4v'];
+
 export const MS_OPTIONS = { colonNotation: true, secondsDecimalDigits: 2, keepDecimalsOnWholeSeconds: true };
 
 export function validEvent(e: MouseEvent) {
@@ -36,13 +41,18 @@ export class RemoteFile {
 		return '';
 	}
 
-	static async fetch(url: string, name?: string) {
-		const response = await fetch(url);
-		const blob = await response.blob();
+	static async fetch(url: string, name?: string, type?: string) {
+		const googleAuth = get(googleDriveData);
+		const response = await fetch(url, {
+			headers: url.startsWith('https://content.googleapis.com/') && googleAuth ? {
+				'Authorization': `${googleAuth.token_type} ${googleAuth.access_token}`
+			} : {}
+		});
 		// TODO use & parse Content-Disposition header
 		// Content-Disposition: inline; filename="3T6ShR37x3Ea5JOK.mp4"; filename*=UTF-8''3T6ShR37x3Ea5JOK.mp4
 		if (!name) name = url.split('/').reverse()[0];
-		const file = new RemoteFile(name, blob.size, URL.createObjectURL(blob), blob.type);
+		const blob = await response.blob();
+		const file = new RemoteFile(name, blob.size, URL.createObjectURL(blob), type || blob.type);
 		file.originalURL = url;
 		file.blob = blob;
 		return file;

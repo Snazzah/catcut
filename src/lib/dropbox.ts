@@ -1,4 +1,6 @@
-const APP_KEY = 'gckh0f9o51dl0vf';
+import { PUBLIC_DROPBOX_CLIENT_ID } from "$env/static/public";
+
+export const dropboxAllowed = !!PUBLIC_DROPBOX_CLIENT_ID;
 
 export async function loadDropbox() {
 	if (document.querySelector('#dropboxjs')) return Promise.resolve();
@@ -8,7 +10,7 @@ export async function loadDropbox() {
 		script.id = 'dropboxjs';
 		script.type = 'application/javascript';
 		script.src = 'https://www.dropbox.com/static/api/2/dropins.js';
-		script.setAttribute('data-app-key', APP_KEY);
+		script.setAttribute('data-app-key', PUBLIC_DROPBOX_CLIENT_ID);
 
 		script.onload = resolve;
 		script.onerror = reject;

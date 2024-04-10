@@ -2,20 +2,20 @@
 	import Icon from "@iconify/svelte";
 	import fileIcon from "@iconify-icons/mdi/file";
 	import dropboxIcon from "@iconify-icons/mdi/dropbox";
+	import driveIcon from "@iconify-icons/mdi/google-drive";
 	import mtIcon from "@iconify-icons/fluent-emoji/high-voltage";
 	import worryIcon from "@iconify-icons/fluent-emoji/worried-face";
 	import { downloadedBytes, ffmpegReady, loadFFmpeg, totalBytes } from "$lib/ffmpeg";
 	import { filesize } from "filesize";
-	import { createEventDispatcher, onMount } from "svelte";
-	import { loadDropbox, type DropboxChooser } from "$lib/dropbox";
-	import { RemoteFile } from "$lib/util";
+	import { createEventDispatcher } from "svelte";
+	import { dropboxAllowed } from "$lib/dropbox";
+	import { RemoteFile, ALLOWED_TYPES } from "$lib/util";
 	import Modal from "./Modal.svelte";
 	import { ffmpegMultithreaded } from "$lib/data";
 	import { replaceState } from "$app/navigation";
+	import { fetchDriveFile, googleAllowed, toFileDownloadLink } from "$lib/google";
 
 	let dispatch = createEventDispatcher();
-
-	const ALLOWED_TYPES = ['video/mp4', 'video/webm', 'video/mov', 'video/m4v'];
 
 	let inputFile: File | RemoteFile | undefined = undefined;
 	let files: FileList | undefined = undefined;
@@ -27,7 +27,6 @@
 
 	let noSelect = false;
 	let ffmpegLoadFail = false;
-	let dropboxAvailable = false;
 
 	let modalOpen = false;
 	let rejectionMessage = '';
@@ -49,17 +48,36 @@
 
 	async function getQueuedFile() {
 		const url = new URL(location.href);
-		const fileURL = url.searchParams.get('file');
+		const file = url.searchParams.get('file');
 		const fileName = url.searchParams.get('filename');
+		const googleDriveFile = url.searchParams.get('googledrivefile');
 		url.search = '';
 		replaceState(url, {});
 
-		if (fileURL) {
+		if (file) {
 			noSelect = true;
 			try {
-				const name = fileName || fileURL.split('/').reverse()[0];
-				const remoteFile = await RemoteFile.fetch(fileURL, name);
+				const fileURL = new URL(file);
+				console.log(fileURL)
+				if (fileURL.protocol !== 'https:' && fileURL.protocol !== 'http:') throw new Error('Bad protocol');
+				const name = fileName || file.split('/').reverse()[0];
+				const remoteFile = await RemoteFile.fetch(file, name);
 				if (typeAllowed(remoteFile.type)) inputFile = remoteFile;
+			} catch (e) {
+				console.error(e);
+				modalOpen = true;
+				rejectionMessage = 'Could not fetch remote file.';
+			}
+			noSelect = false;
+		} else if (googleDriveFile) {
+			noSelect = true;
+			try {
+				const driveFile = await fetchDriveFile(googleDriveFile);
+				if (!driveFile) {
+					modalOpen = true;
+					rejectionMessage = 'Could not fetch Google Drive file.';
+				} else if (typeAllowed(driveFile.mimeType))
+					inputFile = await RemoteFile.fetch(toFileDownloadLink(googleDriveFile), driveFile.name, driveFile.mimeType);
 			} catch (e) {
 				console.error(e);
 				modalOpen = true;
@@ -77,34 +95,6 @@
 		if (rejectionMessage) modalOpen = true;
 		return !rejectionMessage;
 	}
-
-	function chooseDropbox() {
-		if (!dropboxAvailable) return;
-		if (window.crossOriginIsolated) return void (location.href = '/dropbox');
-
-		(window as unknown as { Dropbox: DropboxChooser }).Dropbox.choose({
-			async success(files) {
-				noSelect = true;
-				if (files[0]) {
-					const type = RemoteFile.extensionToType(files[0].name.split('.').reverse()[0]);
-					if (typeAllowed(type)) inputFile = await RemoteFile.fetch(files[0].link, files[0].name);
-				}
-				noSelect = false;
-    	},
-			cancel() {
-				console.log('Dropbox chooser cancelled.');
-			},
-
-			linkType: 'direct',
-			extensions: ['video'],
-			multiselect: false
-		});
-	}
-
-	onMount(async () => {
-		if (!window.crossOriginIsolated) await loadDropbox();
-		dropboxAvailable = true
-	});
 </script>
 
 <svelte:document
@@ -188,9 +178,14 @@
 		<span>
 			or drop a file anywhere
 		</span>
-		{#if dropboxAvailable}
-			<button title="Choose from Dropbox" on:click={chooseDropbox}>
+		{#if dropboxAllowed}
+			<button title="Choose from Dropbox" on:click={() => location.href = '/dropbox'}>
 				<Icon icon={dropboxIcon} class="w-6 h-6 transition-colors hover:text-white" />
+			</button>
+		{/if}
+		{#if googleAllowed}
+			<button title="Choose from Google Drive" on:click={() => location.href = '/googledrive'}>
+				<Icon icon={driveIcon} class="w-6 h-6 transition-colors hover:text-white" />
 			</button>
 		{/if}
 	</span>

@@ -1,5 +1,6 @@
 // See https://kit.svelte.dev/docs/types#app
 // for information about these interfaces
+import type { DropboxChooser } from "$lib/dropbox";
 import { SteamSummary, SteamProfileItems } from "$lib/server/api";
 
 declare global {
@@ -13,6 +14,12 @@ declare global {
     }
 		// interface PageState {}
 		// interface Platform {}
+	}
+
+	interface Window {
+		gapi: any;
+		google: any;
+		Dropbox: DropboxChooser;
 	}
 }
 

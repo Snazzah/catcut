@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { loadDropbox, type DropboxChooser } from "$lib/dropbox";
+	import { loadDropbox } from "$lib/dropbox";
 	import { onMount } from "svelte";
 	import Icon from "@iconify/svelte";
 	import dropboxIcon from "@iconify-icons/mdi/dropbox";
@@ -7,16 +7,20 @@
 	let available = false;
 	let failed = false;
 	let failedOpen = false;
+	let redirecting = false;
 	const isolated = window.crossOriginIsolated;
 
 	function prompt() {
-		(window as unknown as { Dropbox: DropboxChooser }).Dropbox.choose({
+		window.Dropbox.choose({
 			async success(files) {
 				console.log(files);
-				if (files[0]) location.href = `/?${new URLSearchParams({
-					'file': files[0].link,
-					'filename': files[0].name
-				}).toString()}`;
+				if (files[0]) {
+					redirecting = true;
+					location.href = `/?${new URLSearchParams({
+						'file': files[0].link,
+						'filename': files[0].name
+					}).toString()}`;
+				}
 			},
 			cancel() {
 				console.log('Dropbox chooser cancelled.');
@@ -63,8 +67,10 @@
 		<small>Note: You can allow pop-ups for this site to automatically open the chooser on future attempts.</small>
 	{:else if failed}
 		<span class="text-red-300">Failed to load Dropbox chooser. You can close this tab now.</span>
+	{:else if redirecting}
+		<span>Redirecting you back to the app...</span>
 	{:else if !available}
-		<span>Loading Dropbox...</span>
+		<span>Loading Dropbox chooser...</span>
 	{:else}
 		<span class="text-white">Please choose a file from the popup, or close it to cancel.</span>
 	{/if}
