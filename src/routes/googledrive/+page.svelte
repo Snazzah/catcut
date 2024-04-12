@@ -75,6 +75,7 @@
 		})}
 	/>
 	<script async defer src="https://accounts.google.com/gsi/client" on:load={gisLoaded} />
+	<title>Google Drive Picker - catcut</title>
 </svelte:head>
 
 

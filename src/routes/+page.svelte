@@ -1,7 +1,10 @@
 <script lang="ts">
 	import FileSelect from "./FileSelect.svelte";
 	import VideoEditor from "./VideoEditor.svelte";
+	import Footer from "./Footer.svelte";
 	import { RemoteFile } from "$lib/util";
+	import { catcut } from "$lib/icons";
+	import Icon from "@iconify/svelte";
 
 	let inputFile: File | RemoteFile | undefined = undefined;
 	let blobURL: string | undefined;
@@ -17,21 +20,16 @@
 
 <svelte:head>
 	<title>catcut</title>
-	<!-- <meta content="steam.exposed" property="og:title" />
-	<meta content="https://steam.exposed/images/social.png" property="og:image" />
-	<meta content="image/png" property="og:image:type" />
-	<meta content="Breakdowns of Steam's Year in Reviews" property="og:description" />
-	<meta content="https://steam.exposed" property="og:url" />
-	<meta property="twitter:card" content="summary_large_image"> -->
 </svelte:head>
 
 <main class={`flex flex-col items-center min-h-screen overflow-x-hidden ${!inputFile ? ' justify-center px-6 py-4 gap-4' : ''}`} class:justify-center={!inputFile}>
-	<header class={`flex items-center justify-center ${inputFile ? 'px-6 py-4 w-full gap-2 bg-black' : 'flex-col'}`}>
-		<!-- <a class="focus:outline focus:outline-2 focus:rounded font-bold bg-clip-text bg-gradient-to-b decoration-clone focus:outline-offset-4 focus:outline-red-200/50 from-red-400 text-transparent to-red-500" href="https://snazzah.com">
-			Snazzah
-		</a> -->
-		<h1 class="text-3xl font-extrabold text-violet-500">
-			catcut
+	<header class={`flex items-center justify-center select-none ${inputFile ? 'px-6 py-4 w-full gap-2 bg-black' : 'flex-col'}`}>
+		<h1 class="text-3xl font-extrabold text-violet-500 flex items-center gap-1" class:flex-col={!inputFile}>
+			<Icon icon={catcut} class={!inputFile ? 'w-16 h-16' : ''} />
+			<div class="flex items-center gap-2">
+				<span>catcut</span>
+				<small class="text-black bg-violet-500 px-2 rounded text-sm font-extrabold">alpha</small>
+			</div>
 		</h1>
 		{#if !inputFile}
 			<p>in-browser media editing</p>
@@ -40,6 +38,7 @@
 
 	{#if !inputFile}
 		<FileSelect on:file={(e) => inputFile = e.detail} />
+		<Footer />
 	{/if}
 
 	{#if inputFile && blobURL}
