@@ -62,3 +62,12 @@ export class RemoteFile {
 		if (this.url.startsWith('blob:')) URL.revokeObjectURL(this.url);
 	}
 }
+
+export enum ProcessingState {
+	IDLE,
+	WRITING,
+	RUNNING,
+	READING,
+	DONE,
+	ERROR
+}

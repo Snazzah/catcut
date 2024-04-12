@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { RemoteFile, validEvent } from '$lib/util';
+	import { ProcessingState, RemoteFile, validEvent } from '$lib/util';
 	import { filesize } from 'filesize';
 	import ms from 'pretty-ms';
 	import { createEventDispatcher } from 'svelte';
@@ -7,20 +7,78 @@
 	import pauseIcon from "@iconify-icons/mdi/pause";
 	import back10Icon from "@iconify-icons/mdi/rewind-10";
 	import forward10Icon from "@iconify-icons/mdi/fast-forward-10";
+	import processingIcon from '@iconify-icons/fluent-emoji/crystal-ball';
+	import worryIcon from "@iconify-icons/fluent-emoji/worried-face";
+	import yayIcon from "@iconify-icons/fluent-emoji/party-popper";
+	import Icon from '@iconify/svelte';
 	import { skipNext, skipPrevious } from '$lib/icons';
 	import trimIcon from "@iconify-icons/mdi/content-cut";
 	import PlayerButton from '$lib/components/PlayerButton.svelte';
 	import type { IconifyIcon } from '@iconify/svelte';
 	import PreviewStillContainer from './PreviewStillContainer.svelte';
 	import { MS_OPTIONS } from '$lib/util';
+	import { ffmpeg } from '$lib/ffmpeg';
 	import Trim from '$lib/components/video/Trim.svelte';
 	import EditorTabs from '$lib/components/EditorTabs.svelte';
+	import Modal from './Modal.svelte';
+	import { fetchFile } from '@ffmpeg/util';
+	import { scale } from 'svelte/transition';
 
 	export let dispatch = createEventDispatcher();
 	export let file: File | RemoteFile;
 	export let blobURL: string;
 
 	const isRemote = file instanceof RemoteFile;
+	const extension = file.name.split('.').reverse()[0];
+
+	let modalOpen = false;
+	let processState = ProcessingState.IDLE;
+
+	async function saveVideo() {
+		processState = ProcessingState.WRITING;
+		modalOpen = true;
+
+		try {
+			console.time('ffmpeg');
+			await ffmpeg.writeFile(`in.${extension}`, await fetchFile(file instanceof RemoteFile ? file.blob : file));
+			processState = ProcessingState.RUNNING;
+			console.log(' ---- RUNNING FFmpeg ---- ');
+			await ffmpeg.exec([
+				'-i', `in.${extension}`,
+				'-ss', ms(trimStart * 1000, MS_OPTIONS),
+				'-t', ms(trimEnd * 1000, MS_OPTIONS),
+				'-c:v', 'copy',
+				'-c:a', 'copy',
+				`out.${extension}`
+			]);
+			processState = ProcessingState.READING;
+			const data = await ffmpeg.readFile(`out.${extension}`);
+			const blob = new Blob([(data as Uint8Array).buffer], { type: file.type });
+			const downloadURL = URL.createObjectURL(blob);
+			console.log(' ---- FINISHED ---- ');
+
+			processState = ProcessingState.DONE;
+
+			console.timeEnd('ffmpeg');
+
+			const a = document.createElement('a');
+			a.href = downloadURL;
+			a.download = `output_${file.name}`;
+			a.click();
+
+			setTimeout(() => {
+				URL.revokeObjectURL(downloadURL);
+				a.remove();
+			}, 100);
+		} catch (e) {
+			console.error('Failed to save video', e);
+			processState = ProcessingState.ERROR;
+		} finally {
+			console.log(' ---- CLEANUP ---- ');
+			await ffmpeg.deleteFile(`in.${extension}`);
+			await ffmpeg.deleteFile(`out.${extension}`);
+		}
+	}
 
 	let currentTime = 0;
 	let duration = 0;
@@ -242,8 +300,8 @@
 						bind:this={trimStartHandle}
 					/>
 					<code
-						class="absolute top-full text-violet-300 px-1 rounded transition-all"
-						class:opacity-0={trimStart === 0}
+						class="absolute top-full text-violet-300 px-1 rounded transition-all pointer-events-none"
+						class:opacity-0={!willBeTrimmed}
 						class:-ml-16={handleDistance < 100}
 					>
 						{ms(trimStart * 1000, MS_OPTIONS)}
@@ -267,8 +325,8 @@
 						bind:this={trimEndHandle}
 					/>
 					<code
-						class="absolute top-full text-violet-300 px-1 rounded transition-all"
-						class:opacity-0={trimEnd === duration}
+						class="absolute top-full text-violet-300 px-1 rounded transition-all pointer-events-none"
+						class:opacity-0={!willBeTrimmed}
 						class:ml-16={handleDistance < 100}
 					>
 						{ms(trimEnd * 1000, MS_OPTIONS)}
@@ -279,7 +337,7 @@
 			<!-- Trim Duration -->
 			<div class="w-px h-full text-center absolute top-0 pointer-events-none" style:left={`${((trimStart + (trimEnd - trimStart) / 2) / duration) * 100}%`}>
 				<div class="flex justify-center h-full relative">
-					<code class="absolute top-full text-white/25 px-1 rounded text-xs transition-opacity" class:opacity-0={!willBeTrimmed || handleDistance < 140}>
+					<code class="absolute top-full text-white/50 px-1 rounded text-xs transition-opacity" class:opacity-0={!willBeTrimmed || handleDistance < 140}>
 						{ms((trimEnd - trimStart) * 1000, MS_OPTIONS)}
 					</code>
 				</div>
@@ -307,8 +365,8 @@
 		</button>
 
 		<label class="flex justify-between pointer-events-none select-none" for="timeline">
-			<code class="transition-opacity" class:opacity-0={trimStart !== 0}>{ms(trimStart * 1000, MS_OPTIONS)}</code>
-			<code class="transition-opacity" class:opacity-0={trimEnd !== duration}>{ms(trimEnd * 1000, MS_OPTIONS)}</code>
+			<code class="transition-opacity" class:opacity-0={willBeTrimmed}>{ms(trimStart * 1000, MS_OPTIONS)}</code>
+			<code class="transition-opacity" class:opacity-0={willBeTrimmed}>{ms(trimEnd * 1000, MS_OPTIONS)}</code>
 		</label>
 	</div>
 
@@ -318,6 +376,7 @@
 		on:hidetab={(e) => editorComponents[e.detail]?.onHide?.()}
 		on:opentab={(e) => editorComponents[e.detail]?.onOpen?.()}
 		on:closetab={(e) => editorComponents[e.detail]?.onClose?.()}
+		on:save={saveVideo}
 		let:tab
 	>
 		{#if tab === 'trim'}
@@ -336,3 +395,55 @@
 ] -->
 
 </section>
+
+<!-- Processing Modal -->
+<Modal
+	open={modalOpen}
+	on:clickout={() => {
+		if ([ProcessingState.WRITING, ProcessingState.RUNNING, ProcessingState.READING].includes(processState)) return;
+		modalOpen = false;
+	}}
+	class={`w-96 border-2 px-2 py-4 rounded-xl shadow-md flex-col justify-center items-center inline-flex transition-all ${
+		processState === ProcessingState.ERROR ? 'bg-red-950 border-red-800' :
+		processState === ProcessingState.DONE ? 'bg-green-950 border-green-800' :
+		'bg-blue-950 border-blue-800'
+	}`}
+>
+	<div class="relative w-32 h-32 mb-4 -mt-24">
+		{#if processState === ProcessingState.ERROR}
+			<div transition:scale class="absolute w-full h-full">
+				<Icon icon={worryIcon} class="w-full h-full" />
+			</div>
+		{:else if processState === ProcessingState.DONE}
+			<div transition:scale class="absolute w-full h-full">
+				<Icon icon={yayIcon} class="w-full h-full" />
+			</div>
+		{:else}
+			<div transition:scale class="absolute w-full h-full">
+				<Icon icon={processingIcon} class="w-full h-full" />
+			</div>
+		{/if}
+	</div>
+	<h2 class="font-bold tracking-wide text-2xl">
+		{#if processState === ProcessingState.ERROR}
+		  Oh no...
+		{:else if processState === ProcessingState.DONE}
+			Done!
+		{:else}
+			Processing...
+		{/if}
+	</h2>
+	{#if processState === ProcessingState.ERROR}
+		<span>An error occurred while processing! Check console for details.</span>
+	{:else if processState === ProcessingState.IDLE}
+		<span>Waiting...</span>
+	{:else if processState === ProcessingState.WRITING}
+		<span>Loading file...</span>
+	{:else if processState === ProcessingState.RUNNING}
+		<span>Running FFmpeg command...</span>
+	{:else if processState === ProcessingState.READING}
+		<span>Reading result...</span>
+	{:else if processState === ProcessingState.DONE}
+		<span>Your video has finished processing!</span>
+	{/if}
+</Modal>

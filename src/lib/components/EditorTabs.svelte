@@ -65,7 +65,14 @@
 				</button>
 			{/each}
 		</div>
-		<button class="rounded-lg bg-violet-600 text-white px-4 my-0.5 font-bold">
+		<button
+			class="rounded-lg transition-all bg-violet-600 hover:bg-violet-700 text-white active:enabled:scale-95 px-4 my-0.5 font-bold disabled:text-neutral-400 disabled:bg-neutral-700 disabled:opacity-50"
+			disabled={openTabs.length === 0}
+			on:click={() => {
+				if (openTabs.length === 0) return;
+				dispatch('save');
+			}}
+		>
 			<span>Save</span>
 		</button>
 	</div>

@@ -21,6 +21,8 @@ export const downloadedBytes = writable(0);
 export const ffmpegReady = writable(false);
 
 export const ffmpeg = new FFmpeg();
+(window as any).ffmpeg = ffmpeg;
+
 ffmpeg.on('log', ({ message: msg }: {
 	type: string;
 	message: string;
