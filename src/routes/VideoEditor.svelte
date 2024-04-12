@@ -46,7 +46,7 @@
 			await ffmpeg.exec([
 				'-i', `in.${extension}`,
 				'-ss', ms(trimStart * 1000, MS_OPTIONS),
-				'-t', ms(trimEnd * 1000, MS_OPTIONS),
+				'-t', ms((trimEnd - trimStart) * 1000, MS_OPTIONS),
 				'-c:v', 'copy',
 				'-c:a', 'copy',
 				`out.${extension}`
