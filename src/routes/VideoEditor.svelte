@@ -33,6 +33,7 @@
 
 	let modalOpen = false;
 	let processState = ProcessingState.IDLE;
+	let resultInfo: { elapsed: number; size: number } | null = null;
 
 	async function saveVideo() {
 		processState = ProcessingState.WRITING;
@@ -42,6 +43,7 @@
 			console.time('ffmpeg');
 			await ffmpeg.writeFile(`in.${extension}`, await fetchFile(file instanceof RemoteFile ? file.blob : file));
 			processState = ProcessingState.RUNNING;
+			const start = Date.now();
 			console.log(' ---- RUNNING FFmpeg ---- ');
 			await ffmpeg.exec([
 				'-i', `in.${extension}`,
@@ -58,12 +60,13 @@
 			console.log(' ---- FINISHED ---- ');
 
 			processState = ProcessingState.DONE;
+			resultInfo = { elapsed: Date.now() - start, size: blob.size };
 
 			console.timeEnd('ffmpeg');
 
 			const a = document.createElement('a');
 			a.href = downloadURL;
-			a.download = `output_${file.name}`;
+			a.download = `catcut_output_${file.name}`;
 			a.click();
 
 			setTimeout(() => {
@@ -445,5 +448,8 @@
 		<span>Reading result...</span>
 	{:else if processState === ProcessingState.DONE}
 		<span>Your video has finished processing!</span>
+	{/if}
+	{#if resultInfo}
+		<span class="opacity-75 text-sm">{filesize(resultInfo.size, { standard: 'jedec' })} • took {ms(resultInfo.elapsed)}</span>
 	{/if}
 </Modal>
