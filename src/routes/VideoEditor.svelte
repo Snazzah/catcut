@@ -138,6 +138,7 @@
 	let video: HTMLVideoElement;
 	let videoWidth: number;
 	let videoHeight: number;
+	let videoVolume = 1;
 
 	// Timeline variables
 	let timelineElement: HTMLButtonElement;
@@ -146,6 +147,7 @@
 
 	// Filter variables
 	let volume = 1;
+	$: videoVolume = volume <= 1 ? volume : 1;
 
 	const editorComponents: Record<string, {
 		name: string;
@@ -269,6 +271,7 @@
 		playsinline
 		disablepictureinpicture
 		class="max-h-[40svh] bg-neutral-900/25"
+		bind:volume={videoVolume}
 		bind:currentTime={currentTime}
 		bind:duration={duration}
 		bind:paused={paused}
