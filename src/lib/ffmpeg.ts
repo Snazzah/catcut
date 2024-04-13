@@ -23,12 +23,12 @@ export const ffmpegReady = writable(false);
 export const ffmpeg = new FFmpeg();
 (window as any).ffmpeg = ffmpeg;
 
-ffmpeg.on('log', ({ message: msg }: {
-	type: string;
-	message: string;
-}) => {
-	console.log(msg);
+ffmpeg.on('log', ({ message }) => {
+	console.log(message);
 });
+
+export const ffmpegProgress = writable(0);
+ffmpeg.on('progress', ({ progress }) => ffmpegProgress.set(progress));
 
 export async function loadFFmpeg(mt = false) {
 	ffmpegReady.set(false);

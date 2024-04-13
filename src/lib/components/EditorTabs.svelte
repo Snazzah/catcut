@@ -18,7 +18,7 @@
 		icon: addIcon
 	};
 
-	$: allTabs = [...tabs, tabNew]
+	$: allTabs = [...tabs, tabNew];
 
 	let currentTab = 'new';
 	$: dispatch('showtab', currentTab);
@@ -53,9 +53,12 @@
 								dispatch('closetab', tab.id);
 
 								// get the next tab being closed, or just go to new
-								const currentIndex = shownTabs.findIndex((t) => t.id === tab.id);
-								const nextTab = (currentIndex < 0 ? undefined : shownTabs.filter((t) => t.id !== tab.id)[currentIndex]?.id) || 'new';
-								currentTab = nextTab;
+								if (currentTab === tab.id) {
+									const currentIndex = shownTabs.findIndex((t) => t.id === tab.id);
+									const nextTab = (currentIndex < 0 ? undefined : shownTabs.filter((t) => t.id !== tab.id)[currentIndex]?.id) || 'new';
+									currentTab = nextTab;
+								}
+
 								openTabs = openTabs.filter((id) => id !== tab.id);
 							}}
 						>

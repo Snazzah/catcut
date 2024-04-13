@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ProcessingState, RemoteFile, validEvent } from '$lib/util';
+	import { ProcessingState, RemoteFile, splitFilename, validEvent } from '$lib/util';
 	import { filesize } from 'filesize';
 	import ms from 'pretty-ms';
 	import { createEventDispatcher } from 'svelte';
@@ -7,29 +7,27 @@
 	import pauseIcon from "@iconify-icons/mdi/pause";
 	import back10Icon from "@iconify-icons/mdi/rewind-10";
 	import forward10Icon from "@iconify-icons/mdi/fast-forward-10";
-	import processingIcon from '@iconify-icons/fluent-emoji/crystal-ball';
-	import worryIcon from "@iconify-icons/fluent-emoji/worried-face";
-	import yayIcon from "@iconify-icons/fluent-emoji/party-popper";
-	import Icon from '@iconify/svelte';
-	import { skipNext, skipPrevious } from '$lib/icons';
+	import skipNextIcon from "@iconify-icons/mdi/skip-next";
+	import skipPreviousIcon from "@iconify-icons/mdi/skip-previous";
 	import trimIcon from "@iconify-icons/mdi/content-cut";
+	import volumeIcon from '@iconify-icons/mdi/volume-high';
 	import PlayerButton from '$lib/components/PlayerButton.svelte';
 	import type { IconifyIcon } from '@iconify/svelte';
 	import PreviewStillContainer from './PreviewStillContainer.svelte';
 	import { MS_OPTIONS } from '$lib/util';
 	import { ffmpeg } from '$lib/ffmpeg';
 	import Trim from '$lib/components/video/Trim.svelte';
+	import Volume from '$lib/components/video/Volume.svelte';
 	import EditorTabs from '$lib/components/EditorTabs.svelte';
-	import Modal from './Modal.svelte';
 	import { fetchFile } from '@ffmpeg/util';
-	import { scale } from 'svelte/transition';
+	import ProcessingModal from './ProcessingModal.svelte';
 
 	export let dispatch = createEventDispatcher();
 	export let file: File | RemoteFile;
 	export let blobURL: string;
 
 	const isRemote = file instanceof RemoteFile;
-	const extension = file.name.split('.').reverse()[0];
+	const [basename, extension] = splitFilename(file.name);
 
 	let modalOpen = false;
 	let processState = ProcessingState.IDLE;
@@ -38,6 +36,7 @@
 	async function saveVideo() {
 		processState = ProcessingState.WRITING;
 		modalOpen = true;
+		resultInfo = null;
 
 		try {
 			console.time('ffmpeg');
@@ -45,17 +44,36 @@
 			processState = ProcessingState.RUNNING;
 			const start = Date.now();
 			console.log(' ---- RUNNING FFmpeg ---- ');
-			await ffmpeg.exec([
-				'-i', `in.${extension}`,
-				'-ss', ms(trimStart * 1000, MS_OPTIONS),
-				'-t', ms((trimEnd - trimStart) * 1000, MS_OPTIONS),
-				'-c:v', 'copy',
-				'-c:a', 'copy',
-				`out.${extension}`
-			]);
+
+			// For resource intensive calls, we trim first, then run other filters
+			if (willBeTrimmed) {
+				await ffmpeg.exec([
+					'-i', `in.${extension}`,
+					'-ss', ms(trimStart * 1000, MS_OPTIONS),
+					'-t', ms((trimEnd - trimStart) * 1000, MS_OPTIONS),
+					'-c:v', 'copy',
+					'-c:a', 'copy',
+					`clip.${extension}`
+				]);
+				await ffmpeg.deleteFile(`in.${extension}`);
+				await ffmpeg.rename(`clip.${extension}`, `in.${extension}`);
+			}
+
+			const otherFiltersUsed = volume !== 1;
+
+			if (!otherFiltersUsed)
+				await ffmpeg.rename(`in.${extension}`, `out.${extension}`);
+			else
+				await ffmpeg.exec([
+					'-i', `in.${extension}`,
+					...(volume === 0 ? ['-an'] : volume === 1 ? ['-c:a', 'copy'] : ['-af', `volume=${volume.toFixed(2)}`]),
+					'-c:v', 'copy',
+					`out.${extension}`
+				]);
+
 			processState = ProcessingState.READING;
 			const data = await ffmpeg.readFile(`out.${extension}`);
-			const blob = new Blob([(data as Uint8Array).buffer], { type: file.type });
+			const blob = new Blob([(data as Uint8Array).buffer]);
 			const downloadURL = URL.createObjectURL(blob);
 			console.log(' ---- FINISHED ---- ');
 
@@ -66,7 +84,7 @@
 
 			const a = document.createElement('a');
 			a.href = downloadURL;
-			a.download = `catcut_output_${file.name}`;
+			a.download = `catcut_output_${basename}.${extension}`;
 			a.click();
 
 			setTimeout(() => {
@@ -74,6 +92,8 @@
 				a.remove();
 			}, 100);
 		} catch (e) {
+			console.log('---- FAILED ----')
+			console.timeEnd('ffmpeg');
 			console.error('Failed to save video', e);
 			processState = ProcessingState.ERROR;
 		} finally {
@@ -87,6 +107,7 @@
 	let duration = 0;
 	let paused = true;
 
+	// Trim variables
 	let trimStart = 0;
 	let trimEnd = 0;
 	$: if (duration) trimEnd = duration;
@@ -100,9 +121,10 @@
 		video.pause();
 	}
 
-	$: handleDistance = ((trimEnd - trimStart) / duration) * timelineWidth;
 	$: willBeTrimmed = trimStart !== 0 || trimEnd !== duration;
 
+
+	// Trim handle variables
 	let trimStartHandleDragOffset = -1;
 	let trimEndHandleDragOffset = -1;
 	let trimStartHandle: HTMLButtonElement;
@@ -110,14 +132,20 @@
 	let trimEventBounce = false;
 	let showTrimHandles = false;
 	$: isDraggingTrimHandle = trimStartHandleDragOffset >= 0 || trimEndHandleDragOffset >= 0;
+	$: handleDistance = ((trimEnd - trimStart) / duration) * timelineWidth;
 
+	// Video variables
 	let video: HTMLVideoElement;
 	let videoWidth: number;
 	let videoHeight: number;
+
+	// Timeline variables
 	let timelineElement: HTMLButtonElement;
 	let timelineWidth = 0;
-
 	let hoveredTime = -1;
+
+	// Filter variables
+	let volume = 1;
 
 	const editorComponents: Record<string, {
 		name: string;
@@ -136,6 +164,13 @@
 				trimStart = 0;
 				trimEnd = duration;
 				showTrimHandles = false;
+			}
+		},
+		volume: {
+			name: 'Volume',
+			icon: volumeIcon,
+			onClose() {
+				volume = 1;
 			}
 		}
 	}
@@ -243,11 +278,11 @@
 	/>
 
 	<div class="flex justify-center gap-2">
-		<PlayerButton icon={skipPrevious} title="Seek to beginning" on:click={() => seek(0)} />
+		<PlayerButton icon={skipPreviousIcon} title="Seek to beginning" on:click={() => seek(0)} />
 		<PlayerButton icon={back10Icon} title="Rewind 10 seconds" on:click={() => seekBy(-10)} />
 		<PlayerButton icon={paused ? playIcon : pauseIcon} title={paused ? 'Play' : 'Pause'} on:click={onPlaybackToggle} />
 		<PlayerButton icon={forward10Icon} title="Fast forward 10 seconds" on:click={() => seekBy(10)} />
-		<PlayerButton icon={skipNext} title="Seek to end" on:click={() => seek(duration)} />
+		<PlayerButton icon={skipNextIcon} title="Seek to end" on:click={() => seek(duration)} />
 	</div>
 
 	<div class="flex flex-col w-full select-none">
@@ -384,6 +419,8 @@
 	>
 		{#if tab === 'trim'}
 			<Trim {trimStart} {trimEnd} />
+		{:else if tab === 'volume'}
+			<Volume {volume} on:set={(e) => volume = e.detail} />
 		{/if}
 	</EditorTabs>
 
@@ -400,56 +437,7 @@
 </section>
 
 <!-- Processing Modal -->
-<Modal
-	open={modalOpen}
-	on:clickout={() => {
-		if ([ProcessingState.WRITING, ProcessingState.RUNNING, ProcessingState.READING].includes(processState)) return;
-		modalOpen = false;
-	}}
-	class={`w-96 border-2 px-2 py-4 rounded-xl shadow-md flex-col justify-center items-center inline-flex transition-all ${
-		processState === ProcessingState.ERROR ? 'bg-red-950 border-red-800' :
-		processState === ProcessingState.DONE ? 'bg-green-950 border-green-800' :
-		'bg-blue-950 border-blue-800'
-	}`}
->
-	<div class="relative w-32 h-32 mb-4 -mt-24">
-		{#if processState === ProcessingState.ERROR}
-			<div transition:scale class="absolute w-full h-full">
-				<Icon icon={worryIcon} class="w-full h-full" />
-			</div>
-		{:else if processState === ProcessingState.DONE}
-			<div transition:scale class="absolute w-full h-full">
-				<Icon icon={yayIcon} class="w-full h-full" />
-			</div>
-		{:else}
-			<div transition:scale class="absolute w-full h-full">
-				<Icon icon={processingIcon} class="w-full h-full" />
-			</div>
-		{/if}
-	</div>
-	<h2 class="font-bold tracking-wide text-2xl">
-		{#if processState === ProcessingState.ERROR}
-		  Oh no...
-		{:else if processState === ProcessingState.DONE}
-			Done!
-		{:else}
-			Processing...
-		{/if}
-	</h2>
-	{#if processState === ProcessingState.ERROR}
-		<span>An error occurred while processing! Check console for details.</span>
-	{:else if processState === ProcessingState.IDLE}
-		<span>Waiting...</span>
-	{:else if processState === ProcessingState.WRITING}
-		<span>Loading file...</span>
-	{:else if processState === ProcessingState.RUNNING}
-		<span>Running FFmpeg command...</span>
-	{:else if processState === ProcessingState.READING}
-		<span>Reading result...</span>
-	{:else if processState === ProcessingState.DONE}
-		<span>Your video has finished processing!</span>
-	{/if}
-	{#if resultInfo}
-		<span class="opacity-75 text-sm">{filesize(resultInfo.size, { standard: 'jedec' })} • took {ms(resultInfo.elapsed)}</span>
-	{/if}
-</Modal>
+<ProcessingModal
+	open={modalOpen} {processState} {resultInfo}
+	on:close={() => modalOpen = false}
+/>

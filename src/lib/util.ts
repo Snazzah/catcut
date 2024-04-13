@@ -27,6 +27,11 @@ export function blobToDataURL(blob: Blob):Promise<string> {
 	});
 }
 
+export function splitFilename(filename: string): [string, string] {
+	const reverseParts = filename.split('.').reverse();
+	return [reverseParts.slice(1).reverse().join('.'), reverseParts[0]];
+}
+
 export class RemoteFile {
 	type: string;
 	originalURL?: string;
