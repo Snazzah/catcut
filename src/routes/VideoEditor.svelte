@@ -9,6 +9,7 @@
 	import forward10Icon from "@iconify-icons/mdi/fast-forward-10";
 	import skipNextIcon from "@iconify-icons/mdi/skip-next";
 	import skipPreviousIcon from "@iconify-icons/mdi/skip-previous";
+	import convertIcon from "@iconify-icons/mdi/file-arrow-left-right";
 	import trimIcon from "@iconify-icons/mdi/content-cut";
 	import volumeIcon from '@iconify-icons/mdi/volume-high';
 	import PlayerButton from '$lib/components/PlayerButton.svelte';
@@ -21,6 +22,7 @@
 	import EditorTabs from '$lib/components/EditorTabs.svelte';
 	import { fetchFile } from '@ffmpeg/util';
 	import ProcessingModal from './ProcessingModal.svelte';
+	import Convert from '$lib/components/video/Convert.svelte';
 
 	export let dispatch = createEventDispatcher();
 	export let file: File | RemoteFile;
@@ -37,6 +39,7 @@
 		processState = ProcessingState.WRITING;
 		modalOpen = true;
 		resultInfo = null;
+		const outExt = toExtension ?? extension;
 
 		try {
 			console.time('ffmpeg');
@@ -59,20 +62,21 @@
 				await ffmpeg.rename(`clip.${extension}`, `in.${extension}`);
 			}
 
-			const otherFiltersUsed = volume !== 1;
+			const converting = !!toExtension;
+			const otherFiltersUsed = volume !== 1 || converting;
 
 			if (!otherFiltersUsed)
 				await ffmpeg.rename(`in.${extension}`, `out.${extension}`);
 			else
 				await ffmpeg.exec([
 					'-i', `in.${extension}`,
-					...(volume === 0 ? ['-an'] : volume === 1 ? ['-c:a', 'copy'] : ['-af', `volume=${volume.toFixed(2)}`]),
+					...(volume === 0 ? ['-an'] : volume === 1 && !converting ? ['-c:a', 'copy'] : ['-af', `volume=${volume.toFixed(2)}`]),
 					'-c:v', 'copy',
-					`out.${extension}`
+					`out.${outExt}`
 				]);
 
 			processState = ProcessingState.READING;
-			const data = await ffmpeg.readFile(`out.${extension}`);
+			const data = await ffmpeg.readFile(`out.${outExt}`);
 			const blob = new Blob([(data as Uint8Array).buffer]);
 			const downloadURL = URL.createObjectURL(blob);
 			console.log(' ---- FINISHED ---- ');
@@ -84,7 +88,7 @@
 
 			const a = document.createElement('a');
 			a.href = downloadURL;
-			a.download = `catcut_output_${basename}.${extension}`;
+			a.download = `catcut_output_${basename}.${outExt}`;
 			a.click();
 
 			setTimeout(() => {
@@ -99,7 +103,7 @@
 		} finally {
 			console.log(' ---- CLEANUP ---- ');
 			await ffmpeg.deleteFile(`in.${extension}`);
-			await ffmpeg.deleteFile(`out.${extension}`);
+			await ffmpeg.deleteFile(`out.${outExt}`);
 		}
 	}
 
@@ -148,6 +152,7 @@
 	// Filter variables
 	let volume = 1;
 	$: videoVolume = volume <= 1 ? volume : 1;
+	let toExtension: string | null = null;
 
 	const editorComponents: Record<string, {
 		name: string;
@@ -173,6 +178,13 @@
 			icon: volumeIcon,
 			onClose() {
 				volume = 1;
+			}
+		},
+		convert: {
+			name: 'Convert',
+			icon: convertIcon,
+			onClose() {
+				toExtension = null;
 			}
 		}
 	}
@@ -424,6 +436,8 @@
 			<Trim {trimStart} {trimEnd} />
 		{:else if tab === 'volume'}
 			<Volume {volume} on:set={(e) => volume = e.detail} />
+		{:else if tab === 'convert'}
+			<Convert {toExtension} on:set={(e) => toExtension = e.detail} />
 		{/if}
 	</EditorTabs>
 

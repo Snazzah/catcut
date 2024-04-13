@@ -10,7 +10,7 @@
 	const dispatch = createEventDispatcher();
 </script>
 
-<div class="flex items-center gap-4 text-xl h-full select-none">
+<div class="flex items-center gap-4 h-full select-none">
 	<div class="flex flex-col justify-center items-center">
 		<button
 			class="p-1 text-neutral-200 transition-all hover:text-violet-500 active:scale-90 active:text-violet-400"
