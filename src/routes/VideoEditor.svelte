@@ -437,7 +437,7 @@
 		{:else if tab === 'volume'}
 			<Volume {volume} on:set={(e) => volume = e.detail} />
 		{:else if tab === 'convert'}
-			<Convert {toExtension} on:set={(e) => toExtension = e.detail} />
+			<Convert {toExtension} {extension} on:set={(e) => toExtension = e.detail} />
 		{/if}
 	</EditorTabs>
 

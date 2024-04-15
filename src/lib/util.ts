@@ -1,7 +1,7 @@
 import { get } from "svelte/store";
 import { googleDriveData } from "./data";
 
-export const ALLOWED_TYPES = ['video/mp4', 'video/webm', 'video/mov', 'video/m4v'];
+export const ALLOWED_TYPES = ['video/mp4', 'video/webm', 'video/quicktime', 'video/m4v', 'video/x-matroska'];
 
 export const MS_OPTIONS = { colonNotation: true, secondsDecimalDigits: 2, keepDecimalsOnWholeSeconds: true };
 
@@ -42,7 +42,9 @@ export class RemoteFile {
 	}
 
 	static extensionToType(extension: string) {
-		if (['webm', 'mp4', 'mkv', 'm4a'].includes(extension)) return `video/${extension}`;
+		if (extension === 'mov') return 'video/quicktime';
+		if (extension === 'mkv') return 'video/x-matroska';
+		if (['webm', 'mp4', 'm4a'].includes(extension)) return `video/${extension}`;
 		return '';
 	}
 

@@ -194,7 +194,7 @@
 <Modal
 	open={modalOpen}
 	on:clickout={() => modalOpen = false}
-	class="w-96 border-2 px-2 py-4 rounded-xl shadow-md flex-col justify-center items-center inline-flex bg-red-950 border-red-800"
+	class="w-96 border-2 px-2 py-4 rounded-xl shadow-md flex-col justify-center items-center text-center inline-flex bg-red-950 border-red-800"
 >
 	<Icon icon={worryIcon} class="w-32 h-32 mb-4 -mt-24" />
 	<h2 class="font-bold tracking-wide text-2xl">Failed to use that file...</h2>
