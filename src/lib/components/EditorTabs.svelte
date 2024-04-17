@@ -29,7 +29,7 @@
 
 <div class="flex flex-col">
 	<div class="flex justify-between">
-		<div class="flex gap-0.5 overflow-hidden grow items-end h-10">
+		<div class="flex gap-0.5 overflow-x-scroll md:overflow-x-hidden overflow-y-hidden grow items-end h-10">
 			{#each shownTabs as tab (tab.id)}
 				<button
 					class="flex gap-2 justify-center items-center rounded-t-md px-4 py-2 transition-all"
@@ -69,7 +69,7 @@
 			{/each}
 		</div>
 		<button
-			class="rounded-lg transition-all bg-violet-600 hover:bg-violet-700 text-white active:enabled:scale-95 px-4 my-0.5 font-bold disabled:text-neutral-400 disabled:bg-neutral-700 disabled:opacity-50"
+			class="rounded-lg transition-all bg-violet-600 hover:bg-violet-700 text-white active:enabled:scale-95 px-4 my-0.5 ml-1 font-bold disabled:text-neutral-400 disabled:bg-neutral-700 disabled:opacity-50"
 			disabled={openTabs.length === 0}
 			on:click={() => {
 				if (openTabs.length === 0) return;
@@ -79,9 +79,9 @@
 			<span>Save</span>
 		</button>
 	</div>
-	<div class="rounded-b-md rounded-tr-md bg-neutral-800 p-4 h-20 relative">
+	<div class="rounded-b-md rounded-tr-md bg-neutral-800 p-4 min-h-20 relative">
 		{#if currentTab === 'new'}
-			<div class="flex gap-2 items-center h-full">
+			<div class="flex flex-wrap gap-2 items-center h-full">
 				{#each tabs as tab}
 					<button
 						class={`rounded-lg transition-all text-white px-4 py-2 flex gap-2 justify-center items-center active:scale-95 ${openTabs.includes(tab.id) ? 'bg-neutral-600' : 'bg-violet-700 hover:bg-violet-600'}`}

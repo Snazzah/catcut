@@ -17,7 +17,7 @@
 	const dispatch = createEventDispatcher();
 </script>
 
-<div class="flex items-center gap-2 h-full select-none">
+<div class="flex flex-wrap items-center gap-2 h-full select-none">
 	<button
 		class={`rounded-lg transition-all text-white px-4 py-2 flex gap-2 justify-center items-center active:scale-95 ${toExtension !== null ? 'hover:bg-neutral-500/25' : 'bg-violet-700'}`}
 		on:click={() => {
