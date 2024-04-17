@@ -91,6 +91,7 @@
 		rejectionMessage = '';
 		if (type === '') rejectionMessage = 'Unknown file type.';
 		else if (!ALLOWED_TYPES.includes(type)) rejectionMessage = `The file type "${type}" is not supported.`;
+		else if (type === 'video/x-matroska' && navigator.userAgent.includes('Firefox/')) rejectionMessage = 'Firefox does not support MKV files.';
 
 		if (rejectionMessage) modalOpen = true;
 		return !rejectionMessage;

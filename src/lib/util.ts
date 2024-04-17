@@ -2,7 +2,6 @@ import { get } from "svelte/store";
 import { googleDriveData } from "./data";
 
 export const ALLOWED_TYPES = ['video/mp4', 'video/webm', 'video/quicktime', 'video/m4v', 'video/x-matroska'];
-
 export const MS_OPTIONS = { colonNotation: true, secondsDecimalDigits: 2, keepDecimalsOnWholeSeconds: true };
 
 export function validEvent(e: MouseEvent) {
