@@ -88,7 +88,7 @@
 
 			const a = document.createElement('a');
 			a.href = downloadURL;
-			a.download = `catcut_output_${basename}.${outExt}`;
+			a.download = `catcut_${basename}.${outExt}`;
 			a.click();
 
 			setTimeout(() => {
