@@ -25,7 +25,7 @@
 <main class={`flex flex-col items-center min-h-screen overflow-x-hidden ${!inputFile ? ' justify-center px-6 py-4 gap-4' : ''}`} class:justify-center={!inputFile}>
 	<header class={`flex items-center justify-center select-none ${inputFile ? 'px-6 py-4 w-full gap-2 bg-black' : 'flex-col'}`}>
 		<h1 class="text-3xl font-extrabold text-violet-500 flex items-center gap-1" class:flex-col={!inputFile}>
-			<Icon icon={catcut} class={!inputFile ? 'w-16 h-16' : ''} />
+			<Icon icon={catcut} class={!inputFile ? 'w-16 h-16 transition-all hover:scale-110 active:scale-90 cursor-pointer' : ''} />
 			<div class="flex items-center gap-2">
 				<span>catcut</span>
 				<small class="text-black bg-violet-500 px-2 rounded text-sm font-extrabold">alpha</small>
