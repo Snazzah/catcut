@@ -6,6 +6,7 @@
 
 <svelte:head>
 	<title>Privacy Policy - catcut</title>
+	<link href="https://catcut.snaz.in/privacy" rel="canonical">
 </svelte:head>
 
 <main class="flex flex-col items-center justify-center min-h-screen">
