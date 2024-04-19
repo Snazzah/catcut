@@ -15,7 +15,6 @@
 	}
 </script>
 
-
 {#if open}
 	<Portal target="body">
 		<div
@@ -26,7 +25,8 @@
 		>
 			<div
 				transition:fly={{ duration: 250, y: 32 }}
-				class={className || "w-96 border-2 p-2 rounded-md shadow-md flex-col justify-start items-start inline-flex bg-neutral-900 border-neutral-700"}
+				class={className ||
+					'w-96 border-2 p-2 rounded-md shadow-md flex-col justify-start items-start inline-flex bg-neutral-900 border-neutral-700'}
 			>
 				<slot />
 			</div>

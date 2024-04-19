@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { onMount } from "svelte";
+	import { onMount } from 'svelte';
 	import debounce from 'just-debounce-it';
 	import range from 'just-range';
-	import { blobToDataURL } from "$lib/util";
-	import { fade } from "svelte/transition";
+	import { blobToDataURL } from '$lib/util';
+	import { fade } from 'svelte/transition';
 
 	export let videoWidth: number;
 	export let videoHeight: number;
@@ -28,7 +28,7 @@
 	let renderQueued = false;
 	let rendering = false;
 	let neverRendered = true;
-	const debounceQueueRender = debounce(() => renderQueued = true, 250);
+	const debounceQueueRender = debounce(() => (renderQueued = true), 250);
 	$: if (videoReady) fakeEffect(timelineWidth);
 	$: if (videoReady && renderQueued && !rendering) render();
 
@@ -44,14 +44,14 @@
 			let onLoad = () => {
 				video.removeEventListener('error', onError);
 				resolve();
-			}
+			};
 			let onError = () => {
 				video.removeEventListener('canplay', onLoad);
 				reject();
-			}
+			};
 			video.addEventListener('canplay', onLoad, { once: true });
 			video.addEventListener('error', onError, { once: true });
-		})
+		});
 	}
 
 	async function render() {
@@ -92,7 +92,11 @@
 		>
 			{#if previewImages[i]}
 				<!-- svelte-ignore a11y-missing-attribute -->
-				<img transition:fade={{ duration: 100 }} src={previewImages[i]} class="absolute w-full h-full block object-cover" />
+				<img
+					transition:fade={{ duration: 100 }}
+					src={previewImages[i]}
+					class="absolute w-full h-full block object-cover"
+				/>
 			{/if}
 		</div>
 		<!-- <PreviewStill {videoWidth} {videoHeight} src={blobURL} snapAt={Math.min(1, ((i + 0.5) * previewStillWidth) / timelineWidth) * duration} /> -->

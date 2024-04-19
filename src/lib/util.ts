@@ -1,8 +1,18 @@
-import { get } from "svelte/store";
-import { googleDriveData } from "./data";
+import { get } from 'svelte/store';
+import { googleDriveData } from './data';
 
-export const ALLOWED_TYPES = ['video/mp4', 'video/webm', 'video/quicktime', 'video/m4v', 'video/x-matroska'];
-export const MS_OPTIONS = { colonNotation: true, secondsDecimalDigits: 2, keepDecimalsOnWholeSeconds: true };
+export const ALLOWED_TYPES = [
+	'video/mp4',
+	'video/webm',
+	'video/quicktime',
+	'video/m4v',
+	'video/x-matroska'
+];
+export const MS_OPTIONS = {
+	colonNotation: true,
+	secondsDecimalDigits: 2,
+	keepDecimalsOnWholeSeconds: true
+};
 
 export function validEvent(e: MouseEvent) {
 	return (e as any).pointerType !== '';
@@ -17,7 +27,7 @@ export function relativeTime(rtf: Intl.RelativeTimeFormat, seconds: number) {
 	return rtf.format(Math.round(seconds / 31536000), 'year');
 }
 
-export function blobToDataURL(blob: Blob):Promise<string> {
+export function blobToDataURL(blob: Blob): Promise<string> {
 	return new Promise((resolve, reject) => {
 		const reader = new FileReader();
 		reader.onload = () => resolve(reader.result as string);
@@ -36,8 +46,14 @@ export class RemoteFile {
 	originalURL?: string;
 	blob?: Blob;
 
-	constructor(public name: string, public size: number, public url: string, type?: string) {
-		this.type = type ?? name.includes('.') ? RemoteFile.extensionToType(name.split('.').reverse()[0]) : '';
+	constructor(
+		public name: string,
+		public size: number,
+		public url: string,
+		type?: string
+	) {
+		this.type =
+			type ?? name.includes('.') ? RemoteFile.extensionToType(name.split('.').reverse()[0]) : '';
 	}
 
 	static extensionToType(extension: string) {
@@ -50,9 +66,12 @@ export class RemoteFile {
 	static async fetch(url: string, name?: string, type?: string) {
 		const googleAuth = get(googleDriveData);
 		const response = await fetch(url, {
-			headers: url.startsWith('https://content.googleapis.com/') && googleAuth ? {
-				'Authorization': `${googleAuth.token_type} ${googleAuth.access_token}`
-			} : {}
+			headers:
+				url.startsWith('https://content.googleapis.com/') && googleAuth
+					? {
+							Authorization: `${googleAuth.token_type} ${googleAuth.access_token}`
+						}
+					: {}
 		});
 		// TODO use & parse Content-Disposition header
 		// Content-Disposition: inline; filename="3T6ShR37x3Ea5JOK.mp4"; filename*=UTF-8''3T6ShR37x3Ea5JOK.mp4

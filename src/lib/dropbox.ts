@@ -1,4 +1,4 @@
-import { PUBLIC_DROPBOX_CLIENT_ID } from "$env/static/public";
+import { PUBLIC_DROPBOX_CLIENT_ID } from '$env/static/public';
 
 export const dropboxAllowed = !!PUBLIC_DROPBOX_CLIENT_ID;
 
@@ -26,7 +26,7 @@ export interface DropboxChooser {
 export interface DropboxChooserOptions {
 	success(files: DropboxFile[]): void;
 	cancel?: () => void;
-	linkType?: 'preview' | 'direct',
+	linkType?: 'preview' | 'direct';
 	multiselect?: boolean;
 	extensions?: string[];
 	folderselect?: boolean;

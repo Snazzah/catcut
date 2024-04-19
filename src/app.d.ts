@@ -1,6 +1,6 @@
 // See https://kit.svelte.dev/docs/types#app
 // for information about these interfaces
-import type { DropboxChooser } from "$lib/dropbox";
+import type { DropboxChooser } from '$lib/dropbox';
 
 declare global {
 	namespace App {

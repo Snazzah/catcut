@@ -1,20 +1,20 @@
 <script lang="ts">
-	import Icon from "@iconify/svelte";
-	import fileIcon from "@iconify-icons/mdi/file";
-	import dropboxIcon from "@iconify-icons/mdi/dropbox";
-	import driveIcon from "@iconify-icons/mdi/google-drive";
-	import infoIcon from "@iconify-icons/mdi/information-slab-circle";
-	import mtIcon from "@iconify-icons/fluent-emoji/high-voltage";
-	import worryIcon from "@iconify-icons/fluent-emoji/worried-face";
-	import { downloadedBytes, ffmpegReady, loadFFmpeg, totalBytes } from "$lib/ffmpeg";
-	import { filesize } from "filesize";
-	import { createEventDispatcher } from "svelte";
-	import { dropboxAllowed } from "$lib/dropbox";
-	import { RemoteFile, ALLOWED_TYPES } from "$lib/util";
-	import Modal from "./Modal.svelte";
-	import { ffmpegMultithreaded } from "$lib/data";
-	import { replaceState } from "$app/navigation";
-	import { fetchDriveFile, googleAllowed, toFileDownloadLink } from "$lib/google";
+	import Icon from '@iconify/svelte';
+	import fileIcon from '@iconify-icons/mdi/file';
+	import dropboxIcon from '@iconify-icons/mdi/dropbox';
+	import driveIcon from '@iconify-icons/mdi/google-drive';
+	import infoIcon from '@iconify-icons/mdi/information-slab-circle';
+	import mtIcon from '@iconify-icons/fluent-emoji/high-voltage';
+	import worryIcon from '@iconify-icons/fluent-emoji/worried-face';
+	import { downloadedBytes, ffmpegReady, loadFFmpeg, totalBytes } from '$lib/ffmpeg';
+	import { filesize } from 'filesize';
+	import { createEventDispatcher } from 'svelte';
+	import { dropboxAllowed } from '$lib/dropbox';
+	import { RemoteFile, ALLOWED_TYPES } from '$lib/util';
+	import Modal from './Modal.svelte';
+	import { ffmpegMultithreaded } from '$lib/data';
+	import { replaceState } from '$app/navigation';
+	import { fetchDriveFile, googleAllowed, toFileDownloadLink } from '$lib/google';
 
 	let dispatch = createEventDispatcher();
 
@@ -62,8 +62,9 @@
 			noSelect = true;
 			try {
 				const fileURL = new URL(file);
-				console.log(fileURL)
-				if (fileURL.protocol !== 'https:' && fileURL.protocol !== 'http:') throw new Error('Bad protocol');
+				console.log(fileURL);
+				if (fileURL.protocol !== 'https:' && fileURL.protocol !== 'http:')
+					throw new Error('Bad protocol');
 				const name = fileName || file.split('/').reverse()[0];
 				const remoteFile = await RemoteFile.fetch(file, name);
 				if (typeAllowed(remoteFile.type)) inputFile = remoteFile;
@@ -81,7 +82,11 @@
 					modalOpen = true;
 					rejectionMessage = 'Could not fetch Google Drive file.';
 				} else if (typeAllowed(driveFile.mimeType))
-					inputFile = await RemoteFile.fetch(toFileDownloadLink(googleDriveFile), driveFile.name, driveFile.mimeType);
+					inputFile = await RemoteFile.fetch(
+						toFileDownloadLink(googleDriveFile),
+						driveFile.name,
+						driveFile.mimeType
+					);
 			} catch (e) {
 				console.error(e);
 				modalOpen = true;
@@ -94,8 +99,10 @@
 	function typeAllowed(type: string) {
 		rejectionMessage = '';
 		if (type === '') rejectionMessage = 'Unknown file type.';
-		else if (!ALLOWED_TYPES.includes(type)) rejectionMessage = `The file type "${type}" is not supported.`;
-		else if (type === 'video/x-matroska' && navigator.userAgent.includes('Firefox/')) rejectionMessage = 'Firefox does not support MKV files.';
+		else if (!ALLOWED_TYPES.includes(type))
+			rejectionMessage = `The file type "${type}" is not supported.`;
+		else if (type === 'video/x-matroska' && navigator.userAgent.includes('Firefox/'))
+			rejectionMessage = 'Firefox does not support MKV files.';
 
 		if (rejectionMessage) modalOpen = true;
 		return !rejectionMessage;
@@ -129,27 +136,33 @@
 				ffmpegReady.set(false);
 			}}
 		>
-			<Icon icon={mtIcon} class={`w-6 h-6 transition-all${!$ffmpegMultithreaded ? ' grayscale' : ''}`} />
+			<Icon
+				icon={mtIcon}
+				class={`w-6 h-6 transition-all${!$ffmpegMultithreaded ? ' grayscale' : ''}`}
+			/>
 			<span>multi-threaded {$ffmpegMultithreaded ? 'on' : 'off'}</span>
 		</button>
 
-		<button on:click={() => multithreadModalOpen = true}>
+		<button on:click={() => (multithreadModalOpen = true)}>
 			<Icon icon={infoIcon} class="w-4 h-4 transition-all hover:text-white" />
 		</button>
 	</div>
 
-	<Modal
-		open={multithreadModalOpen}
-		on:clickout={() => multithreadModalOpen = false}
-	>
+	<Modal open={multithreadModalOpen} on:clickout={() => (multithreadModalOpen = false)}>
 		<div class="w-full flex flex-col justify-center items-center">
 			<Icon icon={mtIcon} class="w-32 h-32 mb-2 -mt-24" />
 			<h2 class="font-bold tracking-wide text-2xl mb-2">Multi-threaded?</h2>
 		</div>
 		<div class="text-sm">
-			<p>You can optionally use the multi-threaded version of ffmpeg.wasm, which tends to be faster in re-encoding media and using special filters.</p>
+			<p>
+				You can optionally use the multi-threaded version of ffmpeg.wasm, which tends to be faster
+				in re-encoding media and using special filters.
+			</p>
 			<br />
-			<p>However, this tends to use a good amount of memory, and support for all devices is not guarenteed. If ffmpeg.wasm fails to load from using this, you can disable it.</p>
+			<p>
+				However, this tends to use a good amount of memory, and support for all devices is not
+				guarenteed. If ffmpeg.wasm fails to load from using this, you can disable it.
+			</p>
 		</div>
 	</Modal>
 {/if}
@@ -159,7 +172,7 @@
 		type="file"
 		class="hidden"
 		accept={ALLOWED_TYPES.join(', ')}
-		bind:files={files}
+		bind:files
 		bind:this={input}
 	/>
 	<button
@@ -174,7 +187,10 @@
 		}}
 	>
 		<div class="relative transition-all w-full" class:text-xl={droppingFile && !noSelect}>
-			<Icon icon={fileIcon} class={`transition-all absolute w-full h-full ${(droppingFile && !noSelect) ? `scale-[2] opacity-25` : `scale-100 opacity-0`}`} />
+			<Icon
+				icon={fileIcon}
+				class={`transition-all absolute w-full h-full ${droppingFile && !noSelect ? `scale-[2] opacity-25` : `scale-100 opacity-0`}`}
+			/>
 			<div class="flex flex-col items-center justify-center w-full">
 				{#if !noSelect}
 					<span>
@@ -184,33 +200,40 @@
 							select a file
 						{/if}
 					</span>
+				{:else if ffmpegLoadFail}
+					<span>failed to load ffmpeg.wasm, click to retry</span>
+				{:else if !$ffmpegReady}
+					<span class="mb-1">loading ffmpeg.wasm...</span>
+					<div class="h-2 relative bg-neutral-800 w-full rounded overflow-hidden">
+						<div
+							class="bg-violet-500 h-full transition-all"
+							style:width={`${($downloadedBytes / $totalBytes) * 100}%`}
+						/>
+					</div>
+					<span class="text-xs text-neutral-400"
+						>{filesize($downloadedBytes, { standard: 'jedec' })} / {filesize($totalBytes, {
+							standard: 'jedec'
+						})}</span
+					>
 				{:else}
-					{#if ffmpegLoadFail}
-						<span>failed to load ffmpeg.wasm, click to retry</span>
-					{:else if !$ffmpegReady}
-						<span class="mb-1">loading ffmpeg.wasm...</span>
-						<div class="h-2 relative bg-neutral-800 w-full rounded overflow-hidden">
-							<div class="bg-violet-500 h-full transition-all" style:width={`${($downloadedBytes / $totalBytes) * 100}%`} />
-						</div>
-						<span class="text-xs text-neutral-400">{filesize($downloadedBytes, { standard: 'jedec' })} / {filesize($totalBytes, { standard: 'jedec' })}</span>
-					{:else}
-						downloading...
-					{/if}
+					downloading...
 				{/if}
 			</div>
 		</div>
 	</button>
-	<span class="transition-opacity flex gap-2" class:opacity-0={noSelect} class:pointer-events-none={noSelect}>
-		<span>
-			or drop a file anywhere
-		</span>
+	<span
+		class="transition-opacity flex gap-2"
+		class:opacity-0={noSelect}
+		class:pointer-events-none={noSelect}
+	>
+		<span> or drop a file anywhere </span>
 		{#if dropboxAllowed}
-			<button title="Choose from Dropbox" on:click={() => location.href = '/dropbox'}>
+			<button title="Choose from Dropbox" on:click={() => (location.href = '/dropbox')}>
 				<Icon icon={dropboxIcon} class="w-6 h-6 transition-colors hover:text-white" />
 			</button>
 		{/if}
 		{#if googleAllowed}
-			<button title="Choose from Google Drive" on:click={() => location.href = '/googledrive'}>
+			<button title="Choose from Google Drive" on:click={() => (location.href = '/googledrive')}>
 				<Icon icon={driveIcon} class="w-6 h-6 transition-colors hover:text-white" />
 			</button>
 		{/if}
@@ -219,7 +242,7 @@
 
 <Modal
 	open={modalOpen}
-	on:clickout={() => modalOpen = false}
+	on:clickout={() => (modalOpen = false)}
 	class="w-96 border-2 px-2 py-4 rounded-xl shadow-md flex-col justify-center items-center text-center inline-flex bg-red-950 border-red-800"
 >
 	<Icon icon={worryIcon} class="w-32 h-32 mb-4 -mt-24" />

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Icon, { type IconifyIcon } from '@iconify/svelte';
-	import addIcon from "@iconify-icons/mdi/plus";
+	import addIcon from '@iconify-icons/mdi/plus';
 	import { windowClose as closeIcon } from '$lib/icons';
 	import { createEventDispatcher } from 'svelte';
 	import { fly } from 'svelte/transition';
@@ -24,12 +24,16 @@
 	$: dispatch('showtab', currentTab);
 
 	let openTabs: string[] = [];
-	$: shownTabs = [...tabs.filter(({ id }) => openTabs.includes(id)).map(({ id }) => id), 'new'].map((id) => allTabs.find((t) => t.id === id)!);
+	$: shownTabs = [...tabs.filter(({ id }) => openTabs.includes(id)).map(({ id }) => id), 'new'].map(
+		(id) => allTabs.find((t) => t.id === id)!
+	);
 </script>
 
 <div class="flex flex-col">
 	<div class="flex justify-between">
-		<div class="flex gap-0.5 overflow-x-scroll md:overflow-x-hidden overflow-y-hidden grow items-end h-10">
+		<div
+			class="flex gap-0.5 overflow-x-scroll md:overflow-x-hidden overflow-y-hidden grow items-end h-10"
+		>
 			{#each shownTabs as tab (tab.id)}
 				<button
 					class="flex gap-2 justify-center items-center rounded-t-md px-4 py-2 transition-all"
@@ -39,7 +43,7 @@
 					style:padding-bottom={currentTab !== tab.id ? '4px' : ''}
 					transition:fly={{ duration: 250, y: 32 }}
 					on:click={() => {
-						if (!openTabs.includes(tab.id) && tab.id !== 'new' || currentTab === tab.id) return;
+						if ((!openTabs.includes(tab.id) && tab.id !== 'new') || currentTab === tab.id) return;
 						dispatch('hidetab', currentTab);
 						currentTab = tab.id;
 					}}
@@ -55,7 +59,10 @@
 								// get the next tab being closed, or just go to new
 								if (currentTab === tab.id) {
 									const currentIndex = shownTabs.findIndex((t) => t.id === tab.id);
-									const nextTab = (currentIndex < 0 ? undefined : shownTabs.filter((t) => t.id !== tab.id)[currentIndex]?.id) || 'new';
+									const nextTab =
+										(currentIndex < 0
+											? undefined
+											: shownTabs.filter((t) => t.id !== tab.id)[currentIndex]?.id) || 'new';
 									currentTab = nextTab;
 								}
 

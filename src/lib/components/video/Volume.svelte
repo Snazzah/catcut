@@ -16,7 +16,10 @@
 			class="p-1 text-neutral-200 transition-all hover:text-violet-500 active:scale-90 active:text-violet-400"
 			on:click={() => dispatch('set', volume === 0 ? 1 : 0)}
 		>
-			<Icon icon={volume === 0 ? muteIcon : volume < .75 ? lowVolumeIcon : volumeIcon} class="w-8 h-8" />
+			<Icon
+				icon={volume === 0 ? muteIcon : volume < 0.75 ? lowVolumeIcon : volumeIcon}
+				class="w-8 h-8"
+			/>
 		</button>
 		<span class="text-xs text-white">{Math.round(volume * 100)}%</span>
 	</div>
@@ -24,7 +27,9 @@
 		<input
 			class="w-full"
 			type="range"
-			min="0" max="3" step="0.1"
+			min="0"
+			max="3"
+			step="0.1"
 			bind:value={volume}
 			on:change={() => dispatch('set', volume)}
 		/>
@@ -38,9 +43,9 @@
 </div>
 
 <style lang="scss">
-	input[type="range"] {
-    background-color: transparent;
-    appearance: none;
+	input[type='range'] {
+		background-color: transparent;
+		appearance: none;
 		@apply bg-neutral-600/50 h-4 overflow-hidden rounded-full cursor-pointer;
 
 		&::-webkit-slider-thumb {

@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { loadDropbox } from "$lib/dropbox";
-	import { onMount } from "svelte";
-	import Icon from "@iconify/svelte";
-	import dropboxIcon from "@iconify-icons/mdi/dropbox";
+	import { loadDropbox } from '$lib/dropbox';
+	import { onMount } from 'svelte';
+	import Icon from '@iconify/svelte';
+	import dropboxIcon from '@iconify-icons/mdi/dropbox';
 
 	let available = false;
 	let failed = false;
@@ -17,8 +17,8 @@
 				if (files[0]) {
 					redirecting = true;
 					location.href = `/?${new URLSearchParams({
-						'file': files[0].link,
-						'filename': files[0].name
+						file: files[0].link,
+						filename: files[0].name
 					}).toString()}`;
 				}
 			},
@@ -58,13 +58,21 @@
 	<title>Dropbox Chooser - catcut</title>
 </svelte:head>
 
-<main class="flex flex-col items-center justify-center min-h-screen overflow-hidden" class:cursor-pointer={failedOpen}>
+<main
+	class="flex flex-col items-center justify-center min-h-screen overflow-hidden"
+	class:cursor-pointer={failedOpen}
+>
 	<Icon icon={dropboxIcon} class="w-48 h-48" />
 	{#if isolated}
-		<span class="text-red-400">Cannot use the Dropbox chooser in a cross-origin isolated context.</span>
+		<span class="text-red-400"
+			>Cannot use the Dropbox chooser in a cross-origin isolated context.</span
+		>
 	{:else if failedOpen}
 		<span class="text-violet-400">Click anywhere to open the Dropbox chooser.</span>
-		<small>Note: You can allow pop-ups for this site to automatically open the chooser on future attempts.</small>
+		<small
+			>Note: You can allow pop-ups for this site to automatically open the chooser on future
+			attempts.</small
+		>
 	{:else if failed}
 		<span class="text-red-300">Failed to load Dropbox chooser. You can close this tab now.</span>
 	{:else if redirecting}

@@ -3,14 +3,14 @@
 	import { filesize } from 'filesize';
 	import ms from 'pretty-ms';
 	import { createEventDispatcher } from 'svelte';
-	import playIcon from "@iconify-icons/mdi/play-arrow";
-	import pauseIcon from "@iconify-icons/mdi/pause";
-	import back10Icon from "@iconify-icons/mdi/rewind-10";
-	import forward10Icon from "@iconify-icons/mdi/fast-forward-10";
-	import skipNextIcon from "@iconify-icons/mdi/skip-next";
-	import skipPreviousIcon from "@iconify-icons/mdi/skip-previous";
-	import convertIcon from "@iconify-icons/mdi/file-arrow-left-right";
-	import trimIcon from "@iconify-icons/mdi/content-cut";
+	import playIcon from '@iconify-icons/mdi/play-arrow';
+	import pauseIcon from '@iconify-icons/mdi/pause';
+	import back10Icon from '@iconify-icons/mdi/rewind-10';
+	import forward10Icon from '@iconify-icons/mdi/fast-forward-10';
+	import skipNextIcon from '@iconify-icons/mdi/skip-next';
+	import skipPreviousIcon from '@iconify-icons/mdi/skip-previous';
+	import convertIcon from '@iconify-icons/mdi/file-arrow-left-right';
+	import trimIcon from '@iconify-icons/mdi/content-cut';
 	import volumeIcon from '@iconify-icons/mdi/volume-high';
 	import PlayerButton from '$lib/components/PlayerButton.svelte';
 	import type { IconifyIcon } from '@iconify/svelte';
@@ -43,7 +43,10 @@
 
 		try {
 			console.time('ffmpeg');
-			await ffmpeg.writeFile(`in.${extension}`, await fetchFile(file instanceof RemoteFile ? file.blob : file));
+			await ffmpeg.writeFile(
+				`in.${extension}`,
+				await fetchFile(file instanceof RemoteFile ? file.blob : file)
+			);
 			processState = ProcessingState.RUNNING;
 			const start = Date.now();
 			console.log(' ---- RUNNING FFmpeg ---- ');
@@ -51,11 +54,16 @@
 			// For resource intensive calls, we trim first, then run other filters
 			if (willBeTrimmed) {
 				await ffmpeg.exec([
-					'-i', `in.${extension}`,
-					'-ss', ms(trimStart * 1000, MS_OPTIONS),
-					'-t', ms((trimEnd - trimStart) * 1000, MS_OPTIONS),
-					'-c:v', 'copy',
-					'-c:a', 'copy',
+					'-i',
+					`in.${extension}`,
+					'-ss',
+					ms(trimStart * 1000, MS_OPTIONS),
+					'-t',
+					ms((trimEnd - trimStart) * 1000, MS_OPTIONS),
+					'-c:v',
+					'copy',
+					'-c:a',
+					'copy',
 					`clip.${extension}`
 				]);
 				await ffmpeg.deleteFile(`in.${extension}`);
@@ -65,13 +73,18 @@
 			const converting = !!toExtension;
 			const otherFiltersUsed = volume !== 1 || converting;
 
-			if (!otherFiltersUsed)
-				await ffmpeg.rename(`in.${extension}`, `out.${extension}`);
+			if (!otherFiltersUsed) await ffmpeg.rename(`in.${extension}`, `out.${extension}`);
 			else
 				await ffmpeg.exec([
-					'-i', `in.${extension}`,
-					...(volume === 0 ? ['-an'] : volume === 1 && !converting ? ['-c:a', 'copy'] : ['-af', `volume=${volume.toFixed(2)}`]),
-					'-c:v', 'copy',
+					'-i',
+					`in.${extension}`,
+					...(volume === 0
+						? ['-an']
+						: volume === 1 && !converting
+							? ['-c:a', 'copy']
+							: ['-af', `volume=${volume.toFixed(2)}`]),
+					'-c:v',
+					'copy',
 					`out.${outExt}`
 				]);
 
@@ -96,7 +109,7 @@
 				a.remove();
 			}, 100);
 		} catch (e) {
-			console.log('---- FAILED ----')
+			console.log('---- FAILED ----');
 			console.timeEnd('ffmpeg');
 			console.error('Failed to save video', e);
 			processState = ProcessingState.ERROR;
@@ -127,7 +140,6 @@
 
 	$: willBeTrimmed = trimStart !== 0 || trimEnd !== duration;
 
-
 	// Trim handle variables
 	let trimStartHandleDragOffset = -1;
 	let trimEndHandleDragOffset = -1;
@@ -154,19 +166,26 @@
 	$: videoVolume = volume <= 1 ? volume : 1;
 	let toExtension: string | null = null;
 
-	const editorComponents: Record<string, {
-		name: string;
-		icon: IconifyIcon;
-		onShow?(): void;
-		onHide?(): void;
-		onOpen?(): void;
-		onClose?(): void;
-	}> = {
+	const editorComponents: Record<
+		string,
+		{
+			name: string;
+			icon: IconifyIcon;
+			onShow?(): void;
+			onHide?(): void;
+			onOpen?(): void;
+			onClose?(): void;
+		}
+	> = {
 		trim: {
 			name: 'Trim',
 			icon: trimIcon,
-			onShow() { showTrimHandles = true; },
-			onHide() { showTrimHandles = false; },
+			onShow() {
+				showTrimHandles = true;
+			},
+			onHide() {
+				showTrimHandles = false;
+			},
 			onClose() {
 				trimStart = 0;
 				trimEnd = duration;
@@ -187,10 +206,16 @@
 				toExtension = null;
 			}
 		}
-	}
+	};
 
 	function onKeyPress(e: KeyboardEvent) {
-		if (document.activeElement && ['A', 'BUTTON', 'INPUT'].includes(document.activeElement.tagName) && document.activeElement !== timelineElement && !timelineElement.contains(document.activeElement)) return;
+		if (
+			document.activeElement &&
+			['A', 'BUTTON', 'INPUT'].includes(document.activeElement.tagName) &&
+			document.activeElement !== timelineElement &&
+			!timelineElement.contains(document.activeElement)
+		)
+			return;
 
 		if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
 			if (document.activeElement === trimStartHandle) {
@@ -225,7 +250,7 @@
 
 	function onPlaybackToggle() {
 		if (paused) {
-			if (video.currentTime >= (trimEnd - 0.001)) video.currentTime = trimStart;
+			if (video.currentTime >= trimEnd - 0.001) video.currentTime = trimStart;
 
 			// "wake up" the currentTime listener
 			currentTime = 0;
@@ -242,11 +267,14 @@
 		if (!isDraggingTrimHandle) return;
 		const timelineBox = timelineElement.getBoundingClientRect();
 		if (trimStartHandleDragOffset >= 0) {
-			const newTime = ((e.clientX - (timelineBox.left + trimStartHandleDragOffset)) / timelineBox.width) * duration;
+			const newTime =
+				((e.clientX - (timelineBox.left + trimStartHandleDragOffset)) / timelineBox.width) *
+				duration;
 			trimStart = Math.max(0, Math.min(duration, newTime));
 			seek(trimStart);
 		} else if (trimEndHandleDragOffset >= 0) {
-			const newTime = ((e.clientX - (timelineBox.left + trimEndHandleDragOffset)) / timelineBox.width) * duration;
+			const newTime =
+				((e.clientX - (timelineBox.left + trimEndHandleDragOffset)) / timelineBox.width) * duration;
 			trimEnd = Math.max(0, Math.min(duration, newTime));
 			seek(trimEnd);
 		}
@@ -269,9 +297,13 @@
 			{/if}
 		</div>
 		<div class="flex gap-4 text-sm mt-2">
-			<button class="transition-colors hover:text-red-400" on:click={() => dispatch('close')}>close</button>
+			<button class="transition-colors hover:text-red-400" on:click={() => dispatch('close')}
+				>close</button
+			>
 			{#if isRemote}
-				<a href={blobURL} download={file.name} class="transition-colors hover:text-violet-400">download</a>
+				<a href={blobURL} download={file.name} class="transition-colors hover:text-violet-400"
+					>download</a
+				>
 			{/if}
 		</div>
 	</div>
@@ -284,19 +316,27 @@
 		disablepictureinpicture
 		class="max-h-[40svh] bg-neutral-900/25"
 		bind:volume={videoVolume}
-		bind:currentTime={currentTime}
-		bind:duration={duration}
-		bind:paused={paused}
-		bind:videoHeight={videoHeight}
-		bind:videoWidth={videoWidth}
+		bind:currentTime
+		bind:duration
+		bind:paused
+		bind:videoHeight
+		bind:videoWidth
 		bind:this={video}
 	/>
 
 	<div class="flex justify-center gap-2">
 		<PlayerButton icon={skipPreviousIcon} title="Seek to beginning" on:click={() => seek(0)} />
 		<PlayerButton icon={back10Icon} title="Rewind 10 seconds" on:click={() => seekBy(-10)} />
-		<PlayerButton icon={paused ? playIcon : pauseIcon} title={paused ? 'Play' : 'Pause'} on:click={onPlaybackToggle} />
-		<PlayerButton icon={forward10Icon} title="Fast forward 10 seconds" on:click={() => seekBy(10)} />
+		<PlayerButton
+			icon={paused ? playIcon : pauseIcon}
+			title={paused ? 'Play' : 'Pause'}
+			on:click={onPlaybackToggle}
+		/>
+		<PlayerButton
+			icon={forward10Icon}
+			title="Fast forward 10 seconds"
+			on:click={() => seekBy(10)}
+		/>
 		<PlayerButton icon={skipNextIcon} title="Seek to end" on:click={() => seek(duration)} />
 	</div>
 
@@ -311,10 +351,13 @@
 				else if (e.target === timelineElement) hoveredTime = (e.offsetX / timelineWidth) * duration;
 				else {
 					const timelineBox = timelineElement.getBoundingClientRect();
-					hoveredTime = Math.max(0, Math.min(duration, ((e.clientX - timelineBox.left) / timelineBox.width) * duration))
+					hoveredTime = Math.max(
+						0,
+						Math.min(duration, ((e.clientX - timelineBox.left) / timelineBox.width) * duration)
+					);
 				}
 			}}
-			on:mouseleave={() => hoveredTime = -1}
+			on:mouseleave={() => (hoveredTime = -1)}
 			on:click={(e) => {
 				if (!validEvent(e)) return;
 				if (trimEventBounce) return void (trimEventBounce = false);
@@ -332,8 +375,14 @@
 			<PreviewStillContainer {videoWidth} {videoHeight} {duration} src={blobURL} />
 
 			<!-- Trim Shadows -->
-			<div class="bg-black/75 h-full absolute top-0 left-0 pointer-events-none"  style:width={`${(trimStart / duration) * 100}%`} />
-			<div class="bg-black/75 h-full absolute top-0 right-0 pointer-events-none"  style:width={`${((duration - trimEnd) / duration) * 100}%`} />
+			<div
+				class="bg-black/75 h-full absolute top-0 left-0 pointer-events-none"
+				style:width={`${(trimStart / duration) * 100}%`}
+			/>
+			<div
+				class="bg-black/75 h-full absolute top-0 right-0 pointer-events-none"
+				style:width={`${((duration - trimEnd) / duration) * 100}%`}
+			/>
 
 			<!-- Trim Handles -->
 			<div
@@ -388,9 +437,15 @@
 			</div>
 
 			<!-- Trim Duration -->
-			<div class="w-px h-full text-center absolute top-0 pointer-events-none" style:left={`${((trimStart + (trimEnd - trimStart) / 2) / duration) * 100}%`}>
+			<div
+				class="w-px h-full text-center absolute top-0 pointer-events-none"
+				style:left={`${((trimStart + (trimEnd - trimStart) / 2) / duration) * 100}%`}
+			>
 				<div class="flex justify-center h-full relative">
-					<code class="absolute top-full text-white/50 px-1 rounded text-xs transition-opacity" class:opacity-0={!willBeTrimmed || handleDistance < 140}>
+					<code
+						class="absolute top-full text-white/50 px-1 rounded text-xs transition-opacity"
+						class:opacity-0={!willBeTrimmed || handleDistance < 140}
+					>
 						{ms((trimEnd - trimStart) * 1000, MS_OPTIONS)}
 					</code>
 				</div>
@@ -398,7 +453,10 @@
 
 			<!-- Hovered Time -->
 			{#if hoveredTime >= 0}
-				<div class="w-px h-full bg-white/25 text-center absolute top-0 pointer-events-none" style:left={`${(hoveredTime / duration) * 100}%`}>
+				<div
+					class="w-px h-full bg-white/25 text-center absolute top-0 pointer-events-none"
+					style:left={`${(hoveredTime / duration) * 100}%`}
+				>
 					<div class="flex justify-center relative">
 						<code class="absolute bottom-full text-white/25 px-1 rounded text-xs">
 							{ms(hoveredTime * 1000, MS_OPTIONS)}
@@ -408,7 +466,10 @@
 			{/if}
 
 			<!-- Current Time -->
-			<div class="w-px h-full bg-white text-center absolute top-0 pointer-events-none" style:left={`${(currentTime / duration) * 100}%`}>
+			<div
+				class="w-px h-full bg-white text-center absolute top-0 pointer-events-none"
+				style:left={`${(currentTime / duration) * 100}%`}
+			>
 				<div class="flex justify-center relative">
 					<code class="absolute bottom-full text-black bg-white px-1 rounded text-xs font-bold">
 						{ms(currentTime * 1000, MS_OPTIONS)}
@@ -418,13 +479,21 @@
 		</button>
 
 		<label class="flex justify-between pointer-events-none select-none" for="timeline">
-			<code class="transition-opacity" class:opacity-0={willBeTrimmed}>{ms(trimStart * 1000, MS_OPTIONS)}</code>
-			<code class="transition-opacity" class:opacity-0={willBeTrimmed}>{ms(trimEnd * 1000, MS_OPTIONS)}</code>
+			<code class="transition-opacity" class:opacity-0={willBeTrimmed}
+				>{ms(trimStart * 1000, MS_OPTIONS)}</code
+			>
+			<code class="transition-opacity" class:opacity-0={willBeTrimmed}
+				>{ms(trimEnd * 1000, MS_OPTIONS)}</code
+			>
 		</label>
 	</div>
 
 	<EditorTabs
-		tabs={Object.keys(editorComponents).map((id) => ({ id, name: editorComponents[id].name, icon: editorComponents[id].icon }))}
+		tabs={Object.keys(editorComponents).map((id) => ({
+			id,
+			name: editorComponents[id].name,
+			icon: editorComponents[id].icon
+		}))}
 		on:showtab={(e) => editorComponents[e.detail]?.onShow?.()}
 		on:hidetab={(e) => editorComponents[e.detail]?.onHide?.()}
 		on:opentab={(e) => editorComponents[e.detail]?.onOpen?.()}
@@ -435,9 +504,9 @@
 		{#if tab === 'trim'}
 			<Trim {trimStart} {trimEnd} />
 		{:else if tab === 'volume'}
-			<Volume {volume} on:set={(e) => volume = e.detail} />
+			<Volume {volume} on:set={(e) => (volume = e.detail)} />
 		{:else if tab === 'convert'}
-			<Convert {toExtension} {extension} on:set={(e) => toExtension = e.detail} />
+			<Convert {toExtension} {extension} on:set={(e) => (toExtension = e.detail)} />
 		{/if}
 	</EditorTabs>
 
@@ -450,11 +519,12 @@
   "-c:a", "copy",
   "output.mp4"
 ] -->
-
 </section>
 
 <!-- Processing Modal -->
 <ProcessingModal
-	open={modalOpen} {processState} {resultInfo}
-	on:close={() => modalOpen = false}
+	open={modalOpen}
+	{processState}
+	{resultInfo}
+	on:close={() => (modalOpen = false)}
 />

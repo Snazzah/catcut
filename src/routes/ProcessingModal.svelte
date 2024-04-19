@@ -1,8 +1,8 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
 	import processingIcon from '@iconify-icons/fluent-emoji/crystal-ball';
-	import worryIcon from "@iconify-icons/fluent-emoji/worried-face";
-	import yayIcon from "@iconify-icons/fluent-emoji/party-popper";
+	import worryIcon from '@iconify-icons/fluent-emoji/worried-face';
+	import yayIcon from '@iconify-icons/fluent-emoji/party-popper';
 	import { ProcessingState } from '$lib/util';
 	import { ffmpegProgress } from '$lib/ffmpeg';
 	import { createEventDispatcher } from 'svelte';
@@ -21,13 +21,20 @@
 <Modal
 	{open}
 	on:clickout={() => {
-		if ([ProcessingState.WRITING, ProcessingState.RUNNING, ProcessingState.READING].includes(processState)) return;
+		if (
+			[ProcessingState.WRITING, ProcessingState.RUNNING, ProcessingState.READING].includes(
+				processState
+			)
+		)
+			return;
 		dispatch('close');
 	}}
 	class={`w-96 border-2 px-2 py-4 rounded-xl shadow-md flex-col justify-center items-center text-center inline-flex transition-all ${
-		processState === ProcessingState.ERROR ? 'bg-red-950 border-red-800' :
-		processState === ProcessingState.DONE ? 'bg-green-950 border-green-800' :
-		'bg-blue-950 border-blue-800'
+		processState === ProcessingState.ERROR
+			? 'bg-red-950 border-red-800'
+			: processState === ProcessingState.DONE
+				? 'bg-green-950 border-green-800'
+				: 'bg-blue-950 border-blue-800'
 	}`}
 >
 	<div class="relative w-32 h-32 mb-4 -mt-24">
@@ -47,7 +54,7 @@
 	</div>
 	<h2 class="font-bold tracking-wide text-2xl">
 		{#if processState === ProcessingState.ERROR}
-		  Oh no...
+			Oh no...
 		{:else if processState === ProcessingState.DONE}
 			Done!
 		{:else}
@@ -71,6 +78,8 @@
 		<span>Your file has finished processing!</span>
 	{/if}
 	{#if resultInfo}
-		<span class="opacity-75 text-sm">{filesize(resultInfo.size, { standard: 'jedec' })} • took {ms(resultInfo.elapsed)}</span>
+		<span class="opacity-75 text-sm"
+			>{filesize(resultInfo.size, { standard: 'jedec' })} • took {ms(resultInfo.elapsed)}</span
+		>
 	{/if}
 </Modal>

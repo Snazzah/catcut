@@ -3,50 +3,55 @@
 @tailwind utilities;
 
 img:not([draggable]) {
-  user-drag: none;
-  user-select: none;
-  -moz-user-select: none;
-  -webkit-user-drag: none;
-  -webkit-user-select: none;
-  -ms-user-select: none;
+	user-drag: none;
+	user-select: none;
+	-moz-user-select: none;
+	-webkit-user-drag: none;
+	-webkit-user-select: none;
+	-ms-user-select: none;
 }
 
-code, kbd, samp, pre {
-  font-family: "Source Code Pro Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+code,
+kbd,
+samp,
+pre {
+	font-family: 'Source Code Pro Variable', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+		'Liberation Mono', 'Courier New', monospace;
 }
 
-html, body {
-  @apply bg-neutral-950 text-neutral-400 min-h-screen;
+html,
+body {
+	@apply bg-neutral-950 text-neutral-400 min-h-screen;
 }
 
 html {
-  &::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background-color: rgba(255,255,255,.1);
-    border-radius: 10px;
-    border: 2px solid #0a0a0a;
-  }
-  &::-webkit-scrollbar-track {
-    border-radius: 10px;
-  }
+	&::-webkit-scrollbar {
+		width: 10px;
+		height: 10px;
+	}
+	&::-webkit-scrollbar-thumb {
+		background-color: rgba(255, 255, 255, 0.1);
+		border-radius: 10px;
+		border: 2px solid #0a0a0a;
+	}
+	&::-webkit-scrollbar-track {
+		border-radius: 10px;
+	}
 }
 
 .light-scrollbar {
-  &::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background-color: rgba(255,255,255,.1);
-    border-radius: 10px;
-    border: 2px solid #171717;
-  }
-  &::-webkit-scrollbar-track {
-    border-radius: 10px;
-  }
+	&::-webkit-scrollbar {
+		width: 10px;
+		height: 10px;
+	}
+	&::-webkit-scrollbar-thumb {
+		background-color: rgba(255, 255, 255, 0.1);
+		border-radius: 10px;
+		border: 2px solid #171717;
+	}
+	&::-webkit-scrollbar-track {
+		border-radius: 10px;
+	}
 }
 
 .no-ligatures {
