@@ -23,6 +23,7 @@
 	import { fetchFile } from '@ffmpeg/util';
 	import ProcessingModal from './ProcessingModal.svelte';
 	import Convert from '$lib/components/video/Convert.svelte';
+	import { ffmpegMultithreaded } from '$lib/data';
 
 	export let dispatch = createEventDispatcher();
 	export let file: File | RemoteFile;
@@ -66,8 +67,8 @@
 					ms(trimStart * 1000, MS_OPTIONS),
 					'-t',
 					ms(trimDuration * 1000, MS_OPTIONS),
-					'-max_muxing_queue_size', '4096',
-					...(trimDuration <= 10 ? ['-preset', 'ultrafast'] : ['-c:v', 'copy', '-c:a', 'copy']),
+					// '-max_muxing_queue_size', '4096',
+					...(trimDuration <= 10 && !$ffmpegMultithreaded ? ['-preset', 'ultrafast'] : ['-c:v', 'copy', '-c:a', 'copy']),
 					`clip.${extension}`
 				]);
 				await ffmpeg.deleteFile(`in.${extension}`);
