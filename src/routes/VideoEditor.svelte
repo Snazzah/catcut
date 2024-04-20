@@ -35,6 +35,11 @@
 	let processState = ProcessingState.IDLE;
 	let resultInfo: { elapsed: number; size: number } | null = null;
 
+	async function runFFmpeg(args: string[]) {
+		console.log(`Running command: ffmepg ${args.join(' ')}`);
+		await ffmpeg.exec(args);
+	}
+
 	async function saveVideo() {
 		processState = ProcessingState.WRITING;
 		modalOpen = true;
@@ -53,17 +58,16 @@
 
 			// For resource intensive calls, we trim first, then run other filters
 			if (willBeTrimmed) {
-				await ffmpeg.exec([
+				const trimDuration = trimEnd - trimStart;
+				await runFFmpeg([
 					'-i',
 					`in.${extension}`,
 					'-ss',
 					ms(trimStart * 1000, MS_OPTIONS),
 					'-t',
-					ms((trimEnd - trimStart) * 1000, MS_OPTIONS),
-					'-c:v',
-					'copy',
-					'-c:a',
-					'copy',
+					ms(trimDuration * 1000, MS_OPTIONS),
+					'-max_muxing_queue_size', '4096',
+					...(trimDuration <= 10 ? ['-preset', 'ultrafast'] : ['-c:v', 'copy', '-c:a', 'copy']),
 					`clip.${extension}`
 				]);
 				await ffmpeg.deleteFile(`in.${extension}`);
@@ -75,14 +79,13 @@
 
 			if (!otherFiltersUsed) await ffmpeg.rename(`in.${extension}`, `out.${extension}`);
 			else
-				await ffmpeg.exec([
+				await runFFmpeg([
 					'-i',
 					`in.${extension}`,
-					...(volume === 0
-						? ['-an']
-						: volume === 1 && !converting
-							? ['-c:a', 'copy']
-							: ['-af', `volume=${volume.toFixed(2)}`]),
+					...(volume === 0 ? ['-an']
+						: volume !== 1 ? ['-af', `volume=${volume.toFixed(2)}`] :
+							!converting ? ['-c:a', 'copy']
+							: []),
 					'-c:v',
 					'copy',
 					`out.${outExt}`
@@ -115,8 +118,8 @@
 			processState = ProcessingState.ERROR;
 		} finally {
 			console.log(' ---- CLEANUP ---- ');
-			await ffmpeg.deleteFile(`in.${extension}`);
-			await ffmpeg.deleteFile(`out.${outExt}`);
+			await ffmpeg.deleteFile(`in.${extension}`).catch(() => {});
+			await ffmpeg.deleteFile(`out.${outExt}`).catch(() => {});
 		}
 	}
 
