@@ -33,6 +33,8 @@
 	let rejectionMessage = '';
 
 	let multithreadModalOpen = false;
+	const mtAvailable = false;
+	// const mtAvailable = window.crossOriginIsolated;
 
 	$: if (!$ffmpegReady) load($ffmpegMultithreaded);
 
@@ -40,7 +42,7 @@
 		try {
 			ffmpegLoadFail = false;
 			noSelect = true;
-			await loadFFmpeg(window.crossOriginIsolated ? mt : false);
+			await loadFFmpeg(mtAvailable ? mt : false);
 			noSelect = false;
 
 			if (location.search) await getQueuedFile();
@@ -125,7 +127,7 @@
 	}}
 />
 
-{#if window.crossOriginIsolated}
+{#if mtAvailable}
 	<div class="flex gap-1">
 		<button
 			class="flex gap-1 px-1 justify-center items-center transition-all disabled:opacity-50"

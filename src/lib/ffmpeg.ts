@@ -1,5 +1,5 @@
 import { FFmpeg } from '@ffmpeg/ffmpeg';
-import { toBlobURL } from '@ffmpeg/util';
+import { fetchFile, toBlobURL } from '@ffmpeg/util';
 import { writable } from 'svelte/store';
 
 export const CORE_VERSION = '0.12.6';
@@ -22,6 +22,7 @@ export const ffmpegReady = writable(false);
 
 export const ffmpeg = new FFmpeg();
 (window as any).ffmpeg = ffmpeg;
+(window as any).fetchFile = fetchFile;
 
 ffmpeg.on('log', ({ message }) => {
 	console.log(message);

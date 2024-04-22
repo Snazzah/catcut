@@ -10,7 +10,7 @@
 	<h1 class="text-5xl font-bold text-white">{$page.status}</h1>
 	<h3 class="text-2xl">{$page.error?.message}</h3>
 	<br />
-	<a href="/" class="px-4 py-2 rounded transition-all bg-neutral-700 hover:bg-neutral-600"
-		>Back to Homepage</a
-	>
+	<a href="/" class="px-4 py-2 rounded transition-all bg-neutral-700 hover:bg-neutral-600">
+		Back to Homepage
+	</a>
 </main>
