@@ -16,14 +16,13 @@
 	import type { IconifyIcon } from '@iconify/svelte';
 	import PreviewStillContainer from './PreviewStillContainer.svelte';
 	import { MS_OPTIONS } from '$lib/util';
-	import { ffmpeg } from '$lib/ffmpeg';
+	import { ffmpeg, ffmpegIsMT } from '$lib/ffmpeg';
 	import Trim from '$lib/components/video/Trim.svelte';
 	import Volume from '$lib/components/video/Volume.svelte';
 	import EditorTabs from '$lib/components/EditorTabs.svelte';
 	import { fetchFile } from '@ffmpeg/util';
 	import ProcessingModal from './ProcessingModal.svelte';
 	import Convert from '$lib/components/video/Convert.svelte';
-	import { ffmpegMultithreaded } from '$lib/data';
 
 	export let dispatch = createEventDispatcher();
 	export let file: File | RemoteFile;
@@ -68,7 +67,7 @@
 					'-t',
 					ms(trimDuration * 1000, MS_OPTIONS),
 					// '-max_muxing_queue_size', '4096',
-					...(trimDuration <= 10 && !$ffmpegMultithreaded ? ['-preset', 'ultrafast'] : ['-c:v', 'copy', '-c:a', 'copy']),
+					...(forceReencoding ? ['-preset', 'ultrafast'] : ['-c:v', 'copy', '-c:a', 'copy']),
 					`clip.${extension}`
 				]);
 				await ffmpeg.deleteFile(`in.${extension}`);
@@ -172,6 +171,7 @@
 	let volume = 1;
 	$: videoVolume = volume <= 1 ? volume : 1;
 	let toExtension: string | null = null;
+	$: forceReencoding = (trimEnd - trimStart) <= 10 && !$ffmpegIsMT && extension !== 'webm';
 
 	const editorComponents: Record<
 		string,
@@ -533,5 +533,6 @@
 	open={modalOpen}
 	{processState}
 	{resultInfo}
+	{forceReencoding}
 	on:close={() => (modalOpen = false)}
 />
