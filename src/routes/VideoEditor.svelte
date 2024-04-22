@@ -83,12 +83,15 @@
 				await runFFmpeg([
 					'-i',
 					`in.${extension}`,
+					'-preset', 'ultrafast',
 					...(volume === 0 ? ['-an']
 						: volume !== 1 ? ['-af', `volume=${volume.toFixed(2)}`] :
 							!converting ? ['-c:a', 'copy']
 							: []),
-					'-c:v',
-					'copy',
+					...(
+						extension === 'webm' && outExt === 'mp4'
+						? [] : ['-c:v', 'copy']
+					),
 					`out.${outExt}`
 				]);
 
