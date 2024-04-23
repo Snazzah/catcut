@@ -19,7 +19,7 @@
 
 <div class="flex flex-wrap items-center gap-2 h-full select-none">
 	<button
-		class={`rounded-lg transition-all text-white px-4 py-2 flex gap-2 justify-center items-center active:scale-95 ${toExtension !== null ? 'hover:bg-neutral-500/25' : 'bg-violet-700'}`}
+		class={`rounded-lg transition-all text-white px-4 py-2 flex gap-2 justify-center items-center active:scale-95 border ${toExtension !== null ? 'hover:bg-neutral-500/25 border-neutral-500/50' : 'bg-violet-700 border-violet-300/50'}`}
 		on:click={() => {
 			if (toExtension !== null) dispatch('set', null);
 		}}
@@ -29,7 +29,7 @@
 	{#each formats as format (format.extension)}
 		{#if format.extension !== extension}
 			<button
-				class={`rounded-lg transition-all text-white px-4 py-2 flex gap-2 justify-center items-center active:scale-95 ${toExtension !== format.extension ? 'hover:bg-neutral-500/25' : 'bg-violet-700 hover:bg-violet-600'}`}
+				class={`rounded-lg transition-all text-white px-4 py-2 flex gap-2 justify-center items-center active:scale-95 border ${toExtension !== format.extension ? 'hover:bg-neutral-500/25 border-neutral-500/50' : 'bg-violet-700 border-violet-300/50'}`}
 				on:click={() => {
 					if (toExtension !== format.extension) dispatch('set', format.extension);
 				}}

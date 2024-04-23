@@ -12,6 +12,7 @@
 	import convertIcon from '@iconify-icons/mdi/file-arrow-left-right';
 	import trimIcon from '@iconify-icons/mdi/content-cut';
 	import volumeIcon from '@iconify-icons/mdi/volume-high';
+	import compressIcon from '@iconify-icons/mdi/zip-box';
 	import PlayerButton from '$lib/components/PlayerButton.svelte';
 	import type { IconifyIcon } from '@iconify/svelte';
 	import PreviewStillContainer from './PreviewStillContainer.svelte';
@@ -23,6 +24,7 @@
 	import { fetchFile } from '@ffmpeg/util';
 	import ProcessingModal from './ProcessingModal.svelte';
 	import Convert from '$lib/components/video/Convert.svelte';
+	import Compress from '$lib/components/video/Compress.svelte';
 
 	export let dispatch = createEventDispatcher();
 	export let file: File | RemoteFile;
@@ -45,6 +47,13 @@
 		modalOpen = true;
 		resultInfo = null;
 		const outExt = toExtension ?? extension;
+		const compressionArgs = [
+			['-preset', 'ultrafast'], // = 0
+			['-preset', 'veryslow', '-crf', '28'], // = 1
+			['-preset', 'veryslow', '-crf', '32'], // = 2
+			['-preset', 'veryslow', '-crf', '40'], // = 3
+			['-preset', 'veryslow', '-crf', '51'], // = 4
+		];
 
 		try {
 			console.time('ffmpeg');
@@ -75,22 +84,22 @@
 			}
 
 			const converting = !!toExtension;
-			const otherFiltersUsed = volume !== 1 || converting;
+			const otherFiltersUsed = volume !== 1 || converting || compressionLevel !== 0;
 
 			if (!otherFiltersUsed) await ffmpeg.rename(`in.${extension}`, `out.${extension}`);
 			else
 				await runFFmpeg([
 					'-i',
 					`in.${extension}`,
-					'-preset', 'ultrafast',
 					...(volume === 0 ? ['-an']
 						: volume !== 1 ? ['-af', `volume=${volume.toFixed(2)}`] :
 							!converting ? ['-c:a', 'copy']
 							: []),
 					...(
-						extension === 'webm' && outExt === 'mp4'
+						extension === 'webm' && outExt === 'mp4' || compressionLevel !== 0
 						? [] : ['-c:v', 'copy']
 					),
+					...(compressionArgs[compressionLevel]),
 					`out.${outExt}`
 				]);
 
@@ -171,7 +180,8 @@
 	let volume = 1;
 	$: videoVolume = volume <= 1 ? volume : 1;
 	let toExtension: string | null = null;
-	$: forceReencoding = (trimEnd - trimStart) <= 10 && !$ffmpegIsMT && extension !== 'webm';
+	$: forceReencoding = (trimEnd - trimStart) <= 10 && willBeTrimmed && !$ffmpegIsMT && extension !== 'webm';
+	let compressionLevel = 0;
 
 	const editorComponents: Record<
 		string,
@@ -211,6 +221,13 @@
 			icon: convertIcon,
 			onClose() {
 				toExtension = null;
+			}
+		},
+		compress: {
+			name: 'Compress',
+			icon: compressIcon,
+			onClose() {
+				compressionLevel = 0;
 			}
 		}
 	};
@@ -514,18 +531,10 @@
 			<Volume {volume} on:set={(e) => (volume = e.detail)} />
 		{:else if tab === 'convert'}
 			<Convert {toExtension} {extension} on:set={(e) => (toExtension = e.detail)} />
+		{:else if tab === 'compress'}
+			<Compress {compressionLevel} on:set={(e) => (compressionLevel = e.detail)} />
 		{/if}
 	</EditorTabs>
-
-	<!-- [
-  "-i",
-  "input.mp4",
-  "-ss", "00:03:32.40",
-  "-t", "00:03:50.19",
-  "-c:v", "copy",
-  "-c:a", "copy",
-  "output.mp4"
-] -->
 </section>
 
 <!-- Processing Modal -->
