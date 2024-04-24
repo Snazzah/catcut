@@ -13,6 +13,7 @@
 	import trimIcon from '@iconify-icons/mdi/content-cut';
 	import volumeIcon from '@iconify-icons/mdi/volume-high';
 	import compressIcon from '@iconify-icons/mdi/zip-box';
+	import bitrateIcon from '@iconify-icons/mdi/music-note';
 	import PlayerButton from '$lib/components/PlayerButton.svelte';
 	import type { IconifyIcon } from '@iconify/svelte';
 	import PreviewStillContainer from './PreviewStillContainer.svelte';
@@ -25,6 +26,7 @@
 	import ProcessingModal from './ProcessingModal.svelte';
 	import Convert from '$lib/components/video/Convert.svelte';
 	import Compress from '$lib/components/video/Compress.svelte';
+	import Bitrate from '$lib/components/video/Bitrate.svelte';
 
 	export let dispatch = createEventDispatcher();
 	export let file: File | RemoteFile;
@@ -66,7 +68,8 @@
 			console.log(' ---- RUNNING FFmpeg ---- ');
 
 			const converting = !!toExtension;
-			const otherFiltersUsed = volume !== 1 || converting || compressionLevel !== 0;
+			const bitrateChanged = bitrate > 0;
+			const otherFiltersUsed = volume !== 1 || bitrateChanged || converting || compressionLevel !== 0;
 			let trimOnNextCall = false;
 			const trimArgs = ['-ss',
 					ms(trimStart * 1000, MS_OPTIONS),
@@ -98,8 +101,9 @@
 					...(willBeTrimmed && trimOnNextCall ? trimArgs : []),
 					...(volume === 0 ? ['-an']
 						: volume !== 1 ? ['-af', `volume=${volume.toFixed(2)}`] :
-							!converting ? ['-c:a', 'copy']
+							!converting && !bitrateChanged ? ['-c:a', 'copy']
 							: []),
+					...(bitrateChanged && volume !== 0 ? ['-b:a', `${bitrate}k`] : []),
 					...(
 						extension === 'webm' && outExt === 'mp4' || compressionLevel !== 0
 						? [] : ['-c:v', 'copy']
@@ -188,6 +192,7 @@
 	$: cantTrimReencode = $ffmpegIsMT || extension === 'webm';
 	let trimReencoding = false;
 	let compressionLevel = 0;
+	let bitrate = 0;
 
 	const editorComponents: Record<
 		string,
@@ -234,6 +239,13 @@
 			icon: compressIcon,
 			onClose() {
 				compressionLevel = 0;
+			}
+		},
+		bitrate: {
+			name: 'Bitrate',
+			icon: bitrateIcon,
+			onClose() {
+				bitrate = 0;
 			}
 		}
 	};
@@ -539,6 +551,8 @@
 			<Convert {toExtension} {extension} on:set={(e) => (toExtension = e.detail)} />
 		{:else if tab === 'compress'}
 			<Compress {compressionLevel} on:set={(e) => (compressionLevel = e.detail)} />
+		{:else if tab === 'bitrate'}
+			<Bitrate {bitrate} on:set={(e) => (bitrate = e.detail)} />
 		{/if}
 	</EditorTabs>
 </section>
