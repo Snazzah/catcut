@@ -38,7 +38,7 @@
 	let resultInfo: { elapsed: number; size: number } | null = null;
 
 	async function runFFmpeg(args: string[]) {
-		console.log(`Running command: ffmepg ${args.join(' ')}`);
+		console.log(`Running command: ffmpeg ${args.join(' ')}`);
 		await ffmpeg.exec(args);
 	}
 
@@ -65,32 +65,37 @@
 			const start = Date.now();
 			console.log(' ---- RUNNING FFmpeg ---- ');
 
+			const converting = !!toExtension;
+			const otherFiltersUsed = volume !== 1 || converting || compressionLevel !== 0;
+			let trimOnNextCall = false;
+			const trimArgs = ['-ss',
+					ms(trimStart * 1000, MS_OPTIONS),
+					'-t',
+					ms((trimEnd - trimStart) * 1000, MS_OPTIONS)
+			]
+
+			// If a WebM is being trimmed and converted, pass along the trim to the next call
+			if (extension === 'webm' && converting) trimOnNextCall = true;
+
 			// For resource intensive calls, we trim first, then run other filters
-			if (willBeTrimmed) {
-				const trimDuration = trimEnd - trimStart;
+			if (willBeTrimmed && !trimOnNextCall) {
 				await runFFmpeg([
 					'-i',
 					`in.${extension}`,
-					'-ss',
-					ms(trimStart * 1000, MS_OPTIONS),
-					'-t',
-					ms(trimDuration * 1000, MS_OPTIONS),
-					// '-max_muxing_queue_size', '4096',
-					...(forceReencoding ? ['-preset', 'ultrafast'] : ['-c:v', 'copy', '-c:a', 'copy']),
+					...trimArgs,
+					...(trimReencoding ? ['-preset', 'ultrafast'] : ['-c:v', 'copy', '-c:a', 'copy']),
 					`clip.${extension}`
 				]);
 				await ffmpeg.deleteFile(`in.${extension}`);
 				await ffmpeg.rename(`clip.${extension}`, `in.${extension}`);
 			}
 
-			const converting = !!toExtension;
-			const otherFiltersUsed = volume !== 1 || converting || compressionLevel !== 0;
-
 			if (!otherFiltersUsed) await ffmpeg.rename(`in.${extension}`, `out.${extension}`);
 			else
 				await runFFmpeg([
 					'-i',
 					`in.${extension}`,
+					...(willBeTrimmed && trimOnNextCall ? trimArgs : []),
 					...(volume === 0 ? ['-an']
 						: volume !== 1 ? ['-af', `volume=${volume.toFixed(2)}`] :
 							!converting ? ['-c:a', 'copy']
@@ -180,7 +185,8 @@
 	let volume = 1;
 	$: videoVolume = volume <= 1 ? volume : 1;
 	let toExtension: string | null = null;
-	$: forceReencoding = (trimEnd - trimStart) <= 10 && willBeTrimmed && !$ffmpegIsMT && extension !== 'webm';
+	$: cantTrimReencode = $ffmpegIsMT || extension === 'webm';
+	let trimReencoding = false;
 	let compressionLevel = 0;
 
 	const editorComponents: Record<
@@ -526,7 +532,7 @@
 		let:tab
 	>
 		{#if tab === 'trim'}
-			<Trim {trimStart} {trimEnd} />
+			<Trim {trimStart} {trimEnd} {trimReencoding} {cantTrimReencode} on:setreencoding={(e) => (trimReencoding = e.detail)} />
 		{:else if tab === 'volume'}
 			<Volume {volume} on:set={(e) => (volume = e.detail)} />
 		{:else if tab === 'convert'}
@@ -542,6 +548,5 @@
 	open={modalOpen}
 	{processState}
 	{resultInfo}
-	{forceReencoding}
 	on:close={() => (modalOpen = false)}
 />

@@ -12,7 +12,6 @@
 	import Modal from './Modal.svelte';
 
 	export let open: boolean;
-	export let forceReencoding: boolean;
 	export let processState: ProcessingState;
 	export let resultInfo: { elapsed: number; size: number } | null = null;
 
@@ -69,7 +68,7 @@
 	{:else if processState === ProcessingState.WRITING}
 		<span>Loading file...</span>
 	{:else if processState === ProcessingState.RUNNING}
-		<span>{forceReencoding ? 'Your video is being re-encoded to avoid bad clips, this may take a bit.' : 'Running...'} ({Math.round($ffmpegProgress * 100)}%)</span>
+		<span>Running... ({Math.round($ffmpegProgress * 100)}%)</span>
 		<div class="h-2 relative bg-black/50 w-full rounded overflow-hidden mt-2">
 			<div class="bg-violet-500 h-full transition-all" style:width={`${$ffmpegProgress * 100}%`} />
 		</div>

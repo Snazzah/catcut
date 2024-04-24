@@ -5,10 +5,9 @@
 	import donateIcon from '@iconify-icons/mdi/cards-heart';
 	import snazzahIcon from '@iconify-icons/mdi/cat';
 	import trashIcon from '@iconify-icons/mdi/trash';
-	import uncheckIcon from '@iconify-icons/mdi/checkbox-blank-outline';
-	import checkIcon from '@iconify-icons/mdi/checkbox-marked';
 	import Modal from './Modal.svelte';
 	import { analyticsOptOut, googleDriveData } from '$lib/data';
+	import CheckBoxButton from '$lib/components/CheckBoxButton.svelte';
 
 	let aboutModalOpen = false;
 	let settingsModalOpen = false;
@@ -84,16 +83,9 @@
 <Modal open={settingsModalOpen} on:clickout={() => (settingsModalOpen = false)}>
 	<div class="flex flex-col gap-4">
 		<div class="flex flex-col gap-2 text-white">
-			<button
-				class="px-4 py-2 rounded transition-colors bg-violet-600 enabled:hover:bg-violet-500 flex gap-2 items-center w-full disabled:bg-neutral-800 disabled:text-neutral-500 disabled:cursor-not-allowed"
-				on:click={() => ($analyticsOptOut = !$analyticsOptOut)}
-			>
-				<Icon
-					icon={$analyticsOptOut ? checkIcon : uncheckIcon}
-					class="w-6 h-6 transition-all hover:text-white"
-				/>
-				<span>Opt-out of anonymous analytics</span>
-			</button>
+			<CheckBoxButton checked={$analyticsOptOut} on:click={() => ($analyticsOptOut = !$analyticsOptOut)}>
+				Opt-out of anonymous analytics
+			</CheckBoxButton>
 			<p>
 				this is used for traffic analytics and does not store data to track you, you can check the <a
 					href="/privacy"
