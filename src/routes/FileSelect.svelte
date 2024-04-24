@@ -52,19 +52,10 @@
 		}
 	}
 
-	async function getQueuedFile() {
-		const url = new URL(location.href);
-		const file = url.searchParams.get('file');
-		const fileName = url.searchParams.get('filename');
-		const googleDriveFile = url.searchParams.get('googledrivefile');
-		url.search = '';
-		replaceState(url, {});
-
-		if (file) {
+	async function fetchFile(file: string, fileName: string | null = null) {
 			noSelect = true;
 			try {
 				const fileURL = new URL(file);
-				console.log(fileURL);
 				if (fileURL.protocol !== 'https:' && fileURL.protocol !== 'http:')
 					throw new Error('Bad protocol');
 				const name = fileName || file.split('/').reverse()[0];
@@ -76,7 +67,18 @@
 				rejectionMessage = 'Could not fetch remote file.';
 			}
 			noSelect = false;
-		} else if (googleDriveFile) {
+		}
+
+	async function getQueuedFile() {
+		const url = new URL(location.href);
+		const file = url.searchParams.get('file');
+		const fileName = url.searchParams.get('filename');
+		const googleDriveFile = url.searchParams.get('googledrivefile');
+		url.search = '';
+		replaceState(url, {});
+
+		if (file) fetchFile(file, fileName);
+		else if (googleDriveFile) {
 			noSelect = true;
 			try {
 				const driveFile = await fetchDriveFile(googleDriveFile);

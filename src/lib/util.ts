@@ -1,5 +1,6 @@
 import { get } from 'svelte/store';
 import { googleDriveData } from './data';
+import { parse } from './contentDisposition';
 
 export const ALLOWED_TYPES = [
 	'video/mp4',
@@ -73,8 +74,12 @@ export class RemoteFile {
 						}
 					: {}
 		});
-		// TODO use & parse Content-Disposition header
-		// Content-Disposition: inline; filename="3T6ShR37x3Ea5JOK.mp4"; filename*=UTF-8''3T6ShR37x3Ea5JOK.mp4
+
+		if (!name && response.headers.has('Content-Disposition')) {
+			const disposition = parse(response.headers.get('Content-Disposition')!);
+			if (disposition.params.filename) name = disposition.params.filename;
+		}
+
 		if (!name) name = url.split('/').reverse()[0];
 		const blob = await response.blob();
 		const file = new RemoteFile(name, blob.size, URL.createObjectURL(blob), type || blob.type);
