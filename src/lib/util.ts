@@ -7,7 +7,10 @@ export const ALLOWED_TYPES = [
 	'video/webm',
 	'video/quicktime',
 	'video/m4v',
-	'video/x-matroska'
+	'video/x-matroska',
+	'audio/mpeg',
+	'audio/wav',
+	'audio/flac'
 ];
 export const MS_OPTIONS = {
 	colonNotation: true,
@@ -60,7 +63,9 @@ export class RemoteFile {
 	static extensionToType(extension: string) {
 		if (extension === 'mov') return 'video/quicktime';
 		if (extension === 'mkv') return 'video/x-matroska';
+		if (extension === 'mp3') return 'audio/mpeg';
 		if (['webm', 'mp4', 'm4a'].includes(extension)) return `video/${extension}`;
+		if (['ogg', 'wav', 'flac'].includes(extension)) return `audio/${extension}`;
 		return '';
 	}
 

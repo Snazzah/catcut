@@ -5,6 +5,7 @@
 	import { RemoteFile } from '$lib/util';
 	import { catcut } from '$lib/icons';
 	import Icon from '@iconify/svelte';
+	import AudioEditor from './AudioEditor.svelte';
 
 	let inputFile: File | RemoteFile | undefined = undefined;
 	let blobURL: string | undefined;
@@ -13,7 +14,6 @@
 			? inputFile.url
 			: URL.createObjectURL(inputFile)
 		: undefined;
-	$: console.log({ inputFile });
 
 	function closeFile() {
 		if (inputFile instanceof RemoteFile) inputFile.release();
@@ -60,6 +60,10 @@
 	{/if}
 
 	{#if inputFile && blobURL}
-		<VideoEditor file={inputFile} {blobURL} on:close={closeFile} />
+		{#if inputFile.type.startsWith('video/')}
+			<VideoEditor file={inputFile} {blobURL} on:close={closeFile} />
+		{:else if inputFile.type.startsWith('audio/')}
+			<AudioEditor file={inputFile} {blobURL} on:close={closeFile} />
+		{/if}
 	{/if}
 </main>

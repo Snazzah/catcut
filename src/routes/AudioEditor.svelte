@@ -9,24 +9,22 @@
 	import forward10Icon from '@iconify-icons/mdi/fast-forward-10';
 	import skipNextIcon from '@iconify-icons/mdi/skip-next';
 	import skipPreviousIcon from '@iconify-icons/mdi/skip-previous';
-	import convertIcon from '@iconify-icons/mdi/file-arrow-left-right';
 	import trimIcon from '@iconify-icons/mdi/content-cut';
 	import volumeIcon from '@iconify-icons/mdi/volume-high';
-	import compressIcon from '@iconify-icons/mdi/zip-box';
 	import bitrateIcon from '@iconify-icons/mdi/music-note';
+	import convertIcon from '@iconify-icons/mdi/file-arrow-left-right';
 	import PlayerButton from '$lib/components/PlayerButton.svelte';
 	import type { IconifyIcon } from '@iconify/svelte';
-	import PreviewStillContainer from './PreviewStillContainer.svelte';
 	import { MS_OPTIONS } from '$lib/util';
-	import { ffmpeg, ffmpegIsMT } from '$lib/ffmpeg';
-	import Trim from '$lib/components/video/Trim.svelte';
-	import Volume from '$lib/components/common/Volume.svelte';
+	import { ffmpeg } from '$lib/ffmpeg';
 	import EditorTabs from '$lib/components/EditorTabs.svelte';
 	import { fetchFile } from '@ffmpeg/util';
 	import ProcessingModal from './ProcessingModal.svelte';
-	import Convert from '$lib/components/video/Convert.svelte';
-	import Compress from '$lib/components/video/Compress.svelte';
+	import Trim from '$lib/components/audio/Trim.svelte';
+	import Waveform from './Waveform.svelte';
 	import Bitrate from '$lib/components/common/Bitrate.svelte';
+	import Volume from '$lib/components/common/Volume.svelte';
+	import Convert from '$lib/components/audio/Convert.svelte';
 
 	export let dispatch = createEventDispatcher();
 	export let file: File | RemoteFile;
@@ -44,18 +42,11 @@
 		await ffmpeg.exec(args);
 	}
 
-	async function saveVideo() {
+	async function save() {
 		processState = ProcessingState.WRITING;
 		modalOpen = true;
 		resultInfo = null;
 		const outExt = toExtension ?? extension;
-		const compressionArgs = [
-			['-preset', 'ultrafast'], // = 0
-			['-preset', 'veryslow', '-crf', '28'], // = 1
-			['-preset', 'veryslow', '-crf', '32'], // = 2
-			['-preset', 'veryslow', '-crf', '40'], // = 3
-			['-preset', 'veryslow', '-crf', '51'], // = 4
-		];
 
 		try {
 			console.time('ffmpeg');
@@ -67,50 +58,21 @@
 			const start = Date.now();
 			console.log(' ---- RUNNING FFmpeg ---- ');
 
-			const converting = !!toExtension;
 			const bitrateChanged = bitrate > 0;
-			const otherFiltersUsed = volume !== 1 || bitrateChanged || converting || compressionLevel !== 0;
-			let trimOnNextCall = false;
-			const trimArgs = ['-ss',
+
+			await runFFmpeg([
+				'-i',
+				`in.${extension}`,
+				...(willBeTrimmed ? [
+					'-ss',
 					ms(trimStart * 1000, MS_OPTIONS),
 					'-t',
 					ms((trimEnd - trimStart) * 1000, MS_OPTIONS)
-			]
-
-			// If a WebM is being trimmed and converted, pass along the trim to the next call
-			if (extension === 'webm' && converting) trimOnNextCall = true;
-
-			// For resource intensive calls, we trim first, then run other filters
-			if (willBeTrimmed && !trimOnNextCall) {
-				await runFFmpeg([
-					'-i',
-					`in.${extension}`,
-					...trimArgs,
-					...(trimReencoding ? ['-preset', 'ultrafast'] : ['-c:v', 'copy', '-c:a', 'copy']),
-					`clip.${extension}`
-				]);
-				await ffmpeg.deleteFile(`in.${extension}`);
-				await ffmpeg.rename(`clip.${extension}`, `in.${extension}`);
-			}
-
-			if (!otherFiltersUsed) await ffmpeg.rename(`in.${extension}`, `out.${extension}`);
-			else
-				await runFFmpeg([
-					'-i',
-					`in.${extension}`,
-					...(willBeTrimmed && trimOnNextCall ? trimArgs : []),
-					...(volume === 0 ? ['-an']
-						: volume !== 1 ? ['-af', `volume=${volume.toFixed(2)}`] :
-							!converting && !bitrateChanged ? ['-c:a', 'copy']
-							: []),
-					...(bitrateChanged && volume !== 0 ? ['-b:a', `${bitrate}k`] : []),
-					...(
-						extension === 'webm' && outExt === 'mp4' || compressionLevel !== 0
-						? [] : ['-c:v', 'copy']
-					),
-					...(compressionArgs[compressionLevel]),
-					`out.${outExt}`
-				]);
+				] : []),
+				...(volume !== 1 ? ['-af', `volume=${volume.toFixed(2)}`] : []),
+				...(bitrateChanged && volume !== 0 ? ['-b:a', `${bitrate}k`] : []),
+				`out.${outExt}`
+			]);
 
 			processState = ProcessingState.READING;
 			const data = await ffmpeg.readFile(`out.${outExt}`);
@@ -135,7 +97,7 @@
 		} catch (e) {
 			console.log('---- FAILED ----');
 			console.timeEnd('ffmpeg');
-			console.error('Failed to save video', e);
+			console.error('Failed to save audio', e);
 			processState = ProcessingState.ERROR;
 		} finally {
 			console.log(' ---- CLEANUP ---- ');
@@ -159,7 +121,7 @@
 	// Stop at the trimmed end
 	$: if (currentTime > trimEnd) {
 		seek(trimEnd);
-		video.pause();
+		audio.pause();
 	}
 
 	$: willBeTrimmed = trimStart !== 0 || trimEnd !== duration;
@@ -175,10 +137,8 @@
 	$: handleDistance = ((trimEnd - trimStart) / duration) * timelineWidth;
 
 	// Video variables
-	let video: HTMLVideoElement;
-	let videoWidth: number;
-	let videoHeight: number;
-	let videoVolume = 1;
+	let audio: HTMLAudioElement;
+	let audioVolume = 1;
 
 	// Timeline variables
 	let timelineElement: HTMLButtonElement;
@@ -187,11 +147,8 @@
 
 	// Filter variables
 	let volume = 1;
-	$: videoVolume = volume <= 1 ? volume : 1;
+	$: audioVolume = volume <= 1 ? volume : 1;
 	let toExtension: string | null = null;
-	$: cantTrimReencode = $ffmpegIsMT || extension === 'webm';
-	let trimReencoding = false;
-	let compressionLevel = 0;
 	let bitrate = 0;
 
 	const editorComponents: Record<
@@ -234,13 +191,6 @@
 				toExtension = null;
 			}
 		},
-		compress: {
-			name: 'Compress',
-			icon: compressIcon,
-			onClose() {
-				compressionLevel = 0;
-			}
-		},
 		bitrate: {
 			name: 'Bitrate',
 			icon: bitrateIcon,
@@ -281,25 +231,25 @@
 	}
 
 	function seekBy(by: number) {
-		video.currentTime += by;
-		currentTime = video.currentTime;
+		audio.currentTime += by;
+		currentTime = audio.currentTime;
 	}
 
 	function seek(by: number) {
-		video.currentTime = by;
-		currentTime = video.currentTime;
+		audio.currentTime = by;
+		currentTime = audio.currentTime;
 	}
 
 	function onPlaybackToggle() {
 		if (paused) {
-			if (video.currentTime >= trimEnd - 0.001) video.currentTime = trimStart;
+			if (audio.currentTime >= trimEnd - 0.001) audio.currentTime = trimStart;
 
 			// "wake up" the currentTime listener
 			currentTime = 0;
-			currentTime = video.currentTime;
+			currentTime = audio.currentTime;
 
-			video.play();
-		} else video.pause();
+			audio.play();
+		} else audio.pause();
 	}
 </script>
 
@@ -333,8 +283,7 @@
 		<span class="text-violet-300 no-ligatures w-full text-center truncate">{file.name}</span>
 		<div class="flex gap-4 text-xs">
 			<span>{filesize(file.size, { standard: 'jedec' })}</span>
-			{#if video}
-				<span>{videoWidth}x{videoHeight}</span>
+			{#if audio}
 				<span>{ms(duration * 1000)}</span>
 			{/if}
 		</div>
@@ -350,20 +299,15 @@
 		</div>
 	</div>
 
-	<!-- svelte-ignore a11y-media-has-caption -->
-	<video
+	<audio
 		src={blobURL}
 		crossorigin="anonymous"
 		playsinline
-		disablepictureinpicture
-		class="max-h-[40svh] bg-neutral-900/25"
-		bind:volume={videoVolume}
+		bind:volume={audioVolume}
 		bind:currentTime
 		bind:duration
 		bind:paused
-		bind:videoHeight
-		bind:videoWidth
-		bind:this={video}
+		bind:this={audio}
 	/>
 
 	<div class="flex justify-center gap-2">
@@ -385,7 +329,7 @@
 	<div class="flex flex-col w-full select-none">
 		<!-- Timeline -->
 		<button
-			class="relative w-full h-12 bg-neutral-900 mt-6 outline-none transition-all ring-offset-1 ring-offset-neutral-950 ring-violet-400/50 focus:ring-2 cursor-default"
+			class="relative w-full h-24 bg-neutral-900 mt-6 outline-none transition-all ring-offset-1 ring-offset-neutral-950 ring-violet-400/50 focus:ring-2 cursor-default"
 			class:cursor-ew-resize={isDraggingTrimHandle}
 			id="timeline"
 			on:mousemove={(e) => {
@@ -404,7 +348,7 @@
 				if (!validEvent(e)) return;
 				if (trimEventBounce) return void (trimEventBounce = false);
 				currentTime = hoveredTime;
-				video.currentTime = hoveredTime;
+				audio.currentTime = hoveredTime;
 
 				if (!showTrimHandles) return;
 				if (hoveredTime > trimEnd) trimEnd = hoveredTime;
@@ -414,7 +358,8 @@
 			bind:clientWidth={timelineWidth}
 		>
 			<!-- Preview Stills -->
-			<PreviewStillContainer {videoWidth} {videoHeight} {duration} src={blobURL} />
+			<Waveform {audio} {file} />
+			<!-- <PreviewStillContainer {videoWidth} {videoHeight} {duration} src={blobURL} /> -->
 
 			<!-- Trim Shadows -->
 			<div
@@ -540,17 +485,15 @@
 		on:hidetab={(e) => editorComponents[e.detail]?.onHide?.()}
 		on:opentab={(e) => editorComponents[e.detail]?.onOpen?.()}
 		on:closetab={(e) => editorComponents[e.detail]?.onClose?.()}
-		on:save={saveVideo}
+		on:save={save}
 		let:tab
 	>
 		{#if tab === 'trim'}
-			<Trim {trimStart} {trimEnd} {trimReencoding} {cantTrimReencode} on:setreencoding={(e) => (trimReencoding = e.detail)} />
+			<Trim {trimStart} {trimEnd} />
 		{:else if tab === 'volume'}
 			<Volume {volume} on:set={(e) => (volume = e.detail)} />
 		{:else if tab === 'convert'}
 			<Convert {toExtension} {extension} on:set={(e) => (toExtension = e.detail)} />
-		{:else if tab === 'compress'}
-			<Compress {compressionLevel} on:set={(e) => (compressionLevel = e.detail)} />
 		{:else if tab === 'bitrate'}
 			<Bitrate {bitrate} on:set={(e) => (bitrate = e.detail)} />
 		{/if}

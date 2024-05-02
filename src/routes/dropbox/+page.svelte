@@ -28,7 +28,7 @@
 			},
 
 			linkType: 'direct',
-			extensions: ['video'],
+			extensions: ['video', 'audio'],
 			multiselect: false
 		});
 		failedOpen = false;

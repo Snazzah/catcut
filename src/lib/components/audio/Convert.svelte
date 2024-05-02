@@ -1,15 +1,12 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
 	import audioIcon from '@iconify-icons/mdi/music-note';
-	import videoIcon from '@iconify-icons/mdi/video';
 	import { createEventDispatcher } from 'svelte';
 
 	export let toExtension: string | null = null;
 	export let extension: string;
 
 	const formats = [
-		{ icon: videoIcon, extension: 'mp4' },
-		{ icon: videoIcon, extension: 'mkv' },
 		{ icon: audioIcon, extension: 'mp3' },
 		{ icon: audioIcon, extension: 'wav' },
 		{ icon: audioIcon, extension: 'flac' }
