@@ -69,7 +69,7 @@
 
 			const converting = !!toExtension;
 			const bitrateChanged = bitrate > 0;
-			const otherFiltersUsed = volume !== 1 || bitrateChanged || converting || compressionLevel !== 0;
+			const otherFiltersUsed = volume !== 1 || volumeMode !== 0 || bitrateChanged || converting || compressionLevel !== 0;
 			let trimOnNextCall = false;
 			const trimArgs = ['-ss',
 					ms(trimStart * 1000, MS_OPTIONS),
