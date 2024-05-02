@@ -69,7 +69,11 @@
 					'-t',
 					ms((trimEnd - trimStart) * 1000, MS_OPTIONS)
 				] : []),
-				...(volume !== 1 ? ['-af', `volume=${volume.toFixed(2)}`] : []),
+				...((volume !== 1 || volumeMode !== 0)
+					? volumeMode === 0
+						? ['-af', `volume=${volume.toFixed(2)}`]
+						: ['-af', `loudnorm=I=${loudnormArgs[0].toFixed(2)}:LRA=${loudnormArgs[1].toFixed(2)}:TP=${loudnormArgs[2].toFixed(2)}`]
+					: []),
 				...(bitrateChanged && volume !== 0 ? ['-b:a', `${bitrate}k`] : []),
 				`out.${outExt}`
 			]);
@@ -147,7 +151,9 @@
 
 	// Filter variables
 	let volume = 1;
-	$: audioVolume = volume <= 1 ? volume : 1;
+	let volumeMode = 0;
+	let loudnormArgs = [-24, 7, -2];
+	$: audioVolume = volume <= 1 && volumeMode === 0 ? volume : 1;
 	let toExtension: string | null = null;
 	let bitrate = 0;
 
@@ -182,6 +188,8 @@
 			icon: volumeIcon,
 			onClose() {
 				volume = 1;
+				volumeMode = 0;
+				loudnormArgs = [-24, 7, -2];
 			}
 		},
 		convert: {
@@ -491,7 +499,12 @@
 		{#if tab === 'trim'}
 			<Trim {trimStart} {trimEnd} />
 		{:else if tab === 'volume'}
-			<Volume {volume} on:set={(e) => (volume = e.detail)} />
+			<Volume
+				{volume} {volumeMode} {loudnormArgs}
+				on:set={(e) => (volume = e.detail)}
+				on:setmode={(e) => (volumeMode = e.detail)}
+				on:setloudnorm={(e) => (loudnormArgs = e.detail)}
+			/>
 		{:else if tab === 'convert'}
 			<Convert {toExtension} {extension} on:set={(e) => (toExtension = e.detail)} />
 		{:else if tab === 'bitrate'}
