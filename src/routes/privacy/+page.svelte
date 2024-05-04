@@ -20,7 +20,7 @@
 		<p>
 			use of any third-party service (like dropbox, google drive, etc.) will only be used to
 			retrieve the requested file by the user to be downloaded into webapp from the browser, and authorization data for some services may be stored within the browser.
-			authorization data is only used for some services that require storing them in order to download files from that service.
+			authorization data retrieved (from services that require it) is only used to download requested files from that service.
 			authorization data is never sent to any third-party can be cleared from settings.
 		</p>
 		{#if PUBLIC_PLAUSIBLE_HOSTNAME}
