@@ -19,7 +19,7 @@
 		<br />
 		<p>
 			use of any third-party service (like dropbox, google drive, etc.) will only be used to
-			retrieve the media in browser, and authorization data for some services may be stored within the browser.
+			retrieve the requested file by the user to be downloaded into webapp from the browser, and authorization data for some services may be stored within the browser.
 			authorization data is only used for some services that require storing them in order to download files from that service.
 			authorization data is never sent to any third-party can be cleared from settings.
 		</p>
