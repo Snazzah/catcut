@@ -1,8 +1,29 @@
 {
 	"name": "catcut",
 	"short_name": "catcut",
+	"id": "catcut",
 	"description": "quick in-browser media editing with no uploads",
 	"start_url": "/",
+  "screenshots": [
+    {
+      "src": "/images/screenshots/desktop-main.png",
+      "sizes": "1293x826",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/images/screenshots/desktop-video.png",
+      "sizes": "1293x826",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/images/screenshots/desktop-audio.png",
+      "sizes": "1293x826",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+	],
 	"icons": [
 		{
 			"src": "/images/icon@128px.png",

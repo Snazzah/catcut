@@ -1,13 +1,14 @@
-<script>
+<script lang="ts">
 	import Icon from '@iconify/svelte';
 	import githubIcon from '@iconify-icons/mdi/github';
-	import privacyIcon from '@iconify-icons/mdi/information-variant';
+	import privacyIcon from '@iconify-icons/mdi/lock';
 	import donateIcon from '@iconify-icons/mdi/cards-heart';
 	import snazzahIcon from '@iconify-icons/mdi/cat';
 	import trashIcon from '@iconify-icons/mdi/trash';
 	import Modal from './Modal.svelte';
 	import { analyticsOptOut, googleDriveData } from '$lib/data';
 	import CheckBoxButton from '$lib/components/CheckBoxButton.svelte';
+	import { installEvent } from '$lib/install';
 
 	let aboutModalOpen = false;
 	let settingsModalOpen = false;
@@ -17,15 +18,28 @@
 
 <footer class="fixed bottom-0 left-0 right-0 text-center justify-center py-4 flex flex-col gap-2">
 	<div class="flex gap-2 justify-center">
+		{#if $installEvent}
+			<button
+				on:click={async () => {
+					if (!$installEvent) return;
+					$installEvent.prompt();
+					const result = await $installEvent.userChoice;
+					if (result.outcome === 'accepted') installEvent.set(null);
+				}}
+				class="rounded-md bg-violet-700 text-neutral-100 px-6 py-2 transition-all border border-violet-600 hover:bg-violet-600 hover:border-violet-500 hover:text-white active:scale-95"
+			>
+				install
+			</button>
+		{/if}
 		<button
 			on:click={() => (aboutModalOpen = true)}
-			class="rounded-md bg-neutral-700 text-neutral-100 px-6 py-2 transition-all border border-neutral-600 hover:bg-neutral-600 hover:border-neutral-500 hover:text-white"
+			class="rounded-md bg-neutral-700 text-neutral-100 px-6 py-2 transition-all border border-neutral-600 hover:bg-neutral-600 hover:border-neutral-500 hover:text-white active:scale-95"
 		>
 			about
 		</button>
 		<button
 			on:click={() => (settingsModalOpen = true)}
-			class="rounded-md bg-neutral-700 text-neutral-100 px-6 py-2 transition-all border border-neutral-600 hover:bg-neutral-600 hover:border-neutral-500 hover:text-white"
+			class="rounded-md bg-neutral-700 text-neutral-100 px-6 py-2 transition-all border border-neutral-600 hover:bg-neutral-600 hover:border-neutral-500 hover:text-white active:scale-95"
 		>
 			settings
 		</button>
