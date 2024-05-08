@@ -21,6 +21,7 @@
 			use of any third-party service (like Dropbox, Google Drive, etc.) will only be used to retrieve the requested file by the user to be downloaded into webapp from the browser.
 			when authenticating with Google, an access token is retrieved and is used to download requested files (via Google File Picker) from that service.
 			authorization data and access tokens are stored in the browser (using local storage) and is never sent to any third-party server.
+			data stored within the browser is as secure as your browser is.
 		</p>
 		{#if PUBLIC_PLAUSIBLE_HOSTNAME}
 			<br />
