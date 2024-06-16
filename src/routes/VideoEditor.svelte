@@ -14,6 +14,7 @@
 	import volumeIcon from '@iconify-icons/mdi/volume-high';
 	import compressIcon from '@iconify-icons/mdi/zip-box';
 	import bitrateIcon from '@iconify-icons/mdi/music-note';
+	import cropIcon from '@iconify-icons/mdi/crop';
 	import PlayerButton from '$lib/components/PlayerButton.svelte';
 	import type { IconifyIcon } from '@iconify/svelte';
 	import PreviewStillContainer from './PreviewStillContainer.svelte';
@@ -27,6 +28,8 @@
 	import Convert from '$lib/components/video/Convert.svelte';
 	import Compress from '$lib/components/video/Compress.svelte';
 	import Bitrate from '$lib/components/common/Bitrate.svelte';
+	import Crop from '$lib/components/video/Crop.svelte';
+	import CropHandler from './CropHandler.svelte';
 
 	export let dispatch = createEventDispatcher();
 	export let file: File | RemoteFile;
@@ -69,13 +72,12 @@
 
 			const converting = !!toExtension;
 			const bitrateChanged = bitrate > 0;
-			const otherFiltersUsed = volume !== 1 || volumeMode !== 0 || bitrateChanged || converting || compressionLevel !== 0;
+			const otherFiltersUsed = volume !== 1 || volumeMode !== 0 || bitrateChanged || converting || willCrop || compressionLevel !== 0;
 			let trimOnNextCall = false;
-			const trimArgs = ['-ss',
-					ms(trimStart * 1000, MS_OPTIONS),
-					'-t',
-					ms((trimEnd - trimStart) * 1000, MS_OPTIONS)
-			]
+			const trimArgs = [
+				'-ss', ms(trimStart * 1000, MS_OPTIONS),
+				'-t', ms((trimEnd - trimStart) * 1000, MS_OPTIONS)
+			];
 
 			// If a WebM is being trimmed and converted, pass along the trim to the next call
 			if (extension === 'webm' && converting) trimOnNextCall = true;
@@ -110,6 +112,7 @@
 								: []),
 					...(bitrateChanged && volume !== 0 ? ['-b:a', `${bitrate}k`] : []),
 					...(
+						willCrop ? ['-vf', `crop=${cropWidth}:${cropHeight}:${cropX}:${cropY}`] :
 						extension === 'webm' && outExt === 'mp4' || compressionLevel !== 0
 						? [] : ['-c:v', 'copy']
 					),
@@ -190,6 +193,20 @@
 	let timelineWidth = 0;
 	let hoveredTime = -1;
 
+	// Cropping variables
+	let cropX = 0;
+	let cropY = 0;
+	let cropWidth: number;
+	let cropHeight: number;
+	let showCropHandles = false;
+
+	let playerWidth: number;
+	let playerHeight: number;
+
+	$: if (cropWidth === undefined && videoWidth) cropWidth = videoWidth;
+	$: if (cropHeight === undefined && videoHeight) cropHeight = videoHeight;
+	$: willCrop = cropX !== 0 || cropY !== 0 || cropWidth !== videoWidth || cropHeight !== videoHeight;
+
 	// Filter variables
 	let volume = 1;
 	let volumeMode = 0;
@@ -225,6 +242,23 @@
 				trimStart = 0;
 				trimEnd = duration;
 				showTrimHandles = false;
+			}
+		},
+		crop: {
+			name: 'Crop',
+			icon: cropIcon,
+			onShow() {
+				showCropHandles = true;
+			},
+			onHide() {
+				showCropHandles = false;
+			},
+			onClose() {
+				cropX = 0;
+				cropY = 0;
+				cropWidth = videoWidth;
+				cropHeight = videoHeight;
+				showCropHandles = false;
 			}
 		},
 		volume: {
@@ -360,20 +394,40 @@
 	</div>
 
 	<!-- svelte-ignore a11y-media-has-caption -->
-	<video
-		src={blobURL}
-		crossorigin="anonymous"
-		playsinline
-		disablepictureinpicture
-		class="max-h-[40svh] bg-neutral-900/25"
-		bind:volume={videoVolume}
-		bind:currentTime
-		bind:duration
-		bind:paused
-		bind:videoHeight
-		bind:videoWidth
-		bind:this={video}
-	/>
+	<div class="bg-neutral-900/25">
+		<div
+			class="mx-auto w-fit relative"
+			bind:clientWidth={playerWidth}
+			bind:clientHeight={playerHeight}
+		>
+			<video
+				src={blobURL}
+				crossorigin="anonymous"
+				playsinline
+				disablepictureinpicture
+				class="max-h-[40svh]"
+				bind:volume={videoVolume}
+				bind:currentTime
+				bind:duration
+				bind:paused
+				bind:videoHeight
+				bind:videoWidth
+				bind:this={video}
+			/>
+
+			<CropHandler
+				show={showCropHandles} {video}
+				{cropX} {cropY} {cropWidth} {cropHeight}
+				{videoWidth} {videoHeight} {playerWidth} {playerHeight}
+				on:set={(e) => {
+					if (e.detail.x !== undefined && !isNaN(e.detail.x)) cropX = e.detail.x;
+					if (e.detail.y !== undefined && !isNaN(e.detail.y)) cropY = e.detail.y;
+					if (e.detail.w !== undefined && !isNaN(e.detail.w)) cropWidth = e.detail.w;
+					if (e.detail.h !== undefined && !isNaN(e.detail.h)) cropHeight = e.detail.h;
+				}}
+			/>
+		</div>
+	</div>
 
 	<div class="flex justify-center gap-2">
 		<PlayerButton icon={skipPreviousIcon} title="Seek to beginning" on:click={() => seek(0)} />
@@ -567,6 +621,18 @@
 			<Compress {compressionLevel} on:set={(e) => (compressionLevel = e.detail)} />
 		{:else if tab === 'bitrate'}
 			<Bitrate {bitrate} on:set={(e) => (bitrate = e.detail)} />
+		{:else if tab === 'crop'}
+			<Crop
+				{cropX} {cropY}
+				{cropWidth} {cropHeight}
+				{videoWidth} {videoHeight}
+				on:set={(e) => {
+					if (e.detail.x !== undefined) cropX = e.detail.x;
+					if (e.detail.y !== undefined) cropY = e.detail.y;
+					if (e.detail.w !== undefined) cropWidth = e.detail.w;
+					if (e.detail.h !== undefined) cropHeight = e.detail.h;
+				}}
+			/>
 		{/if}
 	</EditorTabs>
 </section>
