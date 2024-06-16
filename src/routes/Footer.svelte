@@ -3,12 +3,13 @@
 	import githubIcon from '@iconify-icons/mdi/github';
 	import privacyIcon from '@iconify-icons/mdi/lock';
 	import donateIcon from '@iconify-icons/mdi/cards-heart';
-	import snazzahIcon from '@iconify-icons/mdi/cat';
+	import twitterIcon from '@iconify-icons/mdi/twitter';
 	import trashIcon from '@iconify-icons/mdi/trash';
 	import Modal from './Modal.svelte';
 	import { analyticsOptOut, googleDriveData } from '$lib/data';
 	import CheckBoxButton from '$lib/components/CheckBoxButton.svelte';
 	import { installEvent } from '$lib/install';
+	import { catcut } from '$lib/icons';
 
 	let aboutModalOpen = false;
 	let settingsModalOpen = false;
@@ -47,14 +48,23 @@
 </footer>
 
 <Modal open={aboutModalOpen} on:clickout={() => (aboutModalOpen = false)}>
-	<div class="flex flex-col gap-4">
+	<div class="flex flex-col gap-4 m-2">
 		<p>
-			<b class="text-violet-500">catcut</b> is a web app that uses
+			<b class="text-violet-500">
+				<Icon
+					icon={catcut}
+					class='inline-block'
+					inline
+				/>
+				catcut
+			</b> is a web app that uses
 			<a
 				href="https://ffmpegwasm.netlify.app/"
 				target="_blank"
-				class="text-violet-300 hover:text-violet-400 transition-colors">ffmpeg.wasm</a
+				class="text-violet-300 hover:text-violet-400 transition-colors"
 			>
+				ffmpeg.wasm
+			</a>
 			to trim and edit media without uploading your media to a server, with media only being processed
 			in browser.
 		</p>
@@ -64,38 +74,50 @@
 				target="_blank"
 				class="px-4 py-2 rounded transition-colors bg-violet-600 hover:bg-violet-500 flex gap-2 items-center w-full"
 			>
-				<Icon icon={githubIcon} class="w-6 h-6 transition-all hover:text-white" />
+				<Icon icon={githubIcon} class="w-6 h-6" />
 				<span>View on GitHub</span>
 			</a>
 			<a
 				href="/privacy"
 				class="px-4 py-2 rounded transition-colors bg-violet-600 hover:bg-violet-500 flex gap-2 items-center w-full"
 			>
-				<Icon icon={privacyIcon} class="w-6 h-6 transition-all hover:text-white" />
+				<Icon icon={privacyIcon} class="w-6 h-6" />
 				<span>Privacy Policy</span>
 			</a>
+		</div>
+		<div class="flex text-center gap-2 justify-center items-center">
+			<span>
+				Made by
+				<a
+					href="https://snazzah.com/"
+					target="_blank"
+					class="text-violet-300 hover:text-violet-400 transition-colors"
+				>
+					Snazzah
+				</a>
+			</span>
+			<a
+				href="https://x.com/Snazzah"
+				target="_blank"
+				class="transition-colors text-violet-300 hover:text-violet-400 w-4 h-4"
+			>
+				<Icon icon={twitterIcon} class="w-4 h-4" />
+			</a>
+			<span>—</span>
 			<a
 				href="https://ko-fi.com/Snazzah"
 				target="_blank"
-				class="px-4 py-2 rounded transition-colors bg-violet-600 hover:bg-violet-500 flex gap-2 items-center w-full"
+				class="transition-colors text-red-500 hover:text-red-400 inline-flex gap-1 items-center"
 			>
-				<Icon icon={donateIcon} class="w-6 h-6 transition-all hover:text-white" />
+				<Icon icon={donateIcon} class="w-4 h-4" />
 				<span>Donate</span>
 			</a>
-			<a
-				href="https://snazzah.com"
-				target="_blank"
-				class="px-4 py-2 rounded transition-colors bg-violet-600 hover:bg-violet-500 flex gap-2 items-center w-full"
-			>
-				<Icon icon={snazzahIcon} class="w-6 h-6 transition-all hover:text-white" />
-				<span>snazzah.com</span>
-			</a>
-		</div>
+	</div>
 	</div>
 </Modal>
 
 <Modal open={settingsModalOpen} on:clickout={() => (settingsModalOpen = false)}>
-	<div class="flex flex-col gap-4">
+	<div class="flex flex-col gap-4 m-2">
 		<div class="flex flex-col gap-2 text-white">
 			<CheckBoxButton checked={$analyticsOptOut} on:click={() => ($analyticsOptOut = !$analyticsOptOut)}>
 				Opt-out of anonymous analytics

@@ -91,7 +91,7 @@
 			<div class="flex flex-wrap gap-2 items-center h-full">
 				{#each tabs as tab}
 					<button
-						class={`rounded-lg transition-all text-white px-4 py-2 flex gap-2 justify-center items-center active:scale-95 ${openTabs.includes(tab.id) ? 'bg-neutral-600' : 'bg-violet-700 hover:bg-violet-600'}`}
+						class={`rounded-lg transition-all text-white px-4 py-2 flex gap-2 justify-center items-center active:scale-95 sm:w-auto w-full ${openTabs.includes(tab.id) ? 'bg-neutral-600' : 'bg-violet-700 hover:bg-violet-600'}`}
 						on:click={() => {
 							if (!openTabs.includes(tab.id)) openTabs = [...openTabs, tab.id];
 							dispatch('opentab', tab.id);
