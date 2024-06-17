@@ -112,7 +112,7 @@
 				<Icon icon={donateIcon} class="w-4 h-4" />
 				<span>Donate</span>
 			</a>
-	</div>
+		</div>
 	</div>
 </Modal>
 

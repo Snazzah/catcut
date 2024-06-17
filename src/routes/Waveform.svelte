@@ -8,8 +8,6 @@
 	let container: HTMLDivElement;
 	let wavesurfer: WaveSurfer;
 
-
-
 	onMount(() => {
 		wavesurfer = WaveSurfer.create({
 			container,
