@@ -3,6 +3,7 @@
 	import Icon from '@iconify/svelte';
 
 	export let icon: IconifyIcon;
+	export let canBeSmall = false;
 	export let title = '';
 </script>
 
@@ -11,5 +12,5 @@
 	{title}
 	on:click
 >
-	<Icon {icon} class="w-8 h-8" />
+	<Icon {icon} class={canBeSmall ? `w-5 h-5 sm:w-8 sm:h-8` : `w-8 h-8`} />
 </button>

@@ -30,6 +30,7 @@
 	import Bitrate from '$lib/components/common/Bitrate.svelte';
 	import Crop from '$lib/components/video/Crop.svelte';
 	import CropHandler from './CropHandler.svelte';
+	import ScreenshotButtons from './ScreenshotButtons.svelte';
 
 	export let dispatch = createEventDispatcher();
 	export let file: File | RemoteFile;
@@ -429,20 +430,29 @@
 		</div>
 	</div>
 
-	<div class="flex justify-center gap-2">
-		<PlayerButton icon={skipPreviousIcon} title="Seek to beginning" on:click={() => seek(0)} />
-		<PlayerButton icon={back10Icon} title="Rewind 10 seconds" on:click={() => seekBy(-10)} />
-		<PlayerButton
-			icon={paused ? playIcon : pauseIcon}
-			title={paused ? 'Play' : 'Pause'}
-			on:click={onPlaybackToggle}
-		/>
-		<PlayerButton
-			icon={forward10Icon}
-			title="Fast forward 10 seconds"
-			on:click={() => seekBy(10)}
-		/>
-		<PlayerButton icon={skipNextIcon} title="Seek to end" on:click={() => seek(duration)} />
+	<div class="flex justify-center sm:flex-row flex-col gap-2 relative">
+		<div class="flex justify-center gap-2">
+			<PlayerButton icon={skipPreviousIcon} title="Seek to beginning" on:click={() => seek(0)} />
+			<PlayerButton icon={back10Icon} title="Rewind 10 seconds" on:click={() => seekBy(-10)} />
+			<PlayerButton
+				icon={paused ? playIcon : pauseIcon}
+				title={paused ? 'Play' : 'Pause'}
+				on:click={onPlaybackToggle}
+			/>
+			<PlayerButton
+				icon={forward10Icon}
+				title="Fast forward 10 seconds"
+				on:click={() => seekBy(10)}
+			/>
+			<PlayerButton icon={skipNextIcon} title="Seek to end" on:click={() => seek(duration)} />
+		</div>
+		<div class="flex justify-center gap-2 sm:absolute right-0">
+			<ScreenshotButtons
+				{video} {basename} {willCrop}
+				{cropX} {cropY}
+				{cropWidth} {cropHeight}
+			/>
+		</div>
 	</div>
 
 	<div class="flex flex-col w-full select-none">
