@@ -12,7 +12,7 @@
 	$: tagComment = !tags?.TXXX?.data?.user_description ? tags?.TXXX?.data?.data as string : undefined;
 	let defaultTags: Record<string, string> = {
 		title: tags?.title ?? '',
-		author: tags?.artist ?? '',
+		artist: tags?.artist ?? '',
 		album: tags?.album ?? '',
 		cover: tags?.picture?.data ? 'applied' : '',
 		genre: tags?.genre ?? '',
@@ -38,7 +38,7 @@
 
 	const tagNames: Record<string, string> = {
 		title: 'Title',
-		author: 'Artist',
+		artist: 'Artist',
 		album: 'Album Name',
 		cover: 'Album Cover',
 		genre: 'Genre',
