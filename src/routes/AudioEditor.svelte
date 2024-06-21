@@ -2,6 +2,7 @@
 	import { ProcessingState, RemoteFile, splitFilename, validEvent } from '$lib/util';
 	import { filesize } from 'filesize';
 	import ms from 'pretty-ms';
+	import type { Tags } from 'jsmediatags/types';
 	import { createEventDispatcher } from 'svelte';
 	import playIcon from '@iconify-icons/mdi/play-arrow';
 	import pauseIcon from '@iconify-icons/mdi/pause';
@@ -13,6 +14,7 @@
 	import volumeIcon from '@iconify-icons/mdi/volume-high';
 	import bitrateIcon from '@iconify-icons/mdi/music-note';
 	import convertIcon from '@iconify-icons/mdi/file-arrow-left-right';
+	import metadataIcon from '@iconify-icons/mdi/card-text';
 	import PlayerButton from '$lib/components/PlayerButton.svelte';
 	import type { IconifyIcon } from '@iconify/svelte';
 	import { MS_OPTIONS } from '$lib/util';
@@ -25,6 +27,7 @@
 	import Bitrate from '$lib/components/common/Bitrate.svelte';
 	import Volume from '$lib/components/common/Volume.svelte';
 	import Convert from '$lib/components/audio/Convert.svelte';
+	import Metadata from '$lib/components/audio/Metadata.svelte';
 
 	export let dispatch = createEventDispatcher();
 	export let file: File | RemoteFile;
@@ -75,6 +78,7 @@
 						: ['-af', `loudnorm=I=${loudnormArgs[0].toFixed(2)}:LRA=${loudnormArgs[1].toFixed(2)}:TP=${loudnormArgs[2].toFixed(2)}`]
 					: []),
 				...(bitrateChanged && volume !== 0 ? ['-b:a', `${bitrate}k`] : []),
+				...Object.keys(metadata).map((t) => (['-metadata', `${t}=${metadata[t]?.replaceAll('"', '\\"')}`])).reduce((p, a) => [...p, ...a], []),
 				`out.${outExt}`
 			]);
 
@@ -156,6 +160,7 @@
 	$: audioVolume = volume <= 1 && volumeMode === 0 ? volume : 1;
 	let toExtension: string | null = null;
 	let bitrate = 0;
+	let metadata: Record<string, string> = {};
 
 	const editorComponents: Record<
 		string,
@@ -204,6 +209,13 @@
 			icon: bitrateIcon,
 			onClose() {
 				bitrate = 0;
+			}
+		},
+		metadata: {
+			name: 'Metadata',
+			icon: metadataIcon,
+			onClose() {
+				metadata = {};
 			}
 		}
 	};
@@ -259,6 +271,19 @@
 			audio.play();
 		} else audio.pause();
 	}
+
+	let audioTags: Tags | null = null;
+	let tagType: string | null = null;
+	$: console.log(`Audio metadata (${tagType})`, audioTags);
+	$: coverSrc = audioTags?.picture?.data ? `data:${audioTags.picture.format};charset=utf-8;base64,${btoa(String.fromCharCode.apply(null, audioTags.picture.data))}` : null;
+	$: window.jsmediatags?.read(file instanceof RemoteFile ? file.blob! : file, {
+		onSuccess: (tag) => {
+			if (!tag.tags) return;
+			audioTags = tag.tags;
+			tagType = tag.type;
+		},
+		onError: (error) => console.error('Failed to parse audio with jsmediatags', error)
+	});
 </script>
 
 <svelte:body
@@ -317,6 +342,32 @@
 		bind:paused
 		bind:this={audio}
 	/>
+
+	{#if audioTags}
+		<div class="flex flex-col md:flex-row justify-center items-center gap-4">
+			{#if coverSrc}
+				<img
+					class="w-40 h-40 rounded bg-black/50"
+					src={coverSrc}
+					alt={`${audioTags?.title} - ${audioTags?.artist}`}
+				/>
+			{/if}
+
+			<div class={`flex flex-col text-center ${coverSrc ? 'md:text-left ' : ''}gap-2`}>
+				{#if audioTags?.title}
+					<h2 class="text-2xl md:text-3xl text-white font-bold">{audioTags?.title}</h2>
+				{/if}
+				<div class="flex flex-col text-lg md:text-2xl">
+					{#if audioTags?.artist}
+						<h5>{audioTags?.artist}</h5>
+					{/if}
+					{#if audioTags?.album}
+						<h5>on {audioTags?.album}</h5>
+					{/if}
+				</div>
+			</div>
+		</div>
+	{/if}
 
 	<div class="flex justify-center gap-2">
 		<PlayerButton icon={skipPreviousIcon} title="Seek to beginning" on:click={() => seek(0)} />
@@ -509,6 +560,11 @@
 			<Convert {toExtension} {extension} on:set={(e) => (toExtension = e.detail)} />
 		{:else if tab === 'bitrate'}
 			<Bitrate {bitrate} on:set={(e) => (bitrate = e.detail)} />
+		{:else if tab === 'metadata'}
+			<Metadata tags={audioTags} on:set={(e) => {
+				if (e.detail[1] === null) metadata = Object.keys(metadata).filter((t) => t !== e.detail[0]).reduce((p, t) => ({ ...p, [t]: metadata[t] }), {});
+				else metadata = { ...metadata, [e.detail[0]]: e.detail[1] };
+			}} />
 		{/if}
 	</EditorTabs>
 </section>

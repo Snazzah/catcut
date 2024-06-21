@@ -10,7 +10,8 @@ export const ALLOWED_TYPES = [
 	'video/x-matroska',
 	'audio/mpeg',
 	'audio/wav',
-	'audio/flac'
+	'audio/flac',
+	'audio/ogg'
 ];
 export const MS_OPTIONS = {
 	colonNotation: true,
