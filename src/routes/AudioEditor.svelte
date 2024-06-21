@@ -50,6 +50,7 @@
 		modalOpen = true;
 		resultInfo = null;
 		const outExt = toExtension ?? extension;
+		const coverExt = changedCover instanceof File ? changedCover.type.split('/')[1] : null;
 
 		try {
 			console.time('ffmpeg');
@@ -57,6 +58,7 @@
 				`in.${extension}`,
 				await fetchFile(file instanceof RemoteFile ? file.blob : file)
 			);
+			if (coverExt) await ffmpeg.writeFile(`cover.${coverExt}`, await fetchFile(changedCover!));
 			processState = ProcessingState.RUNNING;
 			const start = Date.now();
 			console.log(' ---- RUNNING FFmpeg ---- ');
@@ -64,13 +66,18 @@
 			const bitrateChanged = bitrate > 0;
 
 			await runFFmpeg([
-				'-i',
-				`in.${extension}`,
+				'-i', `in.${extension}`,
+				...(coverExt ? [
+					'-i', `cover.${coverExt}`,
+					'-map', '0:0',
+					'-map', '1:0',
+					'-id3v2_version', '3',
+					'-metadata:s:v', 'title=Album cover',
+					'-metadata:s:v', 'comment=Cover (front)'
+				] : changedCover === '' ? ['-vn'] : []),
 				...(willBeTrimmed ? [
-					'-ss',
-					ms(trimStart * 1000, MS_OPTIONS),
-					'-t',
-					ms((trimEnd - trimStart) * 1000, MS_OPTIONS)
+					'-ss', ms(trimStart * 1000, MS_OPTIONS),
+					'-t', ms((trimEnd - trimStart) * 1000, MS_OPTIONS)
 				] : []),
 				...((volume !== 1 || volumeMode !== 0)
 					? volumeMode === 0
@@ -111,6 +118,7 @@
 			console.log(' ---- CLEANUP ---- ');
 			await ffmpeg.deleteFile(`in.${extension}`).catch(() => {});
 			await ffmpeg.deleteFile(`out.${outExt}`).catch(() => {});
+			if (coverExt) await ffmpeg.deleteFile(`cover.${coverExt}`).catch(() => {});
 		}
 	}
 
@@ -160,7 +168,11 @@
 	$: audioVolume = volume <= 1 && volumeMode === 0 ? volume : 1;
 	let toExtension: string | null = null;
 	let bitrate = 0;
+
+	// Metadata
 	let metadata: Record<string, string> = {};
+	let changedCover: null | '' | File = null;
+	$: console.log(metadata, changedCover)
 
 	const editorComponents: Record<
 		string,
@@ -216,6 +228,7 @@
 			icon: metadataIcon,
 			onClose() {
 				metadata = {};
+				changedCover = null;
 			}
 		}
 	};
@@ -347,7 +360,7 @@
 		<div class="flex flex-col md:flex-row justify-center items-center gap-4">
 			{#if coverSrc}
 				<img
-					class="w-40 h-40 rounded bg-black/50"
+					class="w-40 h-40 rounded bg-black/50 object-contain"
 					src={coverSrc}
 					alt={`${audioTags?.title} - ${audioTags?.artist}`}
 				/>
@@ -561,7 +574,8 @@
 		{:else if tab === 'bitrate'}
 			<Bitrate {bitrate} on:set={(e) => (bitrate = e.detail)} />
 		{:else if tab === 'metadata'}
-			<Metadata tags={audioTags} on:set={(e) => {
+			<Metadata tags={audioTags} {basename} on:set={(e) => {
+				if (e.detail[0] === 'cover') return changedCover = e.detail[1];
 				if (e.detail[1] === null) metadata = Object.keys(metadata).filter((t) => t !== e.detail[0]).reduce((p, t) => ({ ...p, [t]: metadata[t] }), {});
 				else metadata = { ...metadata, [e.detail[0]]: e.detail[1] };
 			}} />
