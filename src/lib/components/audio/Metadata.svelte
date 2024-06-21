@@ -9,6 +9,8 @@
 	export let tags: Tags | null;
 	export let basename: string;
 
+	// For later reference: https://wiki.multimedia.cx/index.php/FFmpeg_Metadata
+
 	$: tagComment = !tags?.TXXX?.data?.user_description ? tags?.TXXX?.data?.data as string : undefined;
 	let defaultTags: Record<string, string> = {
 		title: tags?.title ?? '',
