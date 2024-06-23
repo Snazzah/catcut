@@ -11,7 +11,8 @@ export const ALLOWED_TYPES = [
 	'audio/mpeg',
 	'audio/wav',
 	'audio/flac',
-	'audio/ogg'
+	'audio/ogg',
+	'audio/x-m4a'
 ];
 export const MS_OPTIONS = {
 	colonNotation: true,
