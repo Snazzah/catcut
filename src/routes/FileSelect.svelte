@@ -195,7 +195,7 @@
 				icon={fileIcon}
 				class={`transition-all absolute w-full h-full ${droppingFile && !noSelect ? `scale-[2] opacity-25` : `scale-100 opacity-0`}`}
 			/>
-			<div class="flex flex-col items-center justify-center w-full">
+			<div class="flex flex-col items-center justify-center w-full gap-1">
 				{#if !noSelect}
 					<span>
 						{#if droppingFile}
@@ -204,6 +204,7 @@
 							select a file
 						{/if}
 					</span>
+					<span class="text-xs opacity-75">supports audio & video files</span>
 				{:else if ffmpegLoadFail}
 					<span>failed to load ffmpeg.wasm, click to retry</span>
 				{:else if !$ffmpegReady}
@@ -214,11 +215,10 @@
 							style:width={`${($downloadedBytes / $totalBytes) * 100}%`}
 						/>
 					</div>
-					<span class="text-xs text-neutral-400"
-						>{filesize($downloadedBytes, { standard: 'jedec' })} / {filesize($totalBytes, {
-							standard: 'jedec'
-						})}</span
-					>
+					<span class="text-xs text-neutral-400">
+						{filesize($downloadedBytes, { standard: 'jedec' })} /
+						{filesize($totalBytes, {standard: 'jedec'})}
+					</span>
 				{:else}
 					downloading...
 				{/if}
@@ -256,7 +256,7 @@
 
 <style>
 	.filedropper {
-		@apply p-4 max-w-96 w-full h-16 transition-all bg-neutral-800 rounded-lg flex flex-col items-center justify-center text-center border-2 border-neutral-500 text-white outline-none;
+		@apply p-4 max-w-96 w-full h-20 transition-all bg-neutral-800 rounded-lg flex flex-col items-center justify-center text-center border-2 border-neutral-500 text-white outline-none;
 
 		&:hover {
 			@apply bg-neutral-700 border-neutral-400;
@@ -267,7 +267,7 @@
 		}
 
 		&.--dropping:enabled {
-			@apply h-24 bg-violet-900 border-violet-500;
+			@apply h-32 bg-violet-900 border-violet-500;
 		}
 
 		&:disabled {
