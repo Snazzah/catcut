@@ -3,8 +3,6 @@
 	import fileIcon from '@iconify-icons/mdi/file';
 	import dropboxIcon from '@iconify-icons/mdi/dropbox';
 	import driveIcon from '@iconify-icons/mdi/google-drive';
-	import infoIcon from '@iconify-icons/mdi/information-slab-circle';
-	import mtIcon from '@iconify-icons/fluent-emoji/high-voltage';
 	import worryIcon from '@iconify-icons/fluent-emoji/worried-face';
 	import { downloadedBytes, ffmpegReady, loadFFmpeg, totalBytes } from '$lib/ffmpeg';
 	import { filesize } from 'filesize';
@@ -12,7 +10,6 @@
 	import { dropboxAllowed } from '$lib/dropbox';
 	import { RemoteFile, ALLOWED_TYPES } from '$lib/util';
 	import Modal from './Modal.svelte';
-	import { ffmpegMultithreaded } from '$lib/data';
 	import { replaceState } from '$app/navigation';
 	import { fetchDriveFile, googleAllowed, toFileDownloadLink } from '$lib/google';
 
@@ -32,17 +29,13 @@
 	let modalOpen = false;
 	let rejectionMessage = '';
 
-	let multithreadModalOpen = false;
-	const mtAvailable = false;
-	// const mtAvailable = window.crossOriginIsolated;
+	$: if (!$ffmpegReady) load();
 
-	$: if (!$ffmpegReady) load($ffmpegMultithreaded);
-
-	async function load(mt = false) {
+	async function load() {
 		try {
 			ffmpegLoadFail = false;
 			noSelect = true;
-			await loadFFmpeg(mtAvailable ? mt : false);
+			await loadFFmpeg();
 			noSelect = false;
 
 			if (location.search) await getQueuedFile();
@@ -129,48 +122,6 @@
 	}}
 />
 
-{#if mtAvailable}
-	<div class="flex gap-1">
-		<button
-			class="flex gap-1 px-1 justify-center items-center transition-all disabled:opacity-50"
-			class:text-orange-200={$ffmpegMultithreaded}
-			disabled={!$ffmpegReady && !ffmpegLoadFail}
-			on:click={() => {
-				ffmpegMultithreaded.set(!$ffmpegMultithreaded);
-				ffmpegReady.set(false);
-			}}
-		>
-			<Icon
-				icon={mtIcon}
-				class={`w-6 h-6 transition-all${!$ffmpegMultithreaded ? ' grayscale' : ''}`}
-			/>
-			<span>multi-threaded {$ffmpegMultithreaded ? 'on' : 'off'}</span>
-		</button>
-
-		<button on:click={() => (multithreadModalOpen = true)}>
-			<Icon icon={infoIcon} class="w-4 h-4 transition-all hover:text-white" />
-		</button>
-	</div>
-
-	<Modal open={multithreadModalOpen} on:clickout={() => (multithreadModalOpen = false)}>
-		<div class="w-full flex flex-col justify-center items-center">
-			<Icon icon={mtIcon} class="w-32 h-32 mb-2 -mt-24" />
-			<h2 class="font-bold tracking-wide text-2xl mb-2">Multi-threaded?</h2>
-		</div>
-		<div class="text-sm">
-			<p>
-				You can optionally use the multi-threaded version of ffmpeg.wasm, which tends to be faster
-				in re-encoding media and using special filters.
-			</p>
-			<br />
-			<p>
-				However, this tends to use a good amount of memory, and support for all devices is not
-				guarenteed. If ffmpeg.wasm fails to load from using this, you can disable it.
-			</p>
-		</div>
-	</Modal>
-{/if}
-
 <div class="flex flex-col items-center justify-center w-full gap-2">
 	<input
 		type="file"
@@ -186,7 +137,7 @@
 		class:--failed={ffmpegLoadFail}
 		disabled={noSelect && !ffmpegLoadFail}
 		on:click={() => {
-			if (ffmpegLoadFail) load($ffmpegMultithreaded);
+			if (ffmpegLoadFail) load();
 			else input.click();
 		}}
 	>

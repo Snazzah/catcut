@@ -19,7 +19,6 @@ export const totalBytes = writable(1);
 export const downloadedBytes = writable(0);
 
 export const ffmpegReady = writable(false);
-export const ffmpegIsMT = writable(false);
 
 export const ffmpeg = new FFmpeg();
 (window as any).ffmpeg = ffmpeg;
@@ -34,7 +33,6 @@ ffmpeg.on('progress', ({ progress }) => ffmpegProgress.set(progress > 1 ? 0 : pr
 
 export async function loadFFmpeg(mt = false) {
 	ffmpegReady.set(false);
-	ffmpegIsMT.set(false);
 	totalBytes.set(
 		Object.keys(CORE_SIZE)
 			.filter((url) => url.includes(mt ? '@ffmpeg/core-mt@' : '@ffmpeg/core@'))
@@ -90,5 +88,4 @@ export async function loadFFmpeg(mt = false) {
 	});
 	console.log('Loaded');
 	ffmpegReady.set(true);
-	ffmpegIsMT.set(mt);
 }

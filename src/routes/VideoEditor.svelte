@@ -19,7 +19,7 @@
 	import type { IconifyIcon } from '@iconify/svelte';
 	import PreviewStillContainer from './PreviewStillContainer.svelte';
 	import { MS_OPTIONS } from '$lib/util';
-	import { ffmpeg, ffmpegIsMT } from '$lib/ffmpeg';
+	import { ffmpeg } from '$lib/ffmpeg';
 	import Trim from '$lib/components/video/Trim.svelte';
 	import Volume from '$lib/components/common/Volume.svelte';
 	import EditorTabs from '$lib/components/EditorTabs.svelte';
@@ -214,7 +214,7 @@
 	let loudnormArgs = [-24, 7, -2];
 	$: videoVolume = volume <= 1 && volumeMode === 0 ? volume : 1;
 	let toExtension: string | null = null;
-	$: cantTrimReencode = $ffmpegIsMT || extension === 'webm';
+	$: cantTrimReencode = extension === 'webm';
 	let trimReencoding = false;
 	let compressionLevel = 0;
 	let bitrate = 0;
