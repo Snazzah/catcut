@@ -6,8 +6,8 @@
 	import worryIcon from '@iconify-icons/fluent-emoji/worried-face';
 	import { downloadedBytes, ffmpegReady, loadFFmpeg, totalBytes } from '$lib/ffmpeg';
 	import { filesize } from 'filesize';
-	import { createEventDispatcher } from 'svelte';
-	import { dropboxAllowed } from '$lib/dropbox';
+	import { createEventDispatcher, onMount } from 'svelte';
+	import { dropboxAllowed, loadDropbox } from '$lib/dropbox';
 	import { RemoteFile, ALLOWED_TYPES } from '$lib/util';
 	import Modal from './Modal.svelte';
 	import { replaceState } from '$app/navigation';
@@ -22,14 +22,13 @@
 	$: if (inputFile && $ffmpegReady) dispatch('file', inputFile);
 
 	let droppingFile = false;
+	let dropboxAvailable = false;
 
 	let noSelect = false;
 	let ffmpegLoadFail = false;
 
 	let modalOpen = false;
 	let rejectionMessage = '';
-
-	$: if (!$ffmpegReady) load();
 
 	async function load() {
 		try {
@@ -104,6 +103,34 @@
 		if (rejectionMessage) modalOpen = true;
 		return !rejectionMessage;
 	}
+
+	export function chooseDropbox() {
+		if (!dropboxAvailable) return;
+
+		window.Dropbox.choose({
+			async success(files) {
+				noSelect = true;
+				if (files[0]) {
+					const type = RemoteFile.extensionToType(files[0].name.split('.').reverse()[0]);
+					if (typeAllowed(type)) inputFile = await RemoteFile.fetch(files[0].link, files[0].name);
+				}
+				noSelect = false;
+			},
+			cancel() {
+				console.log('Dropbox chooser cancelled.');
+			},
+
+			linkType: 'direct',
+			extensions: ['video'],
+			multiselect: false
+		});
+	}
+
+	onMount(async () => {
+		if (dropboxAllowed) loadDropbox().then(() => dropboxAvailable = true);
+		if ($ffmpegReady) return;
+		load();
+	});
 </script>
 
 <svelte:document
@@ -182,8 +209,8 @@
 		class:pointer-events-none={noSelect}
 	>
 		<span> or drop a file anywhere </span>
-		{#if dropboxAllowed}
-			<button title="Choose from Dropbox" on:click={() => (location.href = '/dropbox')}>
+		{#if dropboxAllowed && dropboxAvailable}
+			<button title="Choose from Dropbox" on:click={() => chooseDropbox()}>
 				<Icon icon={dropboxIcon} class="w-6 h-6 transition-colors hover:text-white" />
 			</button>
 		{/if}

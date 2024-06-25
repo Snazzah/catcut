@@ -2,7 +2,7 @@ import { PUBLIC_DROPBOX_CLIENT_ID } from '$env/static/public';
 
 export const dropboxAllowed = !!PUBLIC_DROPBOX_CLIENT_ID;
 
-export async function loadDropbox() {
+export function loadDropbox() {
 	if (document.querySelector('#dropboxjs')) return Promise.resolve();
 
 	return new Promise((resolve, reject) => {
