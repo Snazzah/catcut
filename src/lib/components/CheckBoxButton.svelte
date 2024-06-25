@@ -5,8 +5,8 @@
 	import infoIcon from '@iconify-icons/mdi/information-slab-circle';
 	import { autoPlacement, offset, shift } from 'svelte-floating-ui/dom';
 	import { createFloatingActions } from 'svelte-floating-ui';
-	import { scale } from "svelte/transition";
-	import Portal from "svelte-portal";
+	import { scale } from 'svelte/transition';
+	import Portal from 'svelte-portal';
 
 	export let checked: boolean;
 	export let disabled = false;

@@ -10,6 +10,7 @@
 	import { dropboxAllowed, loadDropbox } from '$lib/dropbox';
 	import { RemoteFile, ALLOWED_TYPES } from '$lib/util';
 	import Modal from './Modal.svelte';
+	import FilePickerButton from './FilePickerButton.svelte';
 	import { replaceState } from '$app/navigation';
 	import { fetchDriveFile, googleAllowed, toFileDownloadLink } from '$lib/google';
 
@@ -210,14 +211,10 @@
 	>
 		<span> or drop a file anywhere </span>
 		{#if dropboxAllowed && dropboxAvailable}
-			<button title="Choose from Dropbox" on:click={() => chooseDropbox()}>
-				<Icon icon={dropboxIcon} class="w-6 h-6 transition-colors hover:text-white" />
-			</button>
+			<FilePickerButton icon={dropboxIcon} title="Choose from Dropbox" on:click={() => chooseDropbox()} />
 		{/if}
 		{#if googleAllowed}
-			<button title="Choose from Google Drive" on:click={() => (location.href = '/googledrive')}>
-				<Icon icon={driveIcon} class="w-6 h-6 transition-colors hover:text-white" />
-			</button>
+			<FilePickerButton icon={driveIcon} title="Choose from Google Drive" on:click={() => (location.href = '/googledrive')} />
 		{/if}
 	</span>
 </div>
