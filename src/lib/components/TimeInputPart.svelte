@@ -3,6 +3,7 @@
 	import upIcon from '@iconify-icons/mdi/menu-up';
 	import downIcon from '@iconify-icons/mdi/menu-down';
 	import { createEventDispatcher } from 'svelte';
+	import { clamp } from '$lib/util';
 
 	export let value = 0;
 	export let seconds = false;
@@ -26,7 +27,7 @@
 	function fixNumber(num: number) {
 		const maxNumber = fixPlaces(max ?? defaultMax);
 		const minNumber = fixPlaces(min);
-		const clampedNumber = Math.abs(Math.min(Math.max(num, minNumber), maxNumber));
+		const clampedNumber = Math.abs(clamp(num, minNumber, maxNumber));
 		return fixPlaces(clampedNumber);
 	}
 
@@ -41,6 +42,11 @@
 		input.value = fixValue(number);
 		dispatch('set', number);
 	}
+
+	function onPaste(e: ClipboardEvent) {
+		const pasteInfo = e.clipboardData?.getData('text');
+		if (pasteInfo) dispatch('paste', pasteInfo);
+	}
 </script>
 
 <div class="relative number-input" class:seconds-input={seconds}>
@@ -51,6 +57,7 @@
 		max={iMax}
 		type="number"
 		on:input={() => setNumber(input.valueAsNumber)}
+		on:paste={onPaste}
 	/>
 	<button
 		class="-top-2 rounded-t"

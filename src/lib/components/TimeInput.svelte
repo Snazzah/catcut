@@ -3,6 +3,7 @@
 	import pinIcon from '@iconify-icons/mdi/map-marker';
 	import TimeInputPart from './TimeInputPart.svelte';
 	import { createEventDispatcher } from 'svelte';
+	import { clamp } from '$lib/util';
 
 	export let value: number;
 	export let min = 0;
@@ -10,6 +11,8 @@
 	export let largestPossible: number | undefined = undefined;
 	export let currentTimeButton = true;
 	const dispatch = createEventDispatcher();
+	const TIME_REGEX = /^\s*(?:(?<h>\d{1,2}):)?(?<m>\d{1,2}):(?<s>\d{1,2}(?:\.(?:\d+)?)?)\s*$/;
+	const HUMAN_TIME_REGEX = /^\s*(?:(?<h>\d{1,2})h *)?(?:(?<m>\d{1,2})m *)?(?:(?<s>\d{1,2}(?:\.(?:\d+))?)s)?\s*$/;
 
 	$: days = Math.trunc(value / 86400);
 	$: hours = Math.trunc(value / 3600 % 24);
@@ -34,7 +37,19 @@
 	}
 
 	function update(part: string, value: number) {
-		dispatch('set', Math.min(Math.max(combineNumber({ [part]: value }), min), max));
+		dispatch('set', clamp(combineNumber({ [part]: value }), min, max));
+	}
+
+	function onPaste(text: string) {
+		const match = TIME_REGEX.exec(text) ?? HUMAN_TIME_REGEX.exec(text);
+		if (!match || (match.groups!.h === undefined && match.groups!.m === undefined && match.groups!.s === undefined)) return;
+		const result = clamp(combineNumber({
+			day: 0,
+			hour: clamp(Math.trunc(parseInt(match.groups!.h ?? '0')), 0, 24),
+			minute: clamp(Math.trunc(parseInt(match.groups!.m ?? '0')), 0, 60),
+			second: clamp(parseFloat(match.groups!.s ?? '0'), 0, 60)
+		}), min, max);
+		dispatch('set', result);
 	}
 </script>
 
@@ -47,6 +62,7 @@
 				min={days === minDays ? minHours : 0}
 				max={days >= maxDays ? maxHours : 24}
 				on:set={(e) => update('hour', e.detail)}
+				on:paste={(e) => onPaste(e.detail)}
 			/>
 			<span>:</span>
 		{/if}
@@ -56,6 +72,7 @@
 			min={hours === minHours ? minMinutes : 0}
 			max={hours >= maxHours ? maxMinutes : undefined}
 			on:set={(e) => update('minute', e.detail)}
+			on:paste={(e) => onPaste(e.detail)}
 		/>
 		<span>:</span>
 		<TimeInputPart
@@ -64,6 +81,7 @@
 			min={minutes === minMinutes ? minSeconds : 0}
 			max={minutes >= maxMinutes ? maxSeconds : undefined}
 			on:set={(e) => update('second', e.detail)}
+			on:paste={(e) => onPaste(e.detail)}
 		/>
 	</div>
 	{#if currentTimeButton}
