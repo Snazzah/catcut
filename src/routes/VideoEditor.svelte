@@ -161,6 +161,9 @@
 	let trimStart = 0;
 	let trimEnd = 0;
 	$: if (duration) trimEnd = duration;
+	$: if (trimStart < 0) trimStart = 0;
+	$: if (trimStart > trimEnd) trimStart = trimEnd;
+	$: if (trimEnd > duration) trimEnd = duration;
 
 	// Seek at the trimmed start
 	$: if (currentTime < trimStart) seek(trimStart);
@@ -594,12 +597,12 @@
 		</button>
 
 		<label class="flex justify-between pointer-events-none select-none" for="timeline">
-			<code class="transition-opacity" class:opacity-0={willBeTrimmed}
-				>{ms(trimStart * 1000, MS_OPTIONS)}</code
-			>
-			<code class="transition-opacity" class:opacity-0={willBeTrimmed}
-				>{ms(trimEnd * 1000, MS_OPTIONS)}</code
-			>
+			<code class="transition-opacity" class:opacity-0={willBeTrimmed}>
+				{ms(trimStart * 1000, MS_OPTIONS)}
+			</code>
+			<code class="transition-opacity" class:opacity-0={willBeTrimmed}>
+				{ms(trimEnd * 1000, MS_OPTIONS)}
+			</code>
 		</label>
 	</div>
 
@@ -617,7 +620,14 @@
 		let:tab
 	>
 		{#if tab === 'trim'}
-			<Trim {trimStart} {trimEnd} {trimReencoding} {cantTrimReencode} on:setreencoding={(e) => (trimReencoding = e.detail)} />
+			<Trim
+				{trimStart} {trimEnd}
+				{duration} {currentTime}
+				{trimReencoding} {cantTrimReencode}
+				on:setstart={(e) => (trimStart = e.detail)}
+				on:setend={(e) => (trimEnd = e.detail)}
+				on:setreencoding={(e) => (trimReencoding = e.detail)}
+			/>
 		{:else if tab === 'volume'}
 			<Volume
 				{volume} {volumeMode} {loudnormArgs}
