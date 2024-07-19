@@ -32,7 +32,6 @@
 	$: if (videoReady) fakeEffect(timelineWidth);
 	$: if (videoReady && renderQueued && !rendering) render();
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	function fakeEffect(width: number) {
 		if (width === 0) return;
 		if (neverRendered) render();
@@ -45,9 +44,9 @@
 				video.removeEventListener('error', onError);
 				resolve();
 			};
-			let onError = () => {
+			let onError = (e: any) => {
 				video.removeEventListener('canplay', onLoad);
-				reject();
+				reject(e);
 			};
 			video.addEventListener('canplay', onLoad, { once: true });
 			video.addEventListener('error', onError, { once: true });
@@ -55,26 +54,30 @@
 	}
 
 	async function render() {
-		neverRendered = false;
-		renderQueued = false;
-		rendering = true;
-		canvas.width = Math.floor((videoWidth / videoHeight) * timelineHeight);
-		canvas.height = timelineHeight;
-		const ctx = canvas.getContext('2d')!;
-		const segments = previewSegments;
-		console.log('Rendering preview stills', segments);
-		previewImages = {};
+		try {
+			neverRendered = false;
+			renderQueued = false;
+			rendering = true;
+			canvas.width = Math.floor((videoWidth / videoHeight) * timelineHeight);
+			canvas.height = timelineHeight;
+			const ctx = canvas.getContext('2d')!;
+			const segments = previewSegments;
+			console.log('Rendering preview stills', segments);
+			previewImages = {};
 
-		for (let i = 0; i < segments; i++) {
-			const time = Math.min(1, ((i + 0.5) * previewStillWidth) / timelineWidth) * duration;
-			video.currentTime = time;
-			await waitUntilLoad();
-			ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-			const blob = await canvas.convertToBlob({ type: 'image/jpeg', quality: 1 });
-			previewImages[i] = await blobToDataURL(blob);
+			for (let i = 0; i < segments; i++) {
+				const time = Math.min(1, ((i + 0.5) * previewStillWidth) / timelineWidth) * duration;
+				video.currentTime = time;
+				await waitUntilLoad();
+				ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+				const blob = await canvas.convertToBlob({ type: 'image/jpeg', quality: 1 });
+				previewImages[i] = await blobToDataURL(blob);
+			}
+		} catch (e) {
+			console.error('Failed to render preview stills', e);
+		} finally {
+			rendering = false;
 		}
-
-		rendering = false;
 	}
 
 	onMount(() => {
