@@ -16,6 +16,14 @@ declare global {
 		google: any;
 		Dropbox: DropboxChooser;
 	}
+
+	namespace svelteHTML {
+		// This just stops the type errors? ok.
+		interface IntrinsicElements extends svelteElements.SvelteHTMLElements {
+			audio: HTMLProps<'audio', HTMLAttributes>;
+			video: HTMLProps<'video', HTMLAttributes>;
+		}
+	}
 }
 
 export {};

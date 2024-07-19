@@ -352,6 +352,8 @@
 		src={blobURL}
 		crossorigin="anonymous"
 		playsinline
+		disableremoteplayback
+		x-webkit-airplay="deny"
 		bind:volume={audioVolume}
 		bind:currentTime
 		bind:duration

@@ -409,6 +409,8 @@
 				crossorigin="anonymous"
 				playsinline
 				disablepictureinpicture
+				disableremoteplayback
+				x-webkit-airplay="deny"
 				class="max-h-[40svh]"
 				bind:volume={videoVolume}
 				bind:currentTime
