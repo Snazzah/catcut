@@ -53,6 +53,10 @@
 		const coverExt = changedCover instanceof File ? changedCover.type.split('/')[1] : null;
 
 		try {
+			window.plausible?.('File saved', { props: { extension } })
+		} catch (e) { /** */ }
+
+		try {
 			console.time('ffmpeg');
 			await ffmpeg.writeFile(
 				`in.${extension}`,

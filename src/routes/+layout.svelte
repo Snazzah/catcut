@@ -10,7 +10,7 @@
 	{#if PUBLIC_PLAUSIBLE_HOSTNAME}
 		<script
 			data-domain={location.hostname}
-			src="https://{PUBLIC_PLAUSIBLE_HOSTNAME}/js/script.js"
+			src="https://{PUBLIC_PLAUSIBLE_HOSTNAME}/js/script.pageview-props.tagged-events.js"
 		/>
 	{/if}
 </svelte:head>

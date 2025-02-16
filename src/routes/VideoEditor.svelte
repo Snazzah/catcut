@@ -62,6 +62,10 @@
 		];
 
 		try {
+			window.plausible?.('File saved', { props: { extension } })
+		} catch (e) { /** */ }
+
+		try {
 			console.time('ffmpeg');
 			await ffmpeg.writeFile(
 				`in.${extension}`,
