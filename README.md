@@ -9,3 +9,24 @@
 
 ![](/static/images/screenshots/desktop-video.png)
 ![](/static//images/screenshots/desktop-audio.png)
+
+
+## Contributing
+
+Prerequisites for you: working knowledge of Svelte, Vite, and SvelteKit (which depends on knowing HTML, CSS, and JS).
+
+Create a `.env` file with exactly this after cloning:
+
+```
+# https://www.dropbox.com/developers/chooser
+PUBLIC_DROPBOX_CLIENT_ID=
+
+# https://developers.google.com/drive/picker/guides/overview
+PUBLIC_GOOGLE_KEY=
+PUBLIC_GOOGLE_CLIENT_ID=
+
+PUBLIC_PLAUSIBLE_HOSTNAME=
+```
+
+Afterwards, run `npm i` (or `pnpm i` if the former doesn't work).
+To run the development server, run `npm run dev`.
