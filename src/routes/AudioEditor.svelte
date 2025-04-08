@@ -93,11 +93,6 @@
 					'-t', ms((trimEnd - trimStart) * 1000, MS_OPTIONS)
 				] : []),
 				...(complexFilter ? ['-filter_complex', complexFilter, '-map', '[a]'] : []),
-				// ...((volume !== 1 || volumeMode !== 0)
-				// 	? volumeMode === 0
-				// 		? ['-af', `volume=${volume.toFixed(2)}`]
-				// 		: ['-af', `loudnorm=I=${loudnormArgs[0].toFixed(2)}:LRA=${loudnormArgs[1].toFixed(2)}:TP=${loudnormArgs[2].toFixed(2)}`]
-				// 	: []),
 				...(bitrateChanged && volume !== 0 ? ['-b:a', `${bitrate}k`] : []),
 				...Object.keys(metadata).map((t) => (['-metadata', `${t}=${metadata[t]?.replaceAll('"', '\\"')}`])).reduce((p, a) => [...p, ...a], []),
 				`out.${outExt}`
