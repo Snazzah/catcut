@@ -27,6 +27,7 @@
                     id="resize-x"
                     type="number"
                     class="px-4 py-2 bg-transparent outline-none w-full"
+                    step={1}
                     min={0}
                     max={20000}
                     value={resizeWidth}
@@ -59,6 +60,6 @@
     </div>
 
     <div>
-        Blanks or 0 preserve aspect ratio. Dimensions rounded to the nearest even number on export, if this module is used. Forces the Sample Aspect Ratio to 1 if module used. Applied after cropping.
+        Blanks or 0 preserve aspect ratio. Dimensions rounded to the nearest even number on export, if this module is used. Forces the Sample Aspect Ratio to 1 if module used. Applied after cropping. Effect of resizing does not show in the preview.
     </div>
 </div>

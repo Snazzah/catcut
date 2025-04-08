@@ -4,6 +4,7 @@
 	import ms from 'pretty-ms';
 	import { createEventDispatcher } from 'svelte';
 	import playIcon from '@iconify-icons/mdi/play-arrow';
+	import speedIcon from '@iconify-icons/mdi/speedometer-slow';
 	import pauseIcon from '@iconify-icons/mdi/pause';
 	import back10Icon from '@iconify-icons/mdi/rewind-10';
 	import forward10Icon from '@iconify-icons/mdi/fast-forward-10';
@@ -33,6 +34,8 @@
 	import CropHandler from './CropHandler.svelte';
 	import ScreenshotButtons from './ScreenshotButtons.svelte';
 	import Resize from '$lib/components/video/Resize.svelte';
+	import Speed from '$lib/components/common/Speed.svelte';
+	import { generatePitchSpeedAudioCommand } from '$lib/utils/speed-utils';
 
 	export let dispatch = createEventDispatcher();
 	export let file: File | RemoteFile;
@@ -79,7 +82,47 @@
 			const resizingVideo: boolean = ((!!resizeHeight) || (!!resizeWidth));
 			const converting = !!toExtension;
 			const bitrateChanged = bitrate > 0;
-			const otherFiltersUsed = volume !== 1 || volumeMode !== 0 || bitrateChanged || converting || willCrop || compressionLevel !== 0 || resizingVideo;
+
+			const speedFactorInternal: number = speedFactor ?? 1;
+
+
+
+			let rw2 = resizeWidth;
+				let rh2 = resizeHeight;
+				
+				if(resizingVideo){				
+					const aspectRatio = willCrop ? Math.max(cropWidth,1)/Math.max(cropHeight,1) : Math.max(videoWidth,1)/Math.max(videoHeight,1);
+					if(!rw2) {
+						rw2 = rh2 * aspectRatio;
+					}
+					if(!rh2) {
+						rh2 = rw2 * (1 / aspectRatio);
+					}
+				}
+
+				
+			const complexSpeedVideoCommand = speedFactorInternal !== 1 ? `setpts=PTS/${speedFactorInternal}` : '';
+			const complexCropVideoCommand = willCrop ? `crop=${cropWidth}:${cropHeight}:${cropX}:${cropY}` : '';
+			const complexResizeVideoCommand = resizingVideo ? `scale=ceil(${rw2}/2)*2:ceil(${rh2}/2)*2,setsar=1` : '';
+
+			const volumeFilter = (volume !== 1 || volumeMode !== 0) && volumeMode === 0 ? `volume=${volume.toFixed(2)}` : '';
+			const loudNormFilter = (volume !== 1 || volumeMode !== 0) && volumeMode === 1 ? `loudnorm=I=${loudnormArgs[0].toFixed(2)}:LRA=${loudnormArgs[1].toFixed(2)}:TP=${loudnormArgs[2].toFixed(2)}` : '';
+			
+			const complexPitchSpeedAudioCommand = generatePitchSpeedAudioCommand(speedFactorInternal, keepPitch, semitoneFactor);
+
+			const complexVideoFilterPart = [complexCropVideoCommand, complexResizeVideoCommand, complexSpeedVideoCommand].filter(v => !!v);
+			const complexAudioFilterPart = [volumeFilter, loudNormFilter, complexPitchSpeedAudioCommand].filter(v=>!!v);
+			const allComplexFilters: string[] = [];
+			if(complexVideoFilterPart.length >= 1) {
+					allComplexFilters.push(`[0:v]${complexVideoFilterPart.join(',')}[v]`);
+			}
+
+			if(complexAudioFilterPart.length >= 1) {
+				allComplexFilters.push(`[0:a]${complexAudioFilterPart.join(',')}[a]`);
+			}
+
+
+			const otherFiltersUsed = volume !== 1 || volumeMode !== 0 || bitrateChanged || converting || willCrop || compressionLevel !== 0 || resizingVideo || allComplexFilters.length >= 1;
 			let trimOnNextCall = false;
 			const trimArgs = [
 				'-ss', ms(trimStart * 1000, MS_OPTIONS),
@@ -102,43 +145,31 @@
 				await ffmpeg.rename(`clip.${extension}`, `in.${extension}`);
 			}
 
+
 			if (!otherFiltersUsed) {
 				// no other filters used
 				await ffmpeg.rename(`in.${extension}`, `out.${extension}`)
 			}
 			else {
-				let rw2 = resizeWidth;
-				let rh2 = resizeHeight;
-				
-				if(resizingVideo){				
-					const aspectRatio = willCrop ? Math.max(cropWidth,1)/Math.max(cropHeight,1) : Math.max(videoWidth,1)/Math.max(videoHeight,1);
-					if(!rw2) {
-						rw2 = rh2 * aspectRatio;
-					}
-					if(!rh2) {
-						rh2 = rw2 * (1 / aspectRatio);
-					}
-				}
-				const resizeVideoCommand = resizingVideo ? `scale=ceil(${rw2}/2)*2:ceil(${rh2}/2)*2,setsar=1` : '';
-				const cropVideoCommand = willCrop ? `crop=${cropWidth}:${cropHeight}:${cropX}:${cropY}` : '';
-				const videoFilters = [cropVideoCommand, resizeVideoCommand].filter(v => !!v);
+				const complexFilter: string = allComplexFilters.length >= 1 ? allComplexFilters.join(';') : '';
+			
+
 				const ffCommand = [
 				'-i',
 				`in.${extension}`,
 				...(willBeTrimmed && trimOnNextCall ? trimArgs : []),
 				...(volume === 0
 					? ['-an']
-					: (volume !== 1 || volumeMode !== 0)
-						? volumeMode === 0
-							? ['-af', `volume=${volume.toFixed(2)}`]
-							: ['-af', `loudnorm=I=${loudnormArgs[0].toFixed(2)}:LRA=${loudnormArgs[1].toFixed(2)}:TP=${loudnormArgs[2].toFixed(2)}`]
-						: !converting && !bitrateChanged
+					: ((complexAudioFilterPart.length >= 1)
+						? []
+						: (!converting && !bitrateChanged && allComplexFilters.length === 0
 							? ['-c:a', 'copy']
-							: []),
+							: []))),
 				...(bitrateChanged && volume !== 0 ? ['-b:a', `${bitrate}k`] : []),
+				...(complexFilter ? ['-filter_complex', complexFilter, ...(complexVideoFilterPart.length >= 1 ? ['-map', '[v]'] : ['-map', '0:v']), ...(complexAudioFilterPart.length >= 1 ? ['-map', '[a]'] : ['-map', '0:a'])] : []),
 				...(
-					(videoFilters.length >= 1) ? ['-vf', videoFilters.join(',')] :
-					((extension === 'webm' && outExt === 'mp4' || compressionLevel !== 0)
+					(complexVideoFilterPart.length >= 1) ? [] :
+					(complexVideoFilterPart.length >= 1 || (extension === 'webm' && outExt === 'mp4' || compressionLevel !== 0)
 					? [] : ['-c:v', 'copy'])
 				),
 				...(compressionArgs[compressionLevel]),
@@ -150,7 +181,7 @@
 
 			processState = ProcessingState.READING;
 			const data = await ffmpeg.readFile(`out.${outExt}`);
-			const blob = new Blob([(data as Uint8Array).buffer]);
+			const blob = new Blob([(data as Uint8Array).buffer as BlobPart]);
 			const downloadURL = URL.createObjectURL(blob);
 			console.log(' ---- FINISHED ---- ');
 
@@ -256,6 +287,9 @@
 	let trimReencoding = false;
 	let compressionLevel = 0;
 	let bitrate = 0;
+	let speedFactor = 1;
+	let keepPitch: boolean = false;
+	let semitoneFactor: number = 0;
 
 	const editorComponents: Record<
 		string,
@@ -331,13 +365,21 @@
 				compressionLevel = 0;
 			}
 		},
+		speed: {
+			name: 'Speed/Pitch',
+			icon: speedIcon,
+			onClose() {
+				speedFactor = 0;
+			}
+		},
 		bitrate: {
 			name: 'Bitrate',
 			icon: bitrateIcon,
 			onClose() {
 				bitrate = 0;
 			}
-		}
+		},
+
 	};
 
 	function onKeyPress(e: KeyboardEvent) {
@@ -704,6 +746,15 @@
 					if (e.detail.h !== undefined) cropHeight = e.detail.h;
 				}}
 			/>
+		{:else if tab === 'speed'}
+				<Speed {semitoneFactor} {keepPitch} {speedFactor} on:set={(e) => {
+					
+					if(e.detail.s !== undefined) speedFactor = e.detail.s;
+					if(e.detail.t !== undefined) semitoneFactor = e.detail.t;
+					
+					}}
+					on:setKeepPitch={(e) => keepPitch = e.detail}
+					></Speed>
 		{/if}
 	</EditorTabs>
 </section>
@@ -713,5 +764,6 @@
 	open={modalOpen}
 	{processState}
 	{resultInfo}
+	{speedFactor}
 	on:close={() => (modalOpen = false)}
 />
