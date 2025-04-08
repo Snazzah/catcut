@@ -12,6 +12,7 @@
 	import convertIcon from '@iconify-icons/mdi/file-arrow-left-right';
 	import trimIcon from '@iconify-icons/mdi/content-cut';
 	import volumeIcon from '@iconify-icons/mdi/volume-high';
+	import resizeIcon from '@iconify-icons/mdi/arrow-collapse-all';
 	import compressIcon from '@iconify-icons/mdi/zip-box';
 	import bitrateIcon from '@iconify-icons/mdi/music-note';
 	import cropIcon from '@iconify-icons/mdi/crop';
@@ -31,6 +32,7 @@
 	import Crop from '$lib/components/video/Crop.svelte';
 	import CropHandler from './CropHandler.svelte';
 	import ScreenshotButtons from './ScreenshotButtons.svelte';
+	import Resize from '$lib/components/video/Resize.svelte';
 
 	export let dispatch = createEventDispatcher();
 	export let file: File | RemoteFile;
@@ -74,10 +76,10 @@
 			processState = ProcessingState.RUNNING;
 			const start = Date.now();
 			console.log(' ---- RUNNING FFmpeg ---- ');
-
+			const resizingVideo: boolean = ((!!resizeHeight) || (!!resizeWidth));
 			const converting = !!toExtension;
 			const bitrateChanged = bitrate > 0;
-			const otherFiltersUsed = volume !== 1 || volumeMode !== 0 || bitrateChanged || converting || willCrop || compressionLevel !== 0;
+			const otherFiltersUsed = volume !== 1 || volumeMode !== 0 || bitrateChanged || converting || willCrop || compressionLevel !== 0 || resizingVideo;
 			let trimOnNextCall = false;
 			const trimArgs = [
 				'-ss', ms(trimStart * 1000, MS_OPTIONS),
@@ -100,30 +102,51 @@
 				await ffmpeg.rename(`clip.${extension}`, `in.${extension}`);
 			}
 
-			if (!otherFiltersUsed) await ffmpeg.rename(`in.${extension}`, `out.${extension}`);
-			else
-				await runFFmpeg([
-					'-i',
-					`in.${extension}`,
-					...(willBeTrimmed && trimOnNextCall ? trimArgs : []),
-					...(volume === 0
-						? ['-an']
-						: (volume !== 1 || volumeMode !== 0)
-							? volumeMode === 0
-								? ['-af', `volume=${volume.toFixed(2)}`]
-								: ['-af', `loudnorm=I=${loudnormArgs[0].toFixed(2)}:LRA=${loudnormArgs[1].toFixed(2)}:TP=${loudnormArgs[2].toFixed(2)}`]
-							: !converting && !bitrateChanged
-								? ['-c:a', 'copy']
-								: []),
-					...(bitrateChanged && volume !== 0 ? ['-b:a', `${bitrate}k`] : []),
-					...(
-						willCrop ? ['-vf', `crop=${cropWidth}:${cropHeight}:${cropX}:${cropY}`] :
-						extension === 'webm' && outExt === 'mp4' || compressionLevel !== 0
-						? [] : ['-c:v', 'copy']
-					),
-					...(compressionArgs[compressionLevel]),
-					`out.${outExt}`
-				]);
+			if (!otherFiltersUsed) {
+				// no other filters used
+				await ffmpeg.rename(`in.${extension}`, `out.${extension}`)
+			}
+			else {
+				let rw2 = resizeWidth;
+				let rh2 = resizeHeight;
+				
+				if(resizingVideo){				
+					const aspectRatio = willCrop ? Math.max(cropWidth,1)/Math.max(cropHeight,1) : Math.max(videoWidth,1)/Math.max(videoHeight,1);
+					if(!rw2) {
+						rw2 = rh2 * aspectRatio;
+					}
+					if(!rh2) {
+						rh2 = rw2 * (1 / aspectRatio);
+					}
+				}
+				const resizeVideoCommand = resizingVideo ? `scale=ceil(${rw2}/2)*2:ceil(${rh2}/2)*2,setsar=1` : '';
+				const cropVideoCommand = willCrop ? `crop=${cropWidth}:${cropHeight}:${cropX}:${cropY}` : '';
+				const videoFilters = [cropVideoCommand, resizeVideoCommand].filter(v => !!v);
+				const ffCommand = [
+				'-i',
+				`in.${extension}`,
+				...(willBeTrimmed && trimOnNextCall ? trimArgs : []),
+				...(volume === 0
+					? ['-an']
+					: (volume !== 1 || volumeMode !== 0)
+						? volumeMode === 0
+							? ['-af', `volume=${volume.toFixed(2)}`]
+							: ['-af', `loudnorm=I=${loudnormArgs[0].toFixed(2)}:LRA=${loudnormArgs[1].toFixed(2)}:TP=${loudnormArgs[2].toFixed(2)}`]
+						: !converting && !bitrateChanged
+							? ['-c:a', 'copy']
+							: []),
+				...(bitrateChanged && volume !== 0 ? ['-b:a', `${bitrate}k`] : []),
+				...(
+					(videoFilters.length >= 1) ? ['-vf', videoFilters.join(',')] :
+					((extension === 'webm' && outExt === 'mp4' || compressionLevel !== 0)
+					? [] : ['-c:v', 'copy'])
+				),
+				...(compressionArgs[compressionLevel]),
+				`out.${outExt}`
+			];
+			console.log("Going to run", ffCommand);
+				await runFFmpeg(ffCommand);
+			}
 
 			processState = ProcessingState.READING;
 			const data = await ffmpeg.readFile(`out.${outExt}`);
@@ -190,6 +213,10 @@
 	$: isDraggingTrimHandle = trimStartHandleDragOffset >= 0 || trimEndHandleDragOffset >= 0;
 	$: handleDistance = ((trimEnd - trimStart) / duration) * timelineWidth;
 
+	let actualDuration = duration;
+	$: actualDuration = trimEnd - trimStart;
+
+
 	// Video variables
 	let video: HTMLVideoElement;
 	let videoWidth: number;
@@ -200,6 +227,10 @@
 	let timelineElement: HTMLButtonElement;
 	let timelineWidth = 0;
 	let hoveredTime = -1;
+
+	// Resize variables
+	let resizeWidth: number;
+	let resizeHeight: number;
 
 	// Cropping variables
 	let cropX = 0;
@@ -267,6 +298,14 @@
 				cropWidth = videoWidth;
 				cropHeight = videoHeight;
 				showCropHandles = false;
+			}
+		},
+		resize: {
+			name: 'Resize',
+			icon: resizeIcon,
+			onClose() {
+				resizeHeight = 0;
+				resizeWidth = 0;
 			}
 		},
 		volume: {
@@ -641,6 +680,12 @@
 				on:setmode={(e) => (volumeMode = e.detail)}
 				on:setloudnorm={(e) => (loudnormArgs = e.detail)}
 			/>
+		{:else if tab === 'resize'}
+			<Resize on:set={(e) => {
+				if (e.detail.w !== undefined) resizeWidth = e.detail.w;
+				if (e.detail.h !== undefined) resizeHeight = e.detail.h;
+			}
+				} {resizeWidth} {resizeHeight}  />
 		{:else if tab === 'convert'}
 			<Convert {toExtension} {extension} on:set={(e) => (toExtension = e.detail)} />
 		{:else if tab === 'compress'}
