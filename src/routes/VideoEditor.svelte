@@ -13,7 +13,7 @@
 	import convertIcon from '@iconify-icons/mdi/file-arrow-left-right';
 	import trimIcon from '@iconify-icons/mdi/content-cut';
 	import volumeIcon from '@iconify-icons/mdi/volume-high';
-	import resizeIcon from '@iconify-icons/mdi/arrow-collapse-all';
+	import resizeIcon from '@iconify-icons/mdi/aspect-ratio';
 	import compressIcon from '@iconify-icons/mdi/zip-box';
 	import bitrateIcon from '@iconify-icons/mdi/music-note';
 	import cropIcon from '@iconify-icons/mdi/crop';
@@ -85,21 +85,18 @@
 
 			const speedFactorInternal: number = speedFactor ?? 1;
 
-
-
 			let rw2 = resizeWidth;
-				let rh2 = resizeHeight;
+			let rh2 = resizeHeight;
 
-				if(resizingVideo){
-					const aspectRatio = willCrop ? Math.max(cropWidth,1)/Math.max(cropHeight,1) : Math.max(videoWidth,1)/Math.max(videoHeight,1);
-					if(!rw2) {
-						rw2 = rh2 * aspectRatio;
-					}
-					if(!rh2) {
-						rh2 = rw2 * (1 / aspectRatio);
-					}
+			if (resizingVideo) {
+				const aspectRatio = willCrop ? Math.max(cropWidth,1)/Math.max(cropHeight,1) : Math.max(videoWidth,1)/Math.max(videoHeight,1);
+				if (!rw2) {
+					rw2 = rh2 * aspectRatio;
 				}
-
+				if (!rh2) {
+					rh2 = rw2 * (1 / aspectRatio);
+				}
+			}
 
 			const complexSpeedVideoCommand = speedFactorInternal !== 1 ? `setpts=PTS/${speedFactorInternal}` : '';
 			const complexCropVideoCommand = willCrop ? `crop=${cropWidth}:${cropHeight}:${cropX}:${cropY}` : '';
@@ -256,8 +253,8 @@
 	let hoveredTime = -1;
 
 	// Resize variables
-	let resizeWidth: number;
-	let resizeHeight: number;
+	let resizeWidth = 0;
+	let resizeHeight = 0;
 
 	// Cropping variables
 	let cropX = 0;
@@ -719,11 +716,13 @@
 				on:setloudnorm={(e) => (loudnormArgs = e.detail)}
 			/>
 		{:else if tab === 'resize'}
-			<Resize on:set={(e) => {
-				if (e.detail.w !== undefined) resizeWidth = e.detail.w;
-				if (e.detail.h !== undefined) resizeHeight = e.detail.h;
-			}
-				} {resizeWidth} {resizeHeight}  />
+			<Resize
+				{resizeWidth} {resizeHeight}
+				on:set={(e) => {
+					if (e.detail.w !== undefined) resizeWidth = e.detail.w;
+					if (e.detail.h !== undefined) resizeHeight = e.detail.h;
+				}}
+			/>
 		{:else if tab === 'convert'}
 			<Convert {toExtension} {extension} on:set={(e) => (toExtension = e.detail)} />
 		{:else if tab === 'compress'}
