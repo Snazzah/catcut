@@ -612,12 +612,14 @@
 		{:else if tab === 'convert'}
 			<Convert {toExtension} {extension} on:set={(e) => (toExtension = e.detail)} />
 		{:else if tab === 'speed'}
-				<Speed {semitoneFactor} {keepPitch} {speedFactor} on:set={(e) => {
+			<Speed
+				{semitoneFactor} {keepPitch} {speedFactor}
+				on:set={(e) => {
 					if(e.detail.s !== undefined) speedFactor = e.detail.s;
-					if(e.detail.t !== undefined) semitoneFactor = e.detail.t;					
-					}}
-					on:setKeepPitch={(e) => keepPitch = e.detail}
-					></Speed>
+					if(e.detail.t !== undefined) semitoneFactor = e.detail.t;
+				}}
+				on:setKeepPitch={(e) => keepPitch = e.detail}
+			/>
 		{:else if tab === 'bitrate'}
 			<Bitrate {bitrate} on:set={(e) => (bitrate = e.detail)} />
 		{:else if tab === 'metadata'}

@@ -743,14 +743,14 @@
 				}}
 			/>
 		{:else if tab === 'speed'}
-				<Speed {semitoneFactor} {keepPitch} {speedFactor} on:set={(e) => {
-
-					if(e.detail.s !== undefined) speedFactor = e.detail.s;
-					if(e.detail.t !== undefined) semitoneFactor = e.detail.t;
-
-					}}
-					on:setKeepPitch={(e) => keepPitch = e.detail}
-					></Speed>
+			<Speed
+				{semitoneFactor} {keepPitch} {speedFactor}
+				on:set={(e) => {
+					if (e.detail.s !== undefined) speedFactor = e.detail.s;
+					if (e.detail.t !== undefined) semitoneFactor = e.detail.t;
+				}}
+				on:setKeepPitch={(e) => keepPitch = e.detail}
+			/>
 		{/if}
 	</EditorTabs>
 </section>
