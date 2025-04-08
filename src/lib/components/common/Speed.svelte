@@ -15,17 +15,23 @@
 		// 'as any' the function cause of inconsistent types n such
 		return ((e: Event & { target: EventTarget & HTMLInputElement }) => {
 			const newValue = e.target.valueAsNumber;
-			if (parseInt(e.target.min) > newValue) dispatch('set', { [prop]: parseInt(e.target.min) })
-			else if (parseInt(e.target.max) < newValue) dispatch('set', { [prop]: parseInt(e.target.max) })
+			if (parseInt(e.target.min) > newValue) dispatch('set', { [prop]: parseInt(e.target.min) });
+			else if (parseInt(e.target.max) < newValue)
+				dispatch('set', { [prop]: parseInt(e.target.max) });
 			else dispatch('set', { [prop]: newValue });
 		}) as any;
 	}
 </script>
+
 <div class="flex flex-col gap-2 h-full select-none">
 	<div class="flex flex-col md:flex-row md:justify-between items-center gap-4 md:text-xl h-full">
 		<div class="flex flex-wrap items-center md:gap-4 gap-4 w-full">
-			<div class="flex rounded bg-neutral-900 text-neutral-200 overflow-hidden md:w-72 w-[calc(50%-8px)]">
-				<label for="speed-factor" class="px-4 py-2 bg-neutral-700 font-bold flex-none text-center">Speed</label>
+			<div
+				class="flex rounded bg-neutral-900 text-neutral-200 overflow-hidden md:w-72 w-[calc(50%-8px)]"
+			>
+				<label for="speed-factor" class="px-4 py-2 bg-neutral-700 font-bold flex-none text-center"
+					>Speed</label
+				>
 				<input
 					id="speed-factor"
 					type="number"
@@ -38,9 +44,15 @@
 				/>
 				<span class="pr-4 py-2 opacity-50">x</span>
 			</div>
-			<div class="flex rounded bg-neutral-900 text-neutral-200 overflow-hidden md:w-72 w-[calc(50%-8px)]">
-				<label for="semitone-factor" class="px-4 py-2 bg-neutral-700 font-bold flex-none  text-center">Pitch</label>
-				<input disabled={!keepPitch}
+			<div
+				class="flex rounded bg-neutral-900 text-neutral-200 overflow-hidden md:w-72 w-[calc(50%-8px)]"
+			>
+				<label
+					for="semitone-factor"
+					class="px-4 py-2 bg-neutral-700 font-bold flex-none text-center">Pitch</label
+				>
+				<input
+					disabled={!keepPitch}
 					id="semitone-factor"
 					type="number"
 					class={`${!keepPitch ? 'text-gray-500' : ''} px-4 py-2 bg-transparent outline-none w-full no-spinner text-right`}
@@ -54,7 +66,8 @@
 			<div class="mx-auto md:mx-0">
 				<CheckBoxButton
 					on:click={() => dispatch('setKeepPitch', !keepPitch)}
-					checked={keepPitch} info="Maintains the pitch regardless of time stretching, or lets you customize it."
+					checked={keepPitch}
+					info="Maintains the pitch regardless of time stretching, or lets you customize it."
 				>
 					Maintain Pitch
 				</CheckBoxButton>
@@ -65,7 +78,10 @@
 			<button
 				class="font-bold enabled:hover:underline enabled:text-white px-5 py-2 transition-all"
 				disabled={speedFactor === 1 && semitoneFactor === 0 && !keepPitch}
-				on:click={() => {dispatch('set', { s: 1, t: 0 }); dispatch('setKeepPitch', false)}}
+				on:click={() => {
+					dispatch('set', { s: 1, t: 0 });
+					dispatch('setKeepPitch', false);
+				}}
 			>
 				Reset
 			</button>

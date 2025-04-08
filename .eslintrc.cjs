@@ -25,7 +25,7 @@ module.exports = {
 		node: true
 	},
 	globals: {
-		BlobPart: "readonly"
+		BlobPart: 'readonly'
 	},
 	overrides: [
 		{

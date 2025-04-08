@@ -58,12 +58,14 @@
 			['-preset', 'veryslow', '-crf', '28'], // = 1
 			['-preset', 'veryslow', '-crf', '32'], // = 2
 			['-preset', 'veryslow', '-crf', '40'], // = 3
-			['-preset', 'veryslow', '-crf', '51'], // = 4
+			['-preset', 'veryslow', '-crf', '51'] // = 4
 		];
 
 		try {
-			window.plausible?.('File saved', { props: { extension } })
-		} catch (e) { /** */ }
+			window.plausible?.('File saved', { props: { extension } });
+		} catch (e) {
+			/** */
+		}
 
 		try {
 			console.time('ffmpeg');
@@ -74,7 +76,7 @@
 			processState = ProcessingState.RUNNING;
 			const start = Date.now();
 			console.log(' ---- RUNNING FFmpeg ---- ');
-			const resizingVideo: boolean = ((!!resizeHeight) || (!!resizeWidth));
+			const resizingVideo: boolean = !!resizeHeight || !!resizeWidth;
 			const converting = !!toExtension;
 			const bitrateChanged = bitrate > 0;
 
@@ -84,7 +86,9 @@
 			let rh2 = resizeHeight;
 
 			if (resizingVideo) {
-				const aspectRatio = willCrop ? Math.max(cropWidth,1)/Math.max(cropHeight,1) : Math.max(videoWidth,1)/Math.max(videoHeight,1);
+				const aspectRatio = willCrop
+					? Math.max(cropWidth, 1) / Math.max(cropHeight, 1)
+					: Math.max(videoWidth, 1) / Math.max(videoHeight, 1);
 				if (!rw2) {
 					rw2 = rh2 * aspectRatio;
 				}
@@ -93,32 +97,62 @@
 				}
 			}
 
-			const complexSpeedVideoCommand = speedFactorInternal !== 1 ? `setpts=PTS/${speedFactorInternal}` : '';
-			const complexCropVideoCommand = willCrop ? `crop=${cropWidth}:${cropHeight}:${cropX}:${cropY}` : '';
-			const complexResizeVideoCommand = resizingVideo ? `scale=ceil(${rw2}/2)*2:ceil(${rh2}/2)*2,setsar=1` : '';
+			const complexSpeedVideoCommand =
+				speedFactorInternal !== 1 ? `setpts=PTS/${speedFactorInternal}` : '';
+			const complexCropVideoCommand = willCrop
+				? `crop=${cropWidth}:${cropHeight}:${cropX}:${cropY}`
+				: '';
+			const complexResizeVideoCommand = resizingVideo
+				? `scale=ceil(${rw2}/2)*2:ceil(${rh2}/2)*2,setsar=1`
+				: '';
 
-			const volumeFilter = (volume !== 1 || volumeMode !== 0) && volumeMode === 0 ? `volume=${volume.toFixed(2)}` : '';
-			const loudNormFilter = (volume !== 1 || volumeMode !== 0) && volumeMode === 1 ? `loudnorm=I=${loudnormArgs[0].toFixed(2)}:LRA=${loudnormArgs[1].toFixed(2)}:TP=${loudnormArgs[2].toFixed(2)}` : '';
+			const volumeFilter =
+				(volume !== 1 || volumeMode !== 0) && volumeMode === 0 ? `volume=${volume.toFixed(2)}` : '';
+			const loudNormFilter =
+				(volume !== 1 || volumeMode !== 0) && volumeMode === 1
+					? `loudnorm=I=${loudnormArgs[0].toFixed(2)}:LRA=${loudnormArgs[1].toFixed(2)}:TP=${loudnormArgs[2].toFixed(2)}`
+					: '';
 
-			const complexPitchSpeedAudioCommand = generatePitchSpeedAudioCommand(speedFactorInternal, keepPitch, semitoneFactor);
+			const complexPitchSpeedAudioCommand = generatePitchSpeedAudioCommand(
+				speedFactorInternal,
+				keepPitch,
+				semitoneFactor
+			);
 
-			const complexVideoFilterPart = [complexCropVideoCommand, complexResizeVideoCommand, complexSpeedVideoCommand].filter(v => !!v);
-			const complexAudioFilterPart = [volumeFilter, loudNormFilter, complexPitchSpeedAudioCommand].filter(v=>!!v);
+			const complexVideoFilterPart = [
+				complexCropVideoCommand,
+				complexResizeVideoCommand,
+				complexSpeedVideoCommand
+			].filter((v) => !!v);
+			const complexAudioFilterPart = [
+				volumeFilter,
+				loudNormFilter,
+				complexPitchSpeedAudioCommand
+			].filter((v) => !!v);
 			const allComplexFilters: string[] = [];
-			if(complexVideoFilterPart.length >= 1) {
-					allComplexFilters.push(`[0:v]${complexVideoFilterPart.join(',')}[v]`);
+			if (complexVideoFilterPart.length >= 1) {
+				allComplexFilters.push(`[0:v]${complexVideoFilterPart.join(',')}[v]`);
 			}
 
-			if(complexAudioFilterPart.length >= 1) {
+			if (complexAudioFilterPart.length >= 1) {
 				allComplexFilters.push(`[0:a]${complexAudioFilterPart.join(',')}[a]`);
 			}
 
-
-			const otherFiltersUsed = volume !== 1 || volumeMode !== 0 || bitrateChanged || converting || willCrop || compressionLevel !== 0 || resizingVideo || allComplexFilters.length >= 1;
+			const otherFiltersUsed =
+				volume !== 1 ||
+				volumeMode !== 0 ||
+				bitrateChanged ||
+				converting ||
+				willCrop ||
+				compressionLevel !== 0 ||
+				resizingVideo ||
+				allComplexFilters.length >= 1;
 			let trimOnNextCall = false;
 			const trimArgs = [
-				'-ss', ms(trimStart * 1000, MS_OPTIONS),
-				'-t', ms((trimEnd - trimStart) * 1000, MS_OPTIONS)
+				'-ss',
+				ms(trimStart * 1000, MS_OPTIONS),
+				'-t',
+				ms((trimEnd - trimStart) * 1000, MS_OPTIONS)
 			];
 
 			// If a WebM is being trimmed and converted, pass along the trim to the next call
@@ -129,12 +163,17 @@
 				// We try two trimming attempts, if the first one fails, then force re-encoding on the next run
 				for (let attempt = 0; attempt < 2; attempt++) {
 					const forceReencoding = attempt !== 0;
-					console.info("Running intermediary FFmpeg command", forceReencoding ? '(forced re-encoding)' : '(initial run)');
+					console.info(
+						'Running intermediary FFmpeg command',
+						forceReencoding ? '(forced re-encoding)' : '(initial run)'
+					);
 					await runFFmpeg([
 						'-i',
 						`in.${extension}`,
 						...trimArgs,
-						...((trimReencoding || forceReencoding) ? ['-preset', 'ultrafast'] : ['-c:v', 'copy', '-c:a', 'copy']),
+						...(trimReencoding || forceReencoding
+							? ['-preset', 'ultrafast']
+							: ['-c:v', 'copy', '-c:a', 'copy']),
 						`clip.${extension}`
 					]);
 					if ($ffmpegAborted && attempt === 0) {
@@ -147,14 +186,12 @@
 				}
 			}
 
-
 			if (!otherFiltersUsed) {
 				// no other filters used
-				await ffmpeg.rename(`in.${extension}`, `out.${extension}`)
-			}
-			else {
-				const complexFilter: string = allComplexFilters.length >= 1 ? allComplexFilters.join(';') : '';
-
+				await ffmpeg.rename(`in.${extension}`, `out.${extension}`);
+			} else {
+				const complexFilter: string =
+					allComplexFilters.length >= 1 ? allComplexFilters.join(';') : '';
 
 				const ffCommand = [
 					'-i',
@@ -162,22 +199,31 @@
 					...(willBeTrimmed && trimOnNextCall ? trimArgs : []),
 					...(volume === 0
 						? ['-an']
-						: ((complexAudioFilterPart.length >= 1)
+						: complexAudioFilterPart.length >= 1
 							? []
-							: (!converting && !bitrateChanged && allComplexFilters.length === 0
+							: !converting && !bitrateChanged && allComplexFilters.length === 0
 								? ['-c:a', 'copy']
-								: []))),
+								: []),
 					...(bitrateChanged && volume !== 0 ? ['-b:a', `${bitrate}k`] : []),
-					...(complexFilter ? ['-filter_complex', complexFilter, ...(complexVideoFilterPart.length >= 1 ? ['-map', '[v]'] : ['-map', '0:v']), ...(complexAudioFilterPart.length >= 1 ? ['-map', '[a]'] : ['-map', '0:a'])] : []),
-					...(
-						(complexVideoFilterPart.length >= 1) ? [] :
-						(complexVideoFilterPart.length >= 1 || (extension === 'webm' && outExt === 'mp4' || compressionLevel !== 0)
-						? [] : ['-c:v', 'copy'])
-					),
-					...(compressionArgs[compressionLevel]),
+					...(complexFilter
+						? [
+								'-filter_complex',
+								complexFilter,
+								...(complexVideoFilterPart.length >= 1 ? ['-map', '[v]'] : ['-map', '0:v']),
+								...(complexAudioFilterPart.length >= 1 ? ['-map', '[a]'] : ['-map', '0:a'])
+							]
+						: []),
+					...(complexVideoFilterPart.length >= 1
+						? []
+						: complexVideoFilterPart.length >= 1 ||
+							  (extension === 'webm' && outExt === 'mp4') ||
+							  compressionLevel !== 0
+							? []
+							: ['-c:v', 'copy']),
+					...compressionArgs[compressionLevel],
 					`out.${outExt}`
 				];
-				console.info("Running FFmpeg command");
+				console.info('Running FFmpeg command');
 				await runFFmpeg(ffCommand);
 			}
 
@@ -273,7 +319,8 @@
 
 	$: if (cropWidth === undefined && videoWidth) cropWidth = videoWidth;
 	$: if (cropHeight === undefined && videoHeight) cropHeight = videoHeight;
-	$: willCrop = cropX !== 0 || cropY !== 0 || cropWidth !== videoWidth || cropHeight !== videoHeight;
+	$: willCrop =
+		cropX !== 0 || cropY !== 0 || cropWidth !== videoWidth || cropHeight !== videoHeight;
 
 	// Filter variables
 	let volume = 1;
@@ -376,8 +423,7 @@
 			onClose() {
 				bitrate = 0;
 			}
-		},
-
+		}
 	};
 
 	function onKeyPress(e: KeyboardEvent) {
@@ -505,9 +551,16 @@
 			/>
 
 			<CropHandler
-				show={showCropHandles} {video}
-				{cropX} {cropY} {cropWidth} {cropHeight}
-				{videoWidth} {videoHeight} {playerWidth} {playerHeight}
+				show={showCropHandles}
+				{video}
+				{cropX}
+				{cropY}
+				{cropWidth}
+				{cropHeight}
+				{videoWidth}
+				{videoHeight}
+				{playerWidth}
+				{playerHeight}
 				on:set={(e) => {
 					if (e.detail.x !== undefined && !isNaN(e.detail.x)) cropX = e.detail.x;
 					if (e.detail.y !== undefined && !isNaN(e.detail.y)) cropY = e.detail.y;
@@ -535,11 +588,7 @@
 			<PlayerButton icon={skipNextIcon} title="Seek to end" on:click={() => seek(duration)} />
 		</div>
 		<div class="flex justify-center gap-2 sm:absolute right-0">
-			<ScreenshotButtons
-				{video} {basename} {willCrop}
-				{cropX} {cropY}
-				{cropWidth} {cropHeight}
-			/>
+			<ScreenshotButtons {video} {basename} {willCrop} {cropX} {cropY} {cropWidth} {cropHeight} />
 		</div>
 	</div>
 
@@ -706,23 +755,29 @@
 	>
 		{#if tab === 'trim'}
 			<Trim
-				{trimStart} {trimEnd}
-				{duration} {currentTime}
-				{trimReencoding} {cantTrimReencode}
+				{trimStart}
+				{trimEnd}
+				{duration}
+				{currentTime}
+				{trimReencoding}
+				{cantTrimReencode}
 				on:setstart={(e) => (trimStart = e.detail)}
 				on:setend={(e) => (trimEnd = e.detail)}
 				on:setreencoding={(e) => (trimReencoding = e.detail)}
 			/>
 		{:else if tab === 'volume'}
 			<Volume
-				{volume} {volumeMode} {loudnormArgs}
+				{volume}
+				{volumeMode}
+				{loudnormArgs}
 				on:set={(e) => (volume = e.detail)}
 				on:setmode={(e) => (volumeMode = e.detail)}
 				on:setloudnorm={(e) => (loudnormArgs = e.detail)}
 			/>
 		{:else if tab === 'resize'}
 			<Resize
-				{resizeWidth} {resizeHeight}
+				{resizeWidth}
+				{resizeHeight}
 				on:set={(e) => {
 					if (e.detail.w !== undefined) resizeWidth = e.detail.w;
 					if (e.detail.h !== undefined) resizeHeight = e.detail.h;
@@ -736,9 +791,12 @@
 			<Bitrate {bitrate} on:set={(e) => (bitrate = e.detail)} />
 		{:else if tab === 'crop'}
 			<Crop
-				{cropX} {cropY}
-				{cropWidth} {cropHeight}
-				{videoWidth} {videoHeight}
+				{cropX}
+				{cropY}
+				{cropWidth}
+				{cropHeight}
+				{videoWidth}
+				{videoHeight}
 				on:set={(e) => {
 					if (e.detail.x !== undefined) cropX = e.detail.x;
 					if (e.detail.y !== undefined) cropY = e.detail.y;
@@ -748,12 +806,14 @@
 			/>
 		{:else if tab === 'speed'}
 			<Speed
-				{semitoneFactor} {keepPitch} {speedFactor}
+				{semitoneFactor}
+				{keepPitch}
+				{speedFactor}
 				on:set={(e) => {
 					if (e.detail.s !== undefined) speedFactor = e.detail.s;
 					if (e.detail.t !== undefined) semitoneFactor = e.detail.t;
 				}}
-				on:setKeepPitch={(e) => keepPitch = e.detail}
+				on:setKeepPitch={(e) => (keepPitch = e.detail)}
 			/>
 		{/if}
 	</EditorTabs>

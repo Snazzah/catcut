@@ -6,12 +6,12 @@
 </script>
 
 <svelte:head>
-	<script src="/lib/jsmediatags.min.js" />
+	<script src="/lib/jsmediatags.min.js"></script>
 	{#if PUBLIC_PLAUSIBLE_HOSTNAME}
 		<script
 			data-domain={location.hostname}
 			src="https://{PUBLIC_PLAUSIBLE_HOSTNAME}/js/script.pageview-props.tagged-events.js"
-		/>
+		></script>
 	{/if}
 </svelte:head>
 

@@ -91,9 +91,13 @@
 				<div class="flex items-center w-full">
 					<label for={input.id} class="text-white sm:text-lg w-full">{input.name}</label>
 					<input
-						type="number" id={input.id}
+						type="number"
+						id={input.id}
 						class="bg-neutral-900 text-center w-24 outline-none transition-all focus:ring focus:ring-violet-500 rounded px-4 py-2 text-neutral-200 flex-none"
-						value={loudnormArgs[i]} placeholder={`${input.default}`} min={input.min} max={input.max}
+						value={loudnormArgs[i]}
+						placeholder={`${input.default}`}
+						min={input.min}
+						max={input.max}
 						on:change={(e) => {
 							const nextArgs = [...loudnormArgs];
 							nextArgs[i] = parseFloat(e.currentTarget.value);
@@ -113,7 +117,8 @@
 				{/each}
 			</div>
 			<div class="p-2 rounded bg-violet-500/25 text-white sm:text-base text-sm">
-				This uses ffmpeg's 'loudnorm' audio filter to have a more uniform loudness level. The default arguments should work well for most people.
+				This uses ffmpeg's 'loudnorm' audio filter to have a more uniform loudness level. The
+				default arguments should work well for most people.
 			</div>
 		</div>
 	{/if}

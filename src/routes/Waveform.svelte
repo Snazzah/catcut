@@ -21,8 +21,7 @@
 		wavesurfer.loadBlob(file instanceof RemoteFile ? file.blob! : file);
 
 		return () => wavesurfer.destroy();
-	})
+	});
 </script>
-
 
 <div class="h-full pointer-events-none relative z-0" bind:this={container} />

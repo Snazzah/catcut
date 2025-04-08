@@ -6,7 +6,7 @@
 
 <svelte:head>
 	<title>Privacy Policy - catcut</title>
-	<link href="https://catcut.snaz.in/privacy" rel="canonical">
+	<link href="https://catcut.snaz.in/privacy" rel="canonical" />
 </svelte:head>
 
 <main class="flex flex-col items-center justify-center min-h-screen">
@@ -14,14 +14,18 @@
 		<Icon icon={catcut} class="w-16 h-16" />
 		<h1 class="text-3xl font-bold text-white mb-4">Privacy Policy</h1>
 		<p>
-			catcut <b>does not send or store any of your media used in the app to a server</b>, all processing is done in the browser.
+			catcut <b>does not send or store any of your media used in the app to a server</b>, all
+			processing is done in the browser.
 		</p>
 		<br />
 		<p>
-			use of any third-party service (like Dropbox, Google Drive, etc.) will only be used to retrieve the requested file by the user to be downloaded into webapp from the browser.
-			when authenticating with Google, an access token is retrieved and is used to download requested files (via Google File Picker) from that service.
-			authorization data and access tokens are stored in the browser (using local storage) and is never sent to any third-party server.
-			authorization data and access tokens stored using catcut is secure and only accessible through the catcut app. security procedures are in place to protect the confidentiality of your data.
+			use of any third-party service (like Dropbox, Google Drive, etc.) will only be used to
+			retrieve the requested file by the user to be downloaded into webapp from the browser. when
+			authenticating with Google, an access token is retrieved and is used to download requested
+			files (via Google File Picker) from that service. authorization data and access tokens are
+			stored in the browser (using local storage) and is never sent to any third-party server.
+			authorization data and access tokens stored using catcut is secure and only accessible through
+			the catcut app. security procedures are in place to protect the confidentiality of your data.
 		</p>
 		{#if PUBLIC_PLAUSIBLE_HOSTNAME}
 			<br />
@@ -43,7 +47,7 @@
 	b {
 		@apply text-neutral-200;
 	}
-	a[href^="http"] {
+	a[href^='http'] {
 		@apply text-violet-300 transition-colors;
 		&:hover {
 			@apply text-violet-400;

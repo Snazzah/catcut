@@ -51,8 +51,10 @@
 		const coverExt = changedCover instanceof File ? changedCover.type.split('/')[1] : null;
 
 		try {
-			window.plausible?.('File saved', { props: { extension } })
-		} catch (e) { /** */ }
+			window.plausible?.('File saved', { props: { extension } });
+		} catch (e) {
+			/** */
+		}
 
 		try {
 			console.time('ffmpeg');
@@ -64,37 +66,67 @@
 			processState = ProcessingState.RUNNING;
 			const start = Date.now();
 
-			const complexPitchSpeedAudioCommand = generatePitchSpeedAudioCommand(speedFactor, keepPitch, semitoneFactor);
-			const volumeFilter = (volume !== 1 || volumeMode !== 0) && volumeMode === 0 ? `volume=${volume.toFixed(2)}` : '';
-			const loudNormFilter = (volume !== 1 || volumeMode !== 0) && volumeMode === 1 ? `loudnorm=I=${loudnormArgs[0].toFixed(2)}:LRA=${loudnormArgs[1].toFixed(2)}:TP=${loudnormArgs[2].toFixed(2)}` : '';
-			const complexAudioFilterPart = [volumeFilter, loudNormFilter, complexPitchSpeedAudioCommand].filter(v=>!!v);
+			const complexPitchSpeedAudioCommand = generatePitchSpeedAudioCommand(
+				speedFactor,
+				keepPitch,
+				semitoneFactor
+			);
+			const volumeFilter =
+				(volume !== 1 || volumeMode !== 0) && volumeMode === 0 ? `volume=${volume.toFixed(2)}` : '';
+			const loudNormFilter =
+				(volume !== 1 || volumeMode !== 0) && volumeMode === 1
+					? `loudnorm=I=${loudnormArgs[0].toFixed(2)}:LRA=${loudnormArgs[1].toFixed(2)}:TP=${loudnormArgs[2].toFixed(2)}`
+					: '';
+			const complexAudioFilterPart = [
+				volumeFilter,
+				loudNormFilter,
+				complexPitchSpeedAudioCommand
+			].filter((v) => !!v);
 			const allComplexFilters: string[] = [];
-			if(complexAudioFilterPart.length >= 1) {
+			if (complexAudioFilterPart.length >= 1) {
 				allComplexFilters.push(`[0:a]${complexAudioFilterPart.join(',')}[a]`);
 			}
-			const complexFilter: string = allComplexFilters.length >= 1 ? allComplexFilters.join(';') : '';
+			const complexFilter: string =
+				allComplexFilters.length >= 1 ? allComplexFilters.join(';') : '';
 
 			console.log(' ---- RUNNING FFmpeg ---- ');
 
 			const bitrateChanged = bitrate > 0;
 
 			await runFFmpeg([
-				'-i', `in.${extension}`,
-				...(coverExt ? [
-					'-i', `cover.${coverExt}`,
-					'-map', '0:0',
-					'-map', '1:0',
-					'-id3v2_version', '3',
-					'-metadata:s:v', 'title=Album cover',
-					'-metadata:s:v', 'comment=Cover (front)'
-				] : changedCover === '' ? ['-vn'] : []),
-				...(willBeTrimmed ? [
-					'-ss', ms(trimStart * 1000, MS_OPTIONS),
-					'-t', ms((trimEnd - trimStart) * 1000, MS_OPTIONS)
-				] : []),
+				'-i',
+				`in.${extension}`,
+				...(coverExt
+					? [
+							'-i',
+							`cover.${coverExt}`,
+							'-map',
+							'0:0',
+							'-map',
+							'1:0',
+							'-id3v2_version',
+							'3',
+							'-metadata:s:v',
+							'title=Album cover',
+							'-metadata:s:v',
+							'comment=Cover (front)'
+						]
+					: changedCover === ''
+						? ['-vn']
+						: []),
+				...(willBeTrimmed
+					? [
+							'-ss',
+							ms(trimStart * 1000, MS_OPTIONS),
+							'-t',
+							ms((trimEnd - trimStart) * 1000, MS_OPTIONS)
+						]
+					: []),
 				...(complexFilter ? ['-filter_complex', complexFilter, '-map', '[a]'] : []),
 				...(bitrateChanged && volume !== 0 ? ['-b:a', `${bitrate}k`] : []),
-				...Object.keys(metadata).map((t) => (['-metadata', `${t}=${metadata[t]?.replaceAll('"', '\\"')}`])).reduce((p, a) => [...p, ...a], []),
+				...Object.keys(metadata)
+					.map((t) => ['-metadata', `${t}=${metadata[t]?.replaceAll('"', '\\"')}`])
+					.reduce((p, a) => [...p, ...a], []),
 				`out.${outExt}`
 			]);
 
@@ -189,7 +221,7 @@
 	// Metadata
 	let metadata: Record<string, string> = {};
 	let changedCover: null | '' | File = null;
-	$: console.log(metadata, changedCover)
+	$: console.log(metadata, changedCover);
 
 	const editorComponents: Record<
 		string,
@@ -312,7 +344,9 @@
 	let audioTags: Tags | null = null;
 	let tagType: string | null = null;
 	$: console.log(`Audio metadata (${tagType})`, audioTags);
-	$: coverSrc = audioTags?.picture?.data ? `data:${audioTags.picture.format};charset=utf-8;base64,${btoa(String.fromCharCode.apply(null, audioTags.picture.data))}` : null;
+	$: coverSrc = audioTags?.picture?.data
+		? `data:${audioTags.picture.format};charset=utf-8;base64,${btoa(String.fromCharCode.apply(null, audioTags.picture.data))}`
+		: null;
 	$: window.jsmediatags?.read(file instanceof RemoteFile ? file.blob! : file, {
 		onSuccess: (tag) => {
 			if (!tag.tags) return;
@@ -588,13 +622,18 @@
 	>
 		{#if tab === 'trim'}
 			<Trim
-				{trimStart} {trimEnd} {duration} {currentTime}
+				{trimStart}
+				{trimEnd}
+				{duration}
+				{currentTime}
 				on:setstart={(e) => (trimStart = e.detail)}
 				on:setend={(e) => (trimEnd = e.detail)}
 			/>
 		{:else if tab === 'volume'}
 			<Volume
-				{volume} {volumeMode} {loudnormArgs}
+				{volume}
+				{volumeMode}
+				{loudnormArgs}
 				on:set={(e) => (volume = e.detail)}
 				on:setmode={(e) => (volumeMode = e.detail)}
 				on:setloudnorm={(e) => (loudnormArgs = e.detail)}
@@ -603,21 +642,30 @@
 			<Convert {toExtension} {extension} on:set={(e) => (toExtension = e.detail)} />
 		{:else if tab === 'speed'}
 			<Speed
-				{semitoneFactor} {keepPitch} {speedFactor}
+				{semitoneFactor}
+				{keepPitch}
+				{speedFactor}
 				on:set={(e) => {
-					if(e.detail.s !== undefined) speedFactor = e.detail.s;
-					if(e.detail.t !== undefined) semitoneFactor = e.detail.t;
+					if (e.detail.s !== undefined) speedFactor = e.detail.s;
+					if (e.detail.t !== undefined) semitoneFactor = e.detail.t;
 				}}
-				on:setKeepPitch={(e) => keepPitch = e.detail}
+				on:setKeepPitch={(e) => (keepPitch = e.detail)}
 			/>
 		{:else if tab === 'bitrate'}
 			<Bitrate {bitrate} on:set={(e) => (bitrate = e.detail)} />
 		{:else if tab === 'metadata'}
-			<Metadata tags={audioTags} {basename} on:set={(e) => {
-				if (e.detail[0] === 'cover') return changedCover = e.detail[1];
-				if (e.detail[1] === null) metadata = Object.keys(metadata).filter((t) => t !== e.detail[0]).reduce((p, t) => ({ ...p, [t]: metadata[t] }), {});
-				else metadata = { ...metadata, [e.detail[0]]: e.detail[1] };
-			}} />
+			<Metadata
+				tags={audioTags}
+				{basename}
+				on:set={(e) => {
+					if (e.detail[0] === 'cover') return (changedCover = e.detail[1]);
+					if (e.detail[1] === null)
+						metadata = Object.keys(metadata)
+							.filter((t) => t !== e.detail[0])
+							.reduce((p, t) => ({ ...p, [t]: metadata[t] }), {});
+					else metadata = { ...metadata, [e.detail[0]]: e.detail[1] };
+				}}
+			/>
 		{/if}
 	</EditorTabs>
 </section>

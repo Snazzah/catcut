@@ -12,19 +12,21 @@
 	export let willCrop: boolean;
 
 	async function screenshot(useCrop = false) {
-    const canvas = document.createElement('canvas');
+		const canvas = document.createElement('canvas');
 
 		if (useCrop) {
 			canvas.width = cropWidth;
 			canvas.height = cropHeight;
-			canvas.getContext('2d')!.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+			canvas
+				.getContext('2d')!
+				.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
 		} else {
 			canvas.width = video.videoWidth;
 			canvas.height = video.videoHeight;
 			canvas.getContext('2d')!.drawImage(video, 0, 0, canvas.width, canvas.height);
 		}
 
-		canvas.toBlob(async function(blob) {
+		canvas.toBlob(async function (blob) {
 			canvas.remove();
 			if (!blob) return;
 			const url = URL.createObjectURL(blob);
@@ -42,8 +44,18 @@
 </script>
 
 <div class="flex justify-center gap-2">
-	<PlayerButton canBeSmall icon={cameraIcon} title="Screenshot frame" on:click={() => screenshot()} />
+	<PlayerButton
+		canBeSmall
+		icon={cameraIcon}
+		title="Screenshot frame"
+		on:click={() => screenshot()}
+	/>
 	{#if willCrop}
-		<PlayerButton canBeSmall icon={cameraCrop} title="Screenshot frame with crop" on:click={() => screenshot(true)} />
+		<PlayerButton
+			canBeSmall
+			icon={cameraCrop}
+			title="Screenshot frame with crop"
+			on:click={() => screenshot(true)}
+		/>
 	{/if}
 </div>

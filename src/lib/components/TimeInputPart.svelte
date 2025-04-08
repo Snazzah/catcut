@@ -21,7 +21,7 @@
 
 	// .toFixed rounds up, but i dont want that
 	function fixPlaces(num: number) {
-		return seconds ? (Math.floor(num * 100) / 100) : Math.trunc(num);
+		return seconds ? Math.floor(num * 100) / 100 : Math.trunc(num);
 	}
 
 	function fixNumber(num: number) {
@@ -82,7 +82,7 @@
 		margin: 0;
 	}
 
-	input[type=number] {
+	input[type='number'] {
 		appearance: textfield;
 	}
 
@@ -94,8 +94,8 @@
 		input {
 			@apply w-6 bg-transparent h-7 text-right transition-colors;
 
-
-			&:hover, &:focus {
+			&:hover,
+			&:focus {
 				@apply outline-none bg-violet-600/25 text-white;
 			}
 		}
@@ -112,7 +112,9 @@
 			}
 		}
 
-		&:hover button, & input:focus + button, & input:focus + button + button {
+		&:hover button,
+		& input:focus + button,
+		& input:focus + button + button {
 			@apply opacity-100 pointer-events-auto;
 		}
 	}

@@ -8,9 +8,9 @@ const config = {
 		},
 
 		extend: {
-      backgroundImage: {
-        'crop-line': "url('/images/cropline.gif')",
-      }
+			backgroundImage: {
+				'crop-line': "url('/images/cropline.gif')"
+			}
 		}
 	}
 };

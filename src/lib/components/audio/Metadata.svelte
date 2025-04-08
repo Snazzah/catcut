@@ -11,7 +11,9 @@
 
 	// For later reference: https://wiki.multimedia.cx/index.php/FFmpeg_Metadata
 
-	$: tagComment = !tags?.TXXX?.data?.user_description ? tags?.TXXX?.data?.data as string : undefined;
+	$: tagComment = !tags?.TXXX?.data?.user_description
+		? (tags?.TXXX?.data?.data as string)
+		: undefined;
 	let defaultTags: Record<string, string> = {
 		title: tags?.title ?? '',
 		artist: tags?.artist ?? '',
@@ -20,21 +22,21 @@
 		genre: tags?.genre ?? '',
 		track: tags?.track ?? '',
 		// jsmediatags uses TYER/TYE but some dont use that so we are just gonna use date as a year
-		date: tags?.TDRC?.data as string ?? '',
-		album_artist: tags?.TPE2?.data as string ?? tags?.TP2?.data as string ?? '',
-		copyright: tags?.TCOP?.data as string ?? '',
-		grouping: tags?.TIT1?.data as string ?? '',
-		composer: tags?.TCOM?.data as string ?? '',
+		date: (tags?.TDRC?.data as string) ?? '',
+		album_artist: (tags?.TPE2?.data as string) ?? (tags?.TP2?.data as string) ?? '',
+		copyright: (tags?.TCOP?.data as string) ?? '',
+		grouping: (tags?.TIT1?.data as string) ?? '',
+		composer: (tags?.TCOM?.data as string) ?? '',
 
 		// VLC: publisher
-		TPUB: tags?.TPUB?.data as string ?? '',
+		TPUB: (tags?.TPUB?.data as string) ?? '',
 
 		// Windows properties windows uses TXXX for comments with short_description = ""
 		// VLC also uses this for track total making user_description = "TRACKTOTAL"
 		comment: (tags?.comment as any as { text?: string })?.text ?? tagComment ?? '',
 
 		// VLC: language
-		language: tags?.TLAN?.data as string ?? ''
+		language: (tags?.TLAN?.data as string) ?? ''
 	};
 	let cover = tags?.picture?.data ? 'applied' : '';
 
@@ -63,8 +65,9 @@
 		return ((e: Event & { target: EventTarget & HTMLInputElement }) => {
 			const value = e.target.value;
 			const changed = value !== defaultTags[tag];
-			if (changed && !changedTags.includes(tag)) changedTags = [ ...changedTags, tag ];
-			else if (!changed && changedTags.includes(tag)) changedTags = changedTags.filter((t) => t !== tag);
+			if (changed && !changedTags.includes(tag)) changedTags = [...changedTags, tag];
+			else if (!changed && changedTags.includes(tag))
+				changedTags = changedTags.filter((t) => t !== tag);
 			dispatch('set', [tag, changed ? value : null]);
 		}) as any;
 	}
@@ -72,14 +75,14 @@
 	let fileInput: HTMLInputElement;
 	let files: FileList | null = null;
 	$: if (files && files[0]) {
-		changedTags = [ ...changedTags, 'cover' ];
+		changedTags = [...changedTags, 'cover'];
 		cover = 'custom';
 		dispatch('set', ['cover', files[0]]);
 	}
-	$: console.log(changedTags)
+	$: console.log(changedTags);
 
 	function downloadCover() {
-		if(tags?.picture?.data) {
+		if (tags?.picture?.data) {
 			const a = document.createElement('a');
 			a.href = `data:${tags.picture.format};charset=utf-8;base64,${btoa(String.fromCharCode.apply(null, tags.picture.data))}`;
 			a.download = `catcut_cover_${basename}.${tags.picture.format.split('/')[1]}`;
@@ -112,7 +115,7 @@
 								class="hidden"
 								accept="image/png, image/jpeg"
 								bind:files
-								on:input={() => files = fileInput.files}
+								on:input={() => (files = fileInput.files)}
 								bind:this={fileInput}
 							/>
 						{/if}
@@ -143,7 +146,7 @@
 									class="transition-colors hover:text-white py-1"
 									on:click={() => {
 										const changed = defaultTags.cover !== '';
-										if (changed) changedTags = [ ...changedTags, tag ];
+										if (changed) changedTags = [...changedTags, tag];
 										else changedTags = changedTags.filter((t) => t !== tag);
 										files = null;
 										cover = '';
@@ -154,7 +157,10 @@
 								</button>
 							{/if}
 							{#if defaultTags.cover === 'applied' && cover === 'applied'}
-								<button class="bg-neutral-700 text-white rounded px-2 py-1" on:click={downloadCover}>
+								<button
+									class="bg-neutral-700 text-white rounded px-2 py-1"
+									on:click={downloadCover}
+								>
 									<Icon icon={downloadIcon} class="w-6 h-6" />
 								</button>
 							{/if}

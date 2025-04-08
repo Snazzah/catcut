@@ -85,8 +85,8 @@
 				await window.gapi.client.load('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest');
 				pickerInited = true;
 			})}
-	/>
-	<script async defer src="https://accounts.google.com/gsi/client" on:load={gisLoaded} />
+	></script>
+	<script async defer src="https://accounts.google.com/gsi/client" on:load={gisLoaded}></script>
 	<title>Google Drive Picker - catcut</title>
 </svelte:head>
 

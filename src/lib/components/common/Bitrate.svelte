@@ -8,7 +8,7 @@
 		[96]: 'Optimal',
 		[48]: 'Bad',
 		[8]: 'Terrible'
-	}
+	};
 	const dispatch = createEventDispatcher();
 </script>
 

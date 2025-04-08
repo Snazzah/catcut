@@ -51,13 +51,10 @@
 	<div class="flex flex-col gap-4 m-2">
 		<p>
 			<b class="text-violet-500">
-				<Icon
-					icon={catcut}
-					class='inline-block'
-					inline
-				/>
+				<Icon icon={catcut} class="inline-block" inline />
 				catcut
-			</b> is a web app that uses
+			</b>
+			is a web app that uses
 			<a
 				href="https://ffmpegwasm.netlify.app/"
 				target="_blank"
@@ -119,7 +116,10 @@
 <Modal open={settingsModalOpen} on:clickout={() => (settingsModalOpen = false)}>
 	<div class="flex flex-col gap-4 m-2">
 		<div class="flex flex-col gap-2 text-white">
-			<CheckBoxButton checked={$analyticsOptOut} on:click={() => ($analyticsOptOut = !$analyticsOptOut)}>
+			<CheckBoxButton
+				checked={$analyticsOptOut}
+				on:click={() => ($analyticsOptOut = !$analyticsOptOut)}
+			>
 				Opt-out of anonymous analytics
 			</CheckBoxButton>
 			<p>

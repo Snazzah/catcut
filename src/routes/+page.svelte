@@ -24,7 +24,7 @@
 
 <svelte:head>
 	<title>catcut</title>
-	<link href="https://catcut.snaz.in/" rel="canonical">
+	<link href="https://catcut.snaz.in/" rel="canonical" />
 </svelte:head>
 
 <main

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { clamp } from "$lib/util";
-	import { createEventDispatcher } from "svelte";
+	import { clamp } from '$lib/util';
+	import { createEventDispatcher } from 'svelte';
 
 	export let cropX: number;
 	export let cropY: number;
@@ -31,10 +31,9 @@
 			dragOffsetX = e.clientX - x;
 			dragOffsetY = e.clientY - y;
 			dragMode = mode;
-		}
+		};
 	}
 </script>
-
 
 <svelte:body
 	on:mousemove={(e) => {
@@ -47,14 +46,22 @@
 
 		let newProps = {};
 
-		if (dragMode.includes('n') && !(movedY < 0 && cropY <= 0) && !(movedY > 0 && cropHeight <= cropMin)) {
+		if (
+			dragMode.includes('n') &&
+			!(movedY < 0 && cropY <= 0) &&
+			!(movedY > 0 && cropHeight <= cropMin)
+		) {
 			newProps = {
 				y: clamp(Math.round(resultY), 0, videoHeight - cropMin),
 				h: clamp(Math.round(cropHeight - movedY), cropMin, videoHeight),
 				...newProps
 			};
 		}
-		if (dragMode.includes('w') && !(movedX < 0 && cropX <= 0) && !(movedX > 0 && cropWidth <= cropMin)) {
+		if (
+			dragMode.includes('w') &&
+			!(movedX < 0 && cropX <= 0) &&
+			!(movedX > 0 && cropWidth <= cropMin)
+		) {
 			newProps = {
 				x: clamp(Math.round(resultX), 0, videoWidth - cropMin),
 				w: clamp(Math.round(cropWidth - movedX), cropMin, videoWidth),
@@ -145,13 +152,19 @@
 			<div class="h-full w-px opacity-30 absolute right-0 bg-white bg-crop-line" />
 
 			<!-- Free Move Box -->
-			<button class="w-full h-full absolute top-0 cursor-move" on:mousedown={startDrag('f')}  />
+			<button class="w-full h-full absolute top-0 cursor-move" on:mousedown={startDrag('f')} />
 
 			<!-- Drag Bars -->
 			<button class="w-full h-1.5 absolute -top-1 cursor-n-resize" on:mousedown={startDrag('n')} />
-			<button class="w-full h-1.5 absolute -bottom-1 cursor-s-resize" on:mousedown={startDrag('s')} />
+			<button
+				class="w-full h-1.5 absolute -bottom-1 cursor-s-resize"
+				on:mousedown={startDrag('s')}
+			/>
 			<button class="h-full w-1.5 absolute -left-1 cursor-w-resize" on:mousedown={startDrag('w')} />
-			<button class="h-full w-1.5 absolute -right-1 cursor-e-resize" on:mousedown={startDrag('e')} />
+			<button
+				class="h-full w-1.5 absolute -right-1 cursor-e-resize"
+				on:mousedown={startDrag('e')}
+			/>
 
 			<!-- Corner Handles -->
 			<div class="opacity-50">

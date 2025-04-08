@@ -71,7 +71,10 @@
 	{:else if processState === ProcessingState.RUNNING}
 		<span>Running... ({($ffmpegProgress * 100 * speedFactor).toFixed(2)}%)</span>
 		<div class="h-2 relative bg-black/50 w-full rounded overflow-hidden mt-2">
-			<div class="bg-violet-500 h-full transition-all" style:width={`${$ffmpegProgress * 100 * speedFactor}%`} />
+			<div
+				class="bg-violet-500 h-full transition-all"
+				style:width={`${$ffmpegProgress * 100 * speedFactor}%`}
+			/>
 		</div>
 	{:else if processState === ProcessingState.READING}
 		<span>Reading result...</span>

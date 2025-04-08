@@ -14,8 +14,9 @@
 		// 'as any' the function cause of inconsistent types n such
 		return ((e: Event & { target: EventTarget & HTMLInputElement }) => {
 			const newValue = e.target.valueAsNumber;
-			if (parseInt(e.target.min) > newValue) dispatch('set', { [prop]: parseInt(e.target.min) })
-			else if (parseInt(e.target.max) < newValue) dispatch('set', { [prop]: parseInt(e.target.max) })
+			if (parseInt(e.target.min) > newValue) dispatch('set', { [prop]: parseInt(e.target.min) });
+			else if (parseInt(e.target.max) < newValue)
+				dispatch('set', { [prop]: parseInt(e.target.max) });
 			else dispatch('set', { [prop]: newValue });
 		}) as any;
 	}
@@ -23,8 +24,12 @@
 
 <div class="flex flex-col md:flex-row md:justify-between items-center gap-4 md:text-xl h-full">
 	<div class="flex flex-wrap items-center md:gap-4 gap-4 w-full">
-		<div class="flex rounded bg-neutral-900 text-neutral-200 overflow-hidden md:w-40 w-[calc(50%-8px)]">
-			<label for="crop-x" class="px-4 py-2 bg-neutral-700 font-bold flex-none w-12 text-center">X</label>
+		<div
+			class="flex rounded bg-neutral-900 text-neutral-200 overflow-hidden md:w-40 w-[calc(50%-8px)]"
+		>
+			<label for="crop-x" class="px-4 py-2 bg-neutral-700 font-bold flex-none w-12 text-center"
+				>X</label
+			>
 			<input
 				id="crop-x"
 				type="number"
@@ -35,8 +40,12 @@
 				on:change={onChange('x')}
 			/>
 		</div>
-		<div class="flex rounded bg-neutral-900 text-neutral-200 overflow-hidden md:w-40 w-[calc(50%-8px)]">
-			<label for="crop-y" class="px-4 py-2 bg-neutral-700 font-bold flex-none w-12 text-center">Y</label>
+		<div
+			class="flex rounded bg-neutral-900 text-neutral-200 overflow-hidden md:w-40 w-[calc(50%-8px)]"
+		>
+			<label for="crop-y" class="px-4 py-2 bg-neutral-700 font-bold flex-none w-12 text-center"
+				>Y</label
+			>
 			<input
 				id="crop-y"
 				type="number"
@@ -47,8 +56,12 @@
 				on:change={onChange('y')}
 			/>
 		</div>
-		<div class="flex rounded bg-neutral-900 text-neutral-200 overflow-hidden md:w-40 w-[calc(50%-8px)]">
-			<label for="crop-w" class="px-4 py-2 bg-neutral-700 font-bold flex-none w-12 text-center">W</label>
+		<div
+			class="flex rounded bg-neutral-900 text-neutral-200 overflow-hidden md:w-40 w-[calc(50%-8px)]"
+		>
+			<label for="crop-w" class="px-4 py-2 bg-neutral-700 font-bold flex-none w-12 text-center"
+				>W</label
+			>
 			<input
 				id="crop-w"
 				type="number"
@@ -59,8 +72,12 @@
 				on:change={onChange('w')}
 			/>
 		</div>
-		<div class="flex rounded bg-neutral-900 text-neutral-200 overflow-hidden md:w-40 w-[calc(50%-8px)]">
-			<label for="crop-h" class="px-4 py-2 bg-neutral-700 font-bold flex-none w-12 text-center">H</label>
+		<div
+			class="flex rounded bg-neutral-900 text-neutral-200 overflow-hidden md:w-40 w-[calc(50%-8px)]"
+		>
+			<label for="crop-h" class="px-4 py-2 bg-neutral-700 font-bold flex-none w-12 text-center"
+				>H</label
+			>
 			<input
 				id="crop-h"
 				type="number"
@@ -75,7 +92,10 @@
 	<div class="text-base">
 		<button
 			class="font-bold enabled:hover:underline enabled:text-white px-5 py-2 transition-all"
-			disabled={cropX === 0 && cropY === 0 && cropWidth === videoWidth && cropHeight === videoHeight}
+			disabled={cropX === 0 &&
+				cropY === 0 &&
+				cropWidth === videoWidth &&
+				cropHeight === videoHeight}
 			on:click={() => dispatch('set', { x: 0, y: 0, w: videoWidth, h: videoHeight })}
 		>
 			Reset

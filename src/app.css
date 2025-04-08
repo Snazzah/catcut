@@ -59,11 +59,11 @@ html {
 }
 
 .no-spinner {
-  -moz-appearance: textfield;
+	-moz-appearance: textfield;
 }
 
 .no-spinner::-webkit-outer-spin-button,
 .no-spinner::-webkit-inner-spin-button {
-  margin: 0;
-  -webkit-appearance: none;
+	margin: 0;
+	-webkit-appearance: none;
 }

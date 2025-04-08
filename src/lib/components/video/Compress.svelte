@@ -25,6 +25,7 @@
 	</div>
 	<div class="p-2 rounded bg-yellow-500/25 text-white sm:text-base text-sm">
 		<Icon icon={warningIcon} inline class="inline" />
-		Compression takes a long time to process, the higher level of compression means the worse the quality. Most use cases can use 'Optimal'.
+		Compression takes a long time to process, the higher level of compression means the worse the quality.
+		Most use cases can use 'Optimal'.
 	</div>
 </div>

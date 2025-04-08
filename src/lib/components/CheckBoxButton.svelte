@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Icon from "@iconify/svelte";
+	import Icon from '@iconify/svelte';
 	import uncheckIcon from '@iconify-icons/mdi/checkbox-blank-outline';
 	import checkIcon from '@iconify-icons/mdi/checkbox-marked';
 	import infoIcon from '@iconify-icons/mdi/information-slab-circle';
@@ -37,10 +37,10 @@
 	<span><slot /></span>
 	{#if info}
 		<button
-			on:mouseenter={() => showInfo = true}
-			on:mouseleave={() => showInfo = false}
-			on:focus={() => showInfo = true}
-			on:blur={() => showInfo = false}
+			on:mouseenter={() => (showInfo = true)}
+			on:mouseleave={() => (showInfo = false)}
+			on:focus={() => (showInfo = true)}
+			on:blur={() => (showInfo = false)}
 			on:click|stopPropagation
 			use:floatingRef
 		>

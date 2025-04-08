@@ -11,20 +11,16 @@
 	const [floatingRef, floatingContent] = createFloatingActions({
 		strategy: 'absolute',
 		placement: 'bottom',
-		middleware: [
-			offset(8),
-			shift()
-		]
+		middleware: [offset(8), shift()]
 	});
 </script>
 
-
 <button
-	on:mouseenter={() => showTooltip = true}
-	on:mouseleave={() => showTooltip = false}
-	on:mousedown={() => showTooltip = false}
-	on:focus={() => showTooltip = true}
-	on:blur={() => showTooltip = false}
+	on:mouseenter={() => (showTooltip = true)}
+	on:mouseleave={() => (showTooltip = false)}
+	on:mousedown={() => (showTooltip = false)}
+	on:focus={() => (showTooltip = true)}
+	on:blur={() => (showTooltip = false)}
 	aria-label={title}
 	on:click|stopPropagation
 	use:floatingRef

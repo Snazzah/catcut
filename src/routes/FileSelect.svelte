@@ -46,21 +46,21 @@
 	}
 
 	async function fetchFile(file: string, fileName: string | null = null) {
-			noSelect = true;
-			try {
-				const fileURL = new URL(file);
-				if (fileURL.protocol !== 'https:' && fileURL.protocol !== 'http:')
-					throw new Error('Bad protocol');
-				const name = fileName || file.split('/').reverse()[0];
-				const remoteFile = await RemoteFile.fetch(file, name);
-				if (typeAllowed(remoteFile.type)) inputFile = remoteFile;
-			} catch (e) {
-				console.error(e);
-				modalOpen = true;
-				rejectionMessage = 'Could not fetch remote file.';
-			}
-			noSelect = false;
+		noSelect = true;
+		try {
+			const fileURL = new URL(file);
+			if (fileURL.protocol !== 'https:' && fileURL.protocol !== 'http:')
+				throw new Error('Bad protocol');
+			const name = fileName || file.split('/').reverse()[0];
+			const remoteFile = await RemoteFile.fetch(file, name);
+			if (typeAllowed(remoteFile.type)) inputFile = remoteFile;
+		} catch (e) {
+			console.error(e);
+			modalOpen = true;
+			rejectionMessage = 'Could not fetch remote file.';
 		}
+		noSelect = false;
+	}
 
 	async function getQueuedFile() {
 		const url = new URL(location.href);
@@ -128,7 +128,7 @@
 	}
 
 	onMount(async () => {
-		if (dropboxAllowed) loadDropbox().then(() => dropboxAvailable = true);
+		if (dropboxAllowed) loadDropbox().then(() => (dropboxAvailable = true));
 		if ($ffmpegReady) return;
 		load();
 	});
@@ -196,7 +196,7 @@
 					</div>
 					<span class="text-xs text-neutral-400">
 						{filesize($downloadedBytes, { standard: 'jedec' })} /
-						{filesize($totalBytes, {standard: 'jedec'})}
+						{filesize($totalBytes, { standard: 'jedec' })}
 					</span>
 				{:else}
 					downloading...
@@ -211,10 +211,18 @@
 	>
 		<span> or drop a file anywhere </span>
 		{#if dropboxAllowed && dropboxAvailable}
-			<FilePickerButton icon={dropboxIcon} title="Choose from Dropbox" on:click={() => chooseDropbox()} />
+			<FilePickerButton
+				icon={dropboxIcon}
+				title="Choose from Dropbox"
+				on:click={() => chooseDropbox()}
+			/>
 		{/if}
 		{#if googleAllowed}
-			<FilePickerButton icon={driveIcon} title="Choose from Google Drive" on:click={() => (location.href = '/googledrive')} />
+			<FilePickerButton
+				icon={driveIcon}
+				title="Choose from Google Drive"
+				on:click={() => (location.href = '/googledrive')}
+			/>
 		{/if}
 	</span>
 </div>
