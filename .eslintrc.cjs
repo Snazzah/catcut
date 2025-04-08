@@ -24,6 +24,9 @@ module.exports = {
 		es2017: true,
 		node: true
 	},
+	globals: {
+		BlobPart: "readonly"
+	},
 	overrides: [
 		{
 			files: ['*.svelte'],

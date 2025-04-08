@@ -89,8 +89,8 @@
 
 			let rw2 = resizeWidth;
 				let rh2 = resizeHeight;
-				
-				if(resizingVideo){				
+
+				if(resizingVideo){
 					const aspectRatio = willCrop ? Math.max(cropWidth,1)/Math.max(cropHeight,1) : Math.max(videoWidth,1)/Math.max(videoHeight,1);
 					if(!rw2) {
 						rw2 = rh2 * aspectRatio;
@@ -100,14 +100,14 @@
 					}
 				}
 
-				
+
 			const complexSpeedVideoCommand = speedFactorInternal !== 1 ? `setpts=PTS/${speedFactorInternal}` : '';
 			const complexCropVideoCommand = willCrop ? `crop=${cropWidth}:${cropHeight}:${cropX}:${cropY}` : '';
 			const complexResizeVideoCommand = resizingVideo ? `scale=ceil(${rw2}/2)*2:ceil(${rh2}/2)*2,setsar=1` : '';
 
 			const volumeFilter = (volume !== 1 || volumeMode !== 0) && volumeMode === 0 ? `volume=${volume.toFixed(2)}` : '';
 			const loudNormFilter = (volume !== 1 || volumeMode !== 0) && volumeMode === 1 ? `loudnorm=I=${loudnormArgs[0].toFixed(2)}:LRA=${loudnormArgs[1].toFixed(2)}:TP=${loudnormArgs[2].toFixed(2)}` : '';
-			
+
 			const complexPitchSpeedAudioCommand = generatePitchSpeedAudioCommand(speedFactorInternal, keepPitch, semitoneFactor);
 
 			const complexVideoFilterPart = [complexCropVideoCommand, complexResizeVideoCommand, complexSpeedVideoCommand].filter(v => !!v);
@@ -152,7 +152,7 @@
 			}
 			else {
 				const complexFilter: string = allComplexFilters.length >= 1 ? allComplexFilters.join(';') : '';
-			
+
 
 				const ffCommand = [
 				'-i',
@@ -243,10 +243,6 @@
 	let showTrimHandles = false;
 	$: isDraggingTrimHandle = trimStartHandleDragOffset >= 0 || trimEndHandleDragOffset >= 0;
 	$: handleDistance = ((trimEnd - trimStart) / duration) * timelineWidth;
-
-	let actualDuration = duration;
-	$: actualDuration = trimEnd - trimStart;
-
 
 	// Video variables
 	let video: HTMLVideoElement;
@@ -748,10 +744,10 @@
 			/>
 		{:else if tab === 'speed'}
 				<Speed {semitoneFactor} {keepPitch} {speedFactor} on:set={(e) => {
-					
+
 					if(e.detail.s !== undefined) speedFactor = e.detail.s;
 					if(e.detail.t !== undefined) semitoneFactor = e.detail.t;
-					
+
 					}}
 					on:setKeepPitch={(e) => keepPitch = e.detail}
 					></Speed>
