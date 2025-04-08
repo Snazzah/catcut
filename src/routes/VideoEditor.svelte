@@ -21,7 +21,7 @@
 	import type { IconifyIcon } from '@iconify/svelte';
 	import PreviewStillContainer from './PreviewStillContainer.svelte';
 	import { MS_OPTIONS } from '$lib/util';
-	import { ffmpeg } from '$lib/ffmpeg';
+	import { ffmpeg, ffmpegAborted, runFFmpeg } from '$lib/ffmpeg';
 	import Trim from '$lib/components/video/Trim.svelte';
 	import Volume from '$lib/components/common/Volume.svelte';
 	import EditorTabs from '$lib/components/EditorTabs.svelte';
@@ -47,11 +47,6 @@
 	let modalOpen = false;
 	let processState = ProcessingState.IDLE;
 	let resultInfo: { elapsed: number; size: number } | null = null;
-
-	async function runFFmpeg(args: string[]) {
-		console.log(`Running command: ffmpeg ${args.join(' ')}`);
-		await ffmpeg.exec(args);
-	}
 
 	async function saveVideo() {
 		processState = ProcessingState.WRITING;
@@ -131,15 +126,25 @@
 
 			// For resource intensive calls, we trim first, then run other filters
 			if (willBeTrimmed && !trimOnNextCall) {
-				await runFFmpeg([
-					'-i',
-					`in.${extension}`,
-					...trimArgs,
-					...(trimReencoding ? ['-preset', 'ultrafast'] : ['-c:v', 'copy', '-c:a', 'copy']),
-					`clip.${extension}`
-				]);
-				await ffmpeg.deleteFile(`in.${extension}`);
-				await ffmpeg.rename(`clip.${extension}`, `in.${extension}`);
+				// We try two trimming attempts, if the first one fails, then force re-encoding on the next run
+				for (let attempt = 0; attempt < 2; attempt++) {
+					const forceReencoding = attempt !== 0;
+					console.info("Running intermediary FFmpeg command", forceReencoding ? '(forced re-encoding)' : '(initial run)');
+					await runFFmpeg([
+						'-i',
+						`in.${extension}`,
+						...trimArgs,
+						...((trimReencoding || forceReencoding) ? ['-preset', 'ultrafast'] : ['-c:v', 'copy', '-c:a', 'copy']),
+						`clip.${extension}`
+					]);
+					if ($ffmpegAborted && attempt === 0) {
+						console.warn('Failed to trim cleanly! Forcing re-encoding and trying again...');
+						continue;
+					}
+					await ffmpeg.deleteFile(`in.${extension}`);
+					await ffmpeg.rename(`clip.${extension}`, `in.${extension}`);
+					break;
+				}
 			}
 
 
@@ -152,27 +157,27 @@
 
 
 				const ffCommand = [
-				'-i',
-				`in.${extension}`,
-				...(willBeTrimmed && trimOnNextCall ? trimArgs : []),
-				...(volume === 0
-					? ['-an']
-					: ((complexAudioFilterPart.length >= 1)
-						? []
-						: (!converting && !bitrateChanged && allComplexFilters.length === 0
-							? ['-c:a', 'copy']
-							: []))),
-				...(bitrateChanged && volume !== 0 ? ['-b:a', `${bitrate}k`] : []),
-				...(complexFilter ? ['-filter_complex', complexFilter, ...(complexVideoFilterPart.length >= 1 ? ['-map', '[v]'] : ['-map', '0:v']), ...(complexAudioFilterPart.length >= 1 ? ['-map', '[a]'] : ['-map', '0:a'])] : []),
-				...(
-					(complexVideoFilterPart.length >= 1) ? [] :
-					(complexVideoFilterPart.length >= 1 || (extension === 'webm' && outExt === 'mp4' || compressionLevel !== 0)
-					? [] : ['-c:v', 'copy'])
-				),
-				...(compressionArgs[compressionLevel]),
-				`out.${outExt}`
-			];
-			console.log("Going to run", ffCommand);
+					'-i',
+					`in.${extension}`,
+					...(willBeTrimmed && trimOnNextCall ? trimArgs : []),
+					...(volume === 0
+						? ['-an']
+						: ((complexAudioFilterPart.length >= 1)
+							? []
+							: (!converting && !bitrateChanged && allComplexFilters.length === 0
+								? ['-c:a', 'copy']
+								: []))),
+					...(bitrateChanged && volume !== 0 ? ['-b:a', `${bitrate}k`] : []),
+					...(complexFilter ? ['-filter_complex', complexFilter, ...(complexVideoFilterPart.length >= 1 ? ['-map', '[v]'] : ['-map', '0:v']), ...(complexAudioFilterPart.length >= 1 ? ['-map', '[a]'] : ['-map', '0:a'])] : []),
+					...(
+						(complexVideoFilterPart.length >= 1) ? [] :
+						(complexVideoFilterPart.length >= 1 || (extension === 'webm' && outExt === 'mp4' || compressionLevel !== 0)
+						? [] : ['-c:v', 'copy'])
+					),
+					...(compressionArgs[compressionLevel]),
+					`out.${outExt}`
+				];
+				console.info("Running FFmpeg command");
 				await runFFmpeg(ffCommand);
 			}
 

@@ -19,7 +19,7 @@
 	import PlayerButton from '$lib/components/PlayerButton.svelte';
 	import type { IconifyIcon } from '@iconify/svelte';
 	import { MS_OPTIONS } from '$lib/util';
-	import { ffmpeg } from '$lib/ffmpeg';
+	import { ffmpeg, runFFmpeg } from '$lib/ffmpeg';
 	import EditorTabs from '$lib/components/EditorTabs.svelte';
 	import { fetchFile } from '@ffmpeg/util';
 	import ProcessingModal from './ProcessingModal.svelte';
@@ -42,11 +42,6 @@
 	let modalOpen = false;
 	let processState = ProcessingState.IDLE;
 	let resultInfo: { elapsed: number; size: number } | null = null;
-
-	async function runFFmpeg(args: string[]) {
-		console.log(`Running command: ffmpeg ${args.join(' ')}`);
-		await ffmpeg.exec(args);
-	}
 
 	async function save() {
 		processState = ProcessingState.WRITING;

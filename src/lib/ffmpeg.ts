@@ -19,13 +19,21 @@ export const totalBytes = writable(1);
 export const downloadedBytes = writable(0);
 
 export const ffmpegReady = writable(false);
+export const ffmpegAborted = writable(false);
 
 export const ffmpeg = new FFmpeg();
 (window as any).ffmpeg = ffmpeg;
 (window as any).fetchFile = fetchFile;
 
+export async function runFFmpeg(args: string[]) {
+	console.log(`Running command: ffmpeg ${args.join(' ')}`);
+	ffmpegAborted.set(false);
+	await ffmpeg.exec(args);
+}
+
 ffmpeg.on('log', ({ message }) => {
 	console.log(message);
+	if (message === 'Aborted()') ffmpegAborted.set(true);
 });
 
 export const ffmpegProgress = writable(0);
