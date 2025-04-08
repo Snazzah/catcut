@@ -4,6 +4,7 @@
 	import ms from 'pretty-ms';
 	import type { Tags } from 'jsmediatags/types';
 	import { createEventDispatcher } from 'svelte';
+	import speedIcon from '@iconify-icons/mdi/speedometer-slow';
 	import playIcon from '@iconify-icons/mdi/play-arrow';
 	import pauseIcon from '@iconify-icons/mdi/pause';
 	import back10Icon from '@iconify-icons/mdi/rewind-10';
@@ -18,7 +19,7 @@
 	import PlayerButton from '$lib/components/PlayerButton.svelte';
 	import type { IconifyIcon } from '@iconify/svelte';
 	import { MS_OPTIONS } from '$lib/util';
-	import { ffmpeg } from '$lib/ffmpeg';
+	import { ffmpeg, runFFmpeg } from '$lib/ffmpeg';
 	import EditorTabs from '$lib/components/EditorTabs.svelte';
 	import { fetchFile } from '@ffmpeg/util';
 	import ProcessingModal from './ProcessingModal.svelte';
@@ -28,6 +29,8 @@
 	import Volume from '$lib/components/common/Volume.svelte';
 	import Convert from '$lib/components/audio/Convert.svelte';
 	import Metadata from '$lib/components/audio/Metadata.svelte';
+	import Speed from '$lib/components/common/Speed.svelte';
+	import { generatePitchSpeedAudioCommand } from '$lib/utils/speed-utils';
 
 	export let dispatch = createEventDispatcher();
 	export let file: File | RemoteFile;
@@ -39,11 +42,6 @@
 	let modalOpen = false;
 	let processState = ProcessingState.IDLE;
 	let resultInfo: { elapsed: number; size: number } | null = null;
-
-	async function runFFmpeg(args: string[]) {
-		console.log(`Running command: ffmpeg ${args.join(' ')}`);
-		await ffmpeg.exec(args);
-	}
 
 	async function save() {
 		processState = ProcessingState.WRITING;
@@ -65,6 +63,17 @@
 			if (coverExt) await ffmpeg.writeFile(`cover.${coverExt}`, await fetchFile(changedCover!));
 			processState = ProcessingState.RUNNING;
 			const start = Date.now();
+
+			const complexPitchSpeedAudioCommand = generatePitchSpeedAudioCommand(speedFactor, keepPitch, semitoneFactor);
+			const volumeFilter = (volume !== 1 || volumeMode !== 0) && volumeMode === 0 ? `volume=${volume.toFixed(2)}` : '';
+			const loudNormFilter = (volume !== 1 || volumeMode !== 0) && volumeMode === 1 ? `loudnorm=I=${loudnormArgs[0].toFixed(2)}:LRA=${loudnormArgs[1].toFixed(2)}:TP=${loudnormArgs[2].toFixed(2)}` : '';
+			const complexAudioFilterPart = [volumeFilter, loudNormFilter, complexPitchSpeedAudioCommand].filter(v=>!!v);
+			const allComplexFilters: string[] = [];
+			if(complexAudioFilterPart.length >= 1) {
+				allComplexFilters.push(`[0:a]${complexAudioFilterPart.join(',')}[a]`);
+			}
+			const complexFilter: string = allComplexFilters.length >= 1 ? allComplexFilters.join(';') : '';
+
 			console.log(' ---- RUNNING FFmpeg ---- ');
 
 			const bitrateChanged = bitrate > 0;
@@ -83,11 +92,7 @@
 					'-ss', ms(trimStart * 1000, MS_OPTIONS),
 					'-t', ms((trimEnd - trimStart) * 1000, MS_OPTIONS)
 				] : []),
-				...((volume !== 1 || volumeMode !== 0)
-					? volumeMode === 0
-						? ['-af', `volume=${volume.toFixed(2)}`]
-						: ['-af', `loudnorm=I=${loudnormArgs[0].toFixed(2)}:LRA=${loudnormArgs[1].toFixed(2)}:TP=${loudnormArgs[2].toFixed(2)}`]
-					: []),
+				...(complexFilter ? ['-filter_complex', complexFilter, '-map', '[a]'] : []),
 				...(bitrateChanged && volume !== 0 ? ['-b:a', `${bitrate}k`] : []),
 				...Object.keys(metadata).map((t) => (['-metadata', `${t}=${metadata[t]?.replaceAll('"', '\\"')}`])).reduce((p, a) => [...p, ...a], []),
 				`out.${outExt}`
@@ -95,7 +100,7 @@
 
 			processState = ProcessingState.READING;
 			const data = await ffmpeg.readFile(`out.${outExt}`);
-			const blob = new Blob([(data as Uint8Array).buffer]);
+			const blob = new Blob([(data as Uint8Array).buffer as BlobPart]);
 			const downloadURL = URL.createObjectURL(blob);
 			console.log(' ---- FINISHED ---- ');
 
@@ -176,6 +181,11 @@
 	let toExtension: string | null = null;
 	let bitrate = 0;
 
+	// speed
+	let keepPitch: boolean;
+	let speedFactor: number = 1;
+	let semitoneFactor: number = 0;
+
 	// Metadata
 	let metadata: Record<string, string> = {};
 	let changedCover: null | '' | File = null;
@@ -221,6 +231,13 @@
 			icon: convertIcon,
 			onClose() {
 				toExtension = null;
+			}
+		},
+		speed: {
+			name: 'Speed/Pitch',
+			icon: speedIcon,
+			onClose() {
+				speedFactor = 1;
 			}
 		},
 		bitrate: {
@@ -584,6 +601,15 @@
 			/>
 		{:else if tab === 'convert'}
 			<Convert {toExtension} {extension} on:set={(e) => (toExtension = e.detail)} />
+		{:else if tab === 'speed'}
+			<Speed
+				{semitoneFactor} {keepPitch} {speedFactor}
+				on:set={(e) => {
+					if(e.detail.s !== undefined) speedFactor = e.detail.s;
+					if(e.detail.t !== undefined) semitoneFactor = e.detail.t;
+				}}
+				on:setKeepPitch={(e) => keepPitch = e.detail}
+			/>
 		{:else if tab === 'bitrate'}
 			<Bitrate {bitrate} on:set={(e) => (bitrate = e.detail)} />
 		{:else if tab === 'metadata'}
