@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
 	import driveIcon from '@iconify-icons/mdi/google-drive';
-	import { PUBLIC_GOOGLE_CLIENT_ID, PUBLIC_GOOGLE_KEY } from '$env/static/public';
+	import { env } from '$env/dynamic/public';
 	import { ALLOWED_TYPES } from '$lib/util';
 	import { googleDriveData } from '$lib/data';
 	import type { GoogleTokenResponse } from '$lib/google';
@@ -16,7 +16,7 @@
 
 	function gisLoaded() {
 		tokenClient = window.google.accounts.oauth2.initTokenClient({
-			client_id: PUBLIC_GOOGLE_CLIENT_ID,
+			client_id: env.PUBLIC_GOOGLE_CLIENT_ID,
 			scope: 'https://www.googleapis.com/auth/drive.readonly',
 			callback: ''
 		});
@@ -30,7 +30,7 @@
 			const picker = new window.google.picker.PickerBuilder()
 				.addView(view)
 				.setOAuthToken($googleDriveData!.access_token)
-				.setDeveloperKey(PUBLIC_GOOGLE_KEY)
+				.setDeveloperKey(env.PUBLIC_GOOGLE_KEY)
 				.setCallback(pickerCallback)
 				.build();
 			picker.setVisible(true);
@@ -84,7 +84,8 @@
 			window.gapi.load('client:picker', async () => {
 				await window.gapi.client.load('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest');
 				pickerInited = true;
-			})}
+			})
+		}
 	></script>
 	<script async defer src="https://accounts.google.com/gsi/client" on:load={gisLoaded}></script>
 	<title>Google Drive Picker - catcut</title>
@@ -115,6 +116,6 @@
 				or choose a different account
 			</button>
 		{/if}
-		<a href="/" class="transition-all text-violet-500 hover:text-violet-400 mt-4">&lt;- back</a>
+		<a href="/" class="transition-all text-violet-500 hover:text-violet-400 mt-4">&lt; back</a>
 	{/if}
 </main>

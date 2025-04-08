@@ -13,7 +13,7 @@
 
 Prerequisites for you: working knowledge of Svelte, Vite, and SvelteKit (which depends on knowing HTML, CSS, and JS).
 
-Duplicate `.env.example` into `.env`.
+Duplicate `.env.example` into `.env`. (optional)
 
-Afterwards, run `npm i` (or `pnpm i` if the former doesn't work).
+Afterwards, run `bun install` (preferred) or `pnpm i`.
 To run the development server, run `npm run dev`.

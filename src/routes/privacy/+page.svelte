@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
 	import { catcut } from '$lib/icons';
-	import { PUBLIC_PLAUSIBLE_HOSTNAME } from '$env/static/public';
+	import { env } from '$env/dynamic/public';
 </script>
 
 <svelte:head>
@@ -27,7 +27,7 @@
 			authorization data and access tokens stored using catcut is secure and only accessible through
 			the catcut app. security procedures are in place to protect the confidentiality of your data.
 		</p>
-		{#if PUBLIC_PLAUSIBLE_HOSTNAME}
+		{#if env.PUBLIC_PLAUSIBLE_HOSTNAME}
 			<br />
 			<p>
 				this site uses a self-hosted instance of <a href="https://plausible.io">plausible</a>
@@ -38,7 +38,7 @@
 		{/if}
 		<br />
 		<a href="/" class="transition-all text-violet-500 hover:text-violet-400">
-			&lt;- start using catcut
+			&lt; start using catcut
 		</a>
 	</div>
 </main>

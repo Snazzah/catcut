@@ -1,6 +1,6 @@
-import { PUBLIC_DROPBOX_CLIENT_ID } from '$env/static/public';
+import { env } from '$env/dynamic/public';
 
-export const dropboxAllowed = !!PUBLIC_DROPBOX_CLIENT_ID;
+export const dropboxAllowed = !!env.PUBLIC_DROPBOX_CLIENT_ID;
 
 export function loadDropbox() {
 	if (document.querySelector('#dropboxjs')) return Promise.resolve();
@@ -10,7 +10,7 @@ export function loadDropbox() {
 		script.id = 'dropboxjs';
 		script.type = 'application/javascript';
 		script.src = 'https://www.dropbox.com/static/api/2/dropins.js';
-		script.setAttribute('data-app-key', PUBLIC_DROPBOX_CLIENT_ID);
+		script.setAttribute('data-app-key', env.PUBLIC_DROPBOX_CLIENT_ID);
 
 		script.onload = resolve;
 		script.onerror = reject;

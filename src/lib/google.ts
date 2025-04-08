@@ -1,8 +1,8 @@
 import { get } from 'svelte/store';
 import { googleDriveData } from './data';
-import { PUBLIC_GOOGLE_CLIENT_ID, PUBLIC_GOOGLE_KEY } from '$env/static/public';
+import { env } from '$env/dynamic/public';
 
-export const googleAllowed = !!PUBLIC_GOOGLE_CLIENT_ID && !!PUBLIC_GOOGLE_KEY;
+export const googleAllowed = !!env.PUBLIC_GOOGLE_CLIENT_ID && !!env.PUBLIC_GOOGLE_KEY;
 
 export interface GoogleTokenResponse {
 	access_token: string;
