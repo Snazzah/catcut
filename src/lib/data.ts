@@ -6,3 +6,4 @@ export const googleDriveData = writable<(GoogleTokenResponse & { created: number
 	null
 );
 export const analyticsOptOut = writable<boolean>('plausible_ignore', false);
+export const lastBulletin = writable<string>('catcut-bulletin', '');

@@ -6,6 +6,7 @@
 	import { catcut } from '$lib/icons';
 	import Icon from '@iconify/svelte';
 	import AudioEditor from './AudioEditor.svelte';
+	import Bulletin from './Bulletin.svelte';
 
 	let inputFile: File | RemoteFile | undefined = undefined;
 	let blobURL: string | undefined;
@@ -55,6 +56,7 @@
 	</header>
 
 	{#if !inputFile}
+		<Bulletin />
 		<FileSelect on:file={(e) => (inputFile = e.detail)} />
 		<Footer />
 	{/if}
