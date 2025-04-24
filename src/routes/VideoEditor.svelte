@@ -21,7 +21,7 @@
 	import type { IconifyIcon } from '@iconify/svelte';
 	import PreviewStillContainer from './PreviewStillContainer.svelte';
 	import { MS_OPTIONS } from '$lib/util';
-	import { ffmpeg, ffmpegAborted, runFFmpeg } from '$lib/ffmpeg';
+	import { ffmpeg, runFFmpeg } from '$lib/ffmpeg';
 	import Trim from '$lib/components/video/Trim.svelte';
 	import Volume from '$lib/components/common/Volume.svelte';
 	import EditorTabs from '$lib/components/EditorTabs.svelte';
@@ -160,30 +160,18 @@
 
 			// For resource intensive calls, we trim first, then run other filters
 			if (willBeTrimmed && !trimOnNextCall) {
-				// We try two trimming attempts, if the first one fails, then force re-encoding on the next run
-				for (let attempt = 0; attempt < 2; attempt++) {
-					const forceReencoding = attempt !== 0;
-					console.info(
-						'Running intermediary FFmpeg command',
-						forceReencoding ? '(forced re-encoding)' : '(initial run)'
-					);
-					await runFFmpeg([
-						'-i',
-						`in.${extension}`,
-						...trimArgs,
-						...(trimReencoding || forceReencoding
-							? ['-preset', 'ultrafast']
-							: ['-c:v', 'copy', '-c:a', 'copy']),
-						`clip.${extension}`
-					]);
-					if ($ffmpegAborted && attempt === 0) {
-						console.warn('Failed to trim cleanly! Forcing re-encoding and trying again...');
-						continue;
-					}
-					await ffmpeg.deleteFile(`in.${extension}`);
-					await ffmpeg.rename(`clip.${extension}`, `in.${extension}`);
-					break;
-				}
+				console.info('Running intermediary FFmpeg command');
+				await runFFmpeg([
+					'-i',
+					`in.${extension}`,
+					...trimArgs,
+					...(trimReencoding
+						? ['-preset', 'ultrafast']
+						: ['-c:v', 'copy', '-c:a', 'copy']),
+					`clip.${extension}`
+				]);
+				await ffmpeg.deleteFile(`in.${extension}`);
+				await ffmpeg.rename(`clip.${extension}`, `in.${extension}`);
 			}
 
 			if (!otherFiltersUsed) {
