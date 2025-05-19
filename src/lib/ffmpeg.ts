@@ -4,7 +4,7 @@ import { writable } from 'svelte/store';
 
 export const CORE_VERSION = '0.12.6';
 
-const CDN_BASE_URL = 'https://cdn.jsdelivr.net/npm';
+const CDN_BASE_URL = 'https://unpkg.com';
 const CORE_URL = `${CDN_BASE_URL}/@ffmpeg/core@${CORE_VERSION}/dist/esm/ffmpeg-core.js`;
 const CORE_MT_URL = `${CDN_BASE_URL}/@ffmpeg/core-mt@${CORE_VERSION}/dist/esm/ffmpeg-core.js`;
 
