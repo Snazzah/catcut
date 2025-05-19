@@ -4,15 +4,16 @@ import { writable } from 'svelte/store';
 
 export const CORE_VERSION = '0.12.6';
 
-const CORE_URL = `https://unpkg.com/@ffmpeg/core@${CORE_VERSION}/dist/esm/ffmpeg-core.js`;
-const CORE_MT_URL = `https://unpkg.com/@ffmpeg/core-mt@${CORE_VERSION}/dist/esm/ffmpeg-core.js`;
+const CDN_BASE_URL = 'https://cdn.jsdelivr.net/npm';
+const CORE_URL = `${CDN_BASE_URL}/@ffmpeg/core@${CORE_VERSION}/dist/esm/ffmpeg-core.js`;
+const CORE_MT_URL = `${CDN_BASE_URL}/@ffmpeg/core-mt@${CORE_VERSION}/dist/esm/ffmpeg-core.js`;
 
 const CORE_SIZE: Record<string, number> = {
-	[`https://unpkg.com/@ffmpeg/core@${CORE_VERSION}/dist/esm/ffmpeg-core.js`]: 114673,
-	[`https://unpkg.com/@ffmpeg/core@${CORE_VERSION}/dist/esm/ffmpeg-core.wasm`]: 32129114,
-	[`https://unpkg.com/@ffmpeg/core-mt@${CORE_VERSION}/dist/esm/ffmpeg-core.js`]: 132680,
-	[`https://unpkg.com/@ffmpeg/core-mt@${CORE_VERSION}/dist/esm/ffmpeg-core.wasm`]: 32609891,
-	[`https://unpkg.com/@ffmpeg/core-mt@${CORE_VERSION}/dist/esm/ffmpeg-core.worker.js`]: 2915
+	[`${CDN_BASE_URL}/@ffmpeg/core@${CORE_VERSION}/dist/esm/ffmpeg-core.js`]: 114673,
+	[`${CDN_BASE_URL}/@ffmpeg/core@${CORE_VERSION}/dist/esm/ffmpeg-core.wasm`]: 32129114,
+	[`${CDN_BASE_URL}/@ffmpeg/core-mt@${CORE_VERSION}/dist/esm/ffmpeg-core.js`]: 132680,
+	[`${CDN_BASE_URL}/@ffmpeg/core-mt@${CORE_VERSION}/dist/esm/ffmpeg-core.wasm`]: 32609891,
+	[`${CDN_BASE_URL}/@ffmpeg/core-mt@${CORE_VERSION}/dist/esm/ffmpeg-core.worker.js`]: 2915
 };
 
 export const totalBytes = writable(1);
