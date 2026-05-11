@@ -21,7 +21,7 @@
 	import type { IconifyIcon } from '@iconify/svelte';
 	import PreviewStillContainer from './PreviewStillContainer.svelte';
 	import { MS_OPTIONS } from '$lib/util';
-	import { ffmpeg, runFFmpeg } from '$lib/ffmpeg';
+	import { ffmpeg, getKeyframes, runFFmpeg } from '$lib/ffmpeg';
 	import Trim from '$lib/components/video/Trim.svelte';
 	import Volume from '$lib/components/common/Volume.svelte';
 	import EditorTabs from '$lib/components/EditorTabs.svelte';
@@ -47,6 +47,100 @@
 	let modalOpen = false;
 	let processState = ProcessingState.IDLE;
 	let resultInfo: { elapsed: number; size: number } | null = null;
+
+	// Re-encode just the first GOP up to the next keyframe, then stream-copy the
+	// rest, then concatenate. Avoids the delayed-frames-at-start problem you get
+	// from cutting a non-keyframe with `-c copy`, without paying the cost of a
+	// full re-encode. Routes through MPEG-TS + the concat: protocol so the
+	// re-encoded and copied segments don't have to share extradata.
+	async function smartCutTrim(
+		inputFile: string,
+		outputFile: string,
+		start: number,
+		end: number
+	) {
+		const keyframes = await getKeyframes(inputFile);
+		// Tolerance accounts for fractional pts_time rounding and audio/video drift.
+		const tol = 0.05;
+		const startOnKeyframe = keyframes.some((k) => Math.abs(k - start) < tol);
+		const nextKf = keyframes.find((k) => k > start + tol);
+
+		// Fall back to plain stream-copy when smart-cut can't help: start is
+		// already aligned to a keyframe, no later keyframe exists, or the next
+		// keyframe is past the trim end (re-encoding the whole range is what the
+		// user gets from the regular re-encode option).
+		if (startOnKeyframe || !nextKf || nextKf >= end - tol) {
+			await runFFmpeg([
+				'-i',
+				inputFile,
+				'-ss',
+				start.toString(),
+				'-t',
+				(end - start).toString(),
+				'-c:v',
+				'copy',
+				'-c:a',
+				'copy',
+				outputFile
+			]);
+			return;
+		}
+
+		const seg1 = 'smartcut_seg1.ts';
+		const seg2 = 'smartcut_seg2.ts';
+		try {
+			// Segment 1: accurate seek + re-encode from trimStart to the next keyframe.
+			await runFFmpeg([
+				'-i',
+				inputFile,
+				'-ss',
+				start.toString(),
+				'-t',
+				(nextKf - start).toString(),
+				'-c:v',
+				'libx264',
+				'-preset',
+				'ultrafast',
+				'-c:a',
+				'aac',
+				'-bsf:v',
+				'h264_mp4toannexb',
+				'-f',
+				'mpegts',
+				seg1
+			]);
+
+			// Segment 2: fast seek (we're on a keyframe) + stream copy through to trimEnd.
+			await runFFmpeg([
+				'-ss',
+				nextKf.toString(),
+				'-i',
+				inputFile,
+				'-t',
+				(end - nextKf).toString(),
+				'-c',
+				'copy',
+				'-bsf:v',
+				'h264_mp4toannexb',
+				'-f',
+				'mpegts',
+				seg2
+			]);
+
+			await runFFmpeg([
+				'-i',
+				`concat:${seg1}|${seg2}`,
+				'-c',
+				'copy',
+				'-bsf:a',
+				'aac_adtstoasc',
+				outputFile
+			]);
+		} finally {
+			await ffmpeg.deleteFile(seg1).catch(() => {});
+			await ffmpeg.deleteFile(seg2).catch(() => {});
+		}
+	}
 
 	async function saveVideo() {
 		processState = ProcessingState.WRITING;
@@ -161,15 +255,24 @@
 			// For resource intensive calls, we trim first, then run other filters
 			if (willBeTrimmed && !trimOnNextCall) {
 				console.info('Running intermediary FFmpeg command');
-				await runFFmpeg([
-					'-i',
-					`in.${extension}`,
-					...trimArgs,
-					...(trimReencoding
-						? ['-preset', 'ultrafast']
-						: ['-c:v', 'copy', '-c:a', 'copy']),
-					`clip.${extension}`
-				]);
+				if (trimSmartCut) {
+					await smartCutTrim(
+						`in.${extension}`,
+						`clip.${extension}`,
+						trimStart,
+						trimEnd
+					);
+				} else {
+					await runFFmpeg([
+						'-i',
+						`in.${extension}`,
+						...trimArgs,
+						...(trimReencoding
+							? ['-preset', 'ultrafast']
+							: ['-c:v', 'copy', '-c:a', 'copy']),
+						`clip.${extension}`
+					]);
+				}
 				await ffmpeg.deleteFile(`in.${extension}`);
 				await ffmpeg.rename(`clip.${extension}`, `in.${extension}`);
 			}
@@ -318,6 +421,7 @@
 	let toExtension: string | null = null;
 	$: cantTrimReencode = extension === 'webm';
 	let trimReencoding = false;
+	let trimSmartCut = false;
 	let compressionLevel = 0;
 	let bitrate = 0;
 	let speedFactor = 1;
@@ -748,10 +852,18 @@
 				{duration}
 				{currentTime}
 				{trimReencoding}
+				{trimSmartCut}
 				{cantTrimReencode}
 				on:setstart={(e) => (trimStart = e.detail)}
 				on:setend={(e) => (trimEnd = e.detail)}
-				on:setreencoding={(e) => (trimReencoding = e.detail)}
+				on:setreencoding={(e) => {
+					trimReencoding = e.detail;
+					if (trimReencoding) trimSmartCut = false;
+				}}
+				on:setsmartcut={(e) => {
+					trimSmartCut = e.detail;
+					if (trimSmartCut) trimReencoding = false;
+				}}
 			/>
 		{:else if tab === 'volume'}
 			<Volume

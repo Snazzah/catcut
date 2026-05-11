@@ -10,6 +10,7 @@
 	export let currentTime: number;
 	export let cantTrimReencode: boolean;
 	export let trimReencoding: boolean;
+	export let trimSmartCut: boolean;
 
 	const dispatch = createEventDispatcher();
 </script>
@@ -35,8 +36,15 @@
 		</div>
 		<code>({ms((trimEnd - trimStart) * 1000)})</code>
 	</div>
-	<div class="text-base">
-		{#if !cantTrimReencode}
+	{#if !cantTrimReencode}
+		<div class="text-base flex flex-col md:flex-row gap-2">
+			<CheckBoxButton
+				checked={trimSmartCut}
+				info="Re-encodes only the first segment up to the next keyframe, then stream-copies the rest. Fixes delayed frames at the start of the clip without the cost of a full re-encode."
+				on:click={() => dispatch('setsmartcut', !trimSmartCut)}
+			>
+				Smart cut
+			</CheckBoxButton>
 			<CheckBoxButton
 				checked={trimReencoding}
 				info="Re-encoding video takes a while to do but ensures the video is trimmed cleanly. Use this if short clips have delayed frames."
@@ -44,6 +52,6 @@
 			>
 				Re-encode video
 			</CheckBoxButton>
-		{/if}
-	</div>
+		</div>
+	{/if}
 </div>

@@ -32,6 +32,41 @@ export async function runFFmpeg(args: string[]) {
 	await ffmpeg.exec(args);
 }
 
+// Probes the input file for video keyframe timestamps (in seconds, absolute) by
+// running ffmpeg with `-skip_frame nokey` and the `showinfo` filter, then
+// scraping pts_time values out of the log. Used by smart-cut.
+export async function getKeyframes(inputFile: string): Promise<number[]> {
+	const keyframes: number[] = [];
+	const handler = ({ message }: { message: string }) => {
+		if (!message.includes('Parsed_showinfo')) return;
+		const m = message.match(/pts_time:\s*([\d.]+)/);
+		if (m) keyframes.push(parseFloat(m[1]));
+	};
+	ffmpeg.on('log', handler);
+	try {
+		console.log(`Probing keyframes in ${inputFile}`);
+		ffmpegAborted.set(false);
+		await ffmpeg.exec([
+			'-skip_frame',
+			'nokey',
+			'-i',
+			inputFile,
+			'-an',
+			'-sn',
+			'-vf',
+			'showinfo',
+			'-vsync',
+			'passthrough',
+			'-f',
+			'null',
+			'-'
+		]);
+	} finally {
+		ffmpeg.off('log', handler);
+	}
+	return keyframes.sort((a, b) => a - b);
+}
+
 ffmpeg.on('log', ({ message }) => {
 	console.log(message);
 	if (message === 'Aborted()') ffmpegAborted.set(true);
