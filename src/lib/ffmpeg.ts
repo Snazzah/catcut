@@ -32,6 +32,32 @@ export async function runFFmpeg(args: string[]) {
 	await ffmpeg.exec(args);
 }
 
+// Probes the input file for the codec name of its primary video and audio
+// streams (e.g. `h264`, `aac`). Runs ffmpeg with no output — it errors out
+// after parsing the input header, but emits the "Stream #..." log lines we
+// scrape. Used by smart-cut to gate the H.264-specific bitstream path.
+export async function probeStreams(
+	inputFile: string
+): Promise<{ video: string | null; audio: string | null }> {
+	let video: string | null = null;
+	let audio: string | null = null;
+	const handler = ({ message }: { message: string }) => {
+		const m = message.match(/Stream #\d+:\d+.*?: (Video|Audio): (\w+)/);
+		if (!m) return;
+		if (m[1] === 'Video' && !video) video = m[2];
+		else if (m[1] === 'Audio' && !audio) audio = m[2];
+	};
+	ffmpeg.on('log', handler);
+	try {
+		console.log(`Probing streams in ${inputFile}`);
+		// No output specified → ffmpeg errors after reading the header. Logs still fire.
+		await ffmpeg.exec(['-i', inputFile]).catch(() => {});
+	} finally {
+		ffmpeg.off('log', handler);
+	}
+	return { video, audio };
+}
+
 // Probes the input file for video keyframe timestamps (in seconds, absolute) by
 // running ffmpeg with `-skip_frame nokey` and the `showinfo` filter, then
 // scraping pts_time values out of the log. Used by smart-cut.

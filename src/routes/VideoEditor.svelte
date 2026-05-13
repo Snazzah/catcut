@@ -21,7 +21,7 @@
 	import type { IconifyIcon } from '@iconify/svelte';
 	import PreviewStillContainer from './PreviewStillContainer.svelte';
 	import { MS_OPTIONS } from '$lib/util';
-	import { ffmpeg, getKeyframes, runFFmpeg } from '$lib/ffmpeg';
+	import { ffmpeg, getKeyframes, probeStreams, runFFmpeg } from '$lib/ffmpeg';
 	import Trim from '$lib/components/video/Trim.svelte';
 	import Volume from '$lib/components/common/Volume.svelte';
 	import EditorTabs from '$lib/components/EditorTabs.svelte';
@@ -59,6 +59,29 @@
 		start: number,
 		end: number
 	) {
+		// The MPEG-TS + concat trick below depends on H.264 (we wrap the elementary
+		// stream with `h264_mp4toannexb`). Probe codecs first; anything else falls
+		// back to a full re-encode trim, which still fixes the delayed-frame issue
+		// the user opted in to fix, just slower.
+		const { video: vcodec, audio: acodec } = await probeStreams(inputFile);
+		if (vcodec !== 'h264') {
+			console.info(
+				`smart-cut: video codec ${vcodec ?? 'unknown'} not supported, falling back to full re-encode trim`
+			);
+			await runFFmpeg([
+				'-i',
+				inputFile,
+				'-ss',
+				start.toString(),
+				'-t',
+				(end - start).toString(),
+				'-preset',
+				'ultrafast',
+				outputFile
+			]);
+			return;
+		}
+
 		const keyframes = await getKeyframes(inputFile);
 		// Tolerance accounts for fractional pts_time rounding and audio/video drift.
 		const tol = 0.05;
@@ -86,6 +109,15 @@
 			return;
 		}
 
+		const hasAudio = !!acodec;
+		// Explicit stream selection: take the first video + first audio, drop
+		// subtitle/data/attached-pic streams. Keeps both segments structurally
+		// identical so the concat: protocol doesn't get confused.
+		const mapArgs = ['-map', '0:v:0', ...(hasAudio ? ['-map', '0:a:0'] : []), '-sn', '-dn'];
+		// aac_adtstoasc is needed when going TS → MP4 because mpegts wraps AAC in
+		// ADTS. mp3/ac3/etc don't need any unwrap.
+		const audioOutBsf = acodec === 'aac' ? ['-bsf:a', 'aac_adtstoasc'] : [];
+
 		const seg1 = 'smartcut_seg1.ts';
 		const seg2 = 'smartcut_seg2.ts';
 		try {
@@ -97,12 +129,12 @@
 				start.toString(),
 				'-t',
 				(nextKf - start).toString(),
+				...mapArgs,
 				'-c:v',
 				'libx264',
 				'-preset',
 				'ultrafast',
-				'-c:a',
-				'aac',
+				...(hasAudio ? ['-c:a', 'aac'] : ['-an']),
 				'-bsf:v',
 				'h264_mp4toannexb',
 				'-f',
@@ -118,6 +150,7 @@
 				inputFile,
 				'-t',
 				(end - nextKf).toString(),
+				...mapArgs,
 				'-c',
 				'copy',
 				'-bsf:v',
@@ -132,8 +165,7 @@
 				`concat:${seg1}|${seg2}`,
 				'-c',
 				'copy',
-				'-bsf:a',
-				'aac_adtstoasc',
+				...audioOutBsf,
 				outputFile
 			]);
 		} finally {
