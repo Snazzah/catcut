@@ -51,7 +51,23 @@ export async function probeStreams(
 	try {
 		console.log(`Probing streams in ${inputFile}`);
 		// No output specified → ffmpeg errors after reading the header. Logs still fire.
-		await ffmpeg.exec(['-i', inputFile]).catch(() => {});
+		ffmpeg.on('log', handler);
+		let execFailed = false;
+		try {
+			console.log(`Probing streams in ${inputFile}`);
+			// No output specified → ffmpeg errors after reading the header. Logs still fire.
+			try {
+				await ffmpeg.exec(['-i', inputFile]);
+			} catch {
+				execFailed = true;
+			}
+		} finally {
+			ffmpeg.off('log', handler);
+		}
+		if (execFailed && !video && !audio) {
+			throw new Error(`Failed to probe streams for input: ${inputFile}`);
+		}
+		return { video, audio };
 	} finally {
 		ffmpeg.off('log', handler);
 	}
