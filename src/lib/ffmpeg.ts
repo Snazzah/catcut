@@ -37,41 +37,33 @@ export async function runFFmpeg(args: string[]) {
 // after parsing the input header, but emits the "Stream #..." log lines we
 // scrape. Used by smart-cut to gate the H.264-specific bitstream path.
 export async function probeStreams(
-	inputFile: string
+  inputFile: string
 ): Promise<{ video: string | null; audio: string | null }> {
-	let video: string | null = null;
-	let audio: string | null = null;
-	const handler = ({ message }: { message: string }) => {
-		const m = message.match(/Stream #\d+:\d+.*?: (Video|Audio): (\w+)/);
-		if (!m) return;
-		if (m[1] === 'Video' && !video) video = m[2];
-		else if (m[1] === 'Audio' && !audio) audio = m[2];
-	};
-	ffmpeg.on('log', handler);
-	try {
-		console.log(`Probing streams in ${inputFile}`);
-		// No output specified → ffmpeg errors after reading the header. Logs still fire.
-		ffmpeg.on('log', handler);
-		let execFailed = false;
-		try {
-			console.log(`Probing streams in ${inputFile}`);
-			// No output specified → ffmpeg errors after reading the header. Logs still fire.
-			try {
-				await ffmpeg.exec(['-i', inputFile]);
-			} catch {
-				execFailed = true;
-			}
-		} finally {
-			ffmpeg.off('log', handler);
-		}
-		if (execFailed && !video && !audio) {
-			throw new Error(`Failed to probe streams for input: ${inputFile}`);
-		}
-		return { video, audio };
-	} finally {
-		ffmpeg.off('log', handler);
-	}
-	return { video, audio };
+  let video: string | null = null;
+  let audio: string | null = null;
+  const handler = ({ message }: { message: string }) => {
+    const m = message.match(/Stream #\d+:\d+.*?: (Video|Audio): (\w+)/);
+    if (!m) return;
+    if (m[1] === 'Video' && !video) video = m[2];
+    else if (m[1] === 'Audio' && !audio) audio = m[2];
+  };
+  ffmpeg.on('log', handler);
+  try {
+    console.log(`Probing streams in ${inputFile}`);
+    ffmpegAborted.set(false);
+    let execFailed = false;
+    try {
+      await ffmpeg.exec(['-i', inputFile]);
+    } catch {
+      execFailed = true;
+    }
+    if (execFailed && !video && !audio) {
+      throw new Error(`Failed to probe streams for input: ${inputFile}`);
+    }
+    return { video, audio };
+  } finally {
+    ffmpeg.off('log', handler);
+  }
 }
 
 // Probes the input file for video keyframe timestamps (in seconds, absolute) by
