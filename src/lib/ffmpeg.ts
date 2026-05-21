@@ -32,6 +32,75 @@ export async function runFFmpeg(args: string[]) {
 	await ffmpeg.exec(args);
 }
 
+// Probes the input file for the codec name of its primary video and audio
+// streams (e.g. `h264`, `aac`). Runs ffmpeg with no output — it errors out
+// after parsing the input header, but emits the "Stream #..." log lines we
+// scrape. Used by smart-cut to gate the H.264-specific bitstream path.
+export async function probeStreams(
+  inputFile: string
+): Promise<{ video: string | null; audio: string | null }> {
+  let video: string | null = null;
+  let audio: string | null = null;
+  const handler = ({ message }: { message: string }) => {
+    const m = message.match(/Stream #\d+:\d+.*?: (Video|Audio): (\w+)/);
+    if (!m) return;
+    if (m[1] === 'Video' && !video) video = m[2];
+    else if (m[1] === 'Audio' && !audio) audio = m[2];
+  };
+  ffmpeg.on('log', handler);
+  try {
+    console.log(`Probing streams in ${inputFile}`);
+    ffmpegAborted.set(false);
+    let execFailed = false;
+    try {
+      await ffmpeg.exec(['-i', inputFile]);
+    } catch {
+      execFailed = true;
+    }
+    if (execFailed && !video && !audio) {
+      throw new Error(`Failed to probe streams for input: ${inputFile}`);
+    }
+    return { video, audio };
+  } finally {
+    ffmpeg.off('log', handler);
+  }
+}
+
+// Probes the input file for video keyframe timestamps (in seconds, absolute) by
+// running ffmpeg with `-skip_frame nokey` and the `showinfo` filter, then
+// scraping pts_time values out of the log. Used by smart-cut.
+export async function getKeyframes(inputFile: string): Promise<number[]> {
+	const keyframes: number[] = [];
+	const handler = ({ message }: { message: string }) => {
+		if (!message.includes('Parsed_showinfo')) return;
+		const m = message.match(/pts_time:\s*([\d.]+)/);
+		if (m) keyframes.push(parseFloat(m[1]));
+	};
+	ffmpeg.on('log', handler);
+	try {
+		console.log(`Probing keyframes in ${inputFile}`);
+		ffmpegAborted.set(false);
+		await ffmpeg.exec([
+			'-skip_frame',
+			'nokey',
+			'-i',
+			inputFile,
+			'-an',
+			'-sn',
+			'-vf',
+			'showinfo',
+			'-vsync',
+			'passthrough',
+			'-f',
+			'null',
+			'-'
+		]);
+	} finally {
+		ffmpeg.off('log', handler);
+	}
+	return keyframes.sort((a, b) => a - b);
+}
+
 ffmpeg.on('log', ({ message }) => {
 	console.log(message);
 	if (message === 'Aborted()') ffmpegAborted.set(true);
