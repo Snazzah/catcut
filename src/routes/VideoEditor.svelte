@@ -21,7 +21,7 @@
 	import type { IconifyIcon } from '@iconify/svelte';
 	import PreviewStillContainer from './PreviewStillContainer.svelte';
 	import { MS_OPTIONS } from '$lib/util';
-	import { ffmpeg, runFFmpeg } from '$lib/ffmpeg';
+	import { ffmpeg, getKeyframes, probeStreams, runFFmpeg } from '$lib/ffmpeg';
 	import Trim from '$lib/components/video/Trim.svelte';
 	import Volume from '$lib/components/common/Volume.svelte';
 	import EditorTabs from '$lib/components/EditorTabs.svelte';
@@ -47,6 +47,132 @@
 	let modalOpen = false;
 	let processState = ProcessingState.IDLE;
 	let resultInfo: { elapsed: number; size: number } | null = null;
+
+	// Re-encode just the first GOP up to the next keyframe, then stream-copy the
+	// rest, then concatenate. Avoids the delayed-frames-at-start problem you get
+	// from cutting a non-keyframe with `-c copy`, without paying the cost of a
+	// full re-encode. Routes through MPEG-TS + the concat: protocol so the
+	// re-encoded and copied segments don't have to share extradata.
+	async function smartCutTrim(
+		inputFile: string,
+		outputFile: string,
+		start: number,
+		end: number
+	) {
+		// The MPEG-TS + concat trick below depends on H.264 (we wrap the elementary
+		// stream with `h264_mp4toannexb`). Probe codecs first; anything else falls
+		// back to a full re-encode trim, which still fixes the delayed-frame issue
+		// the user opted in to fix, just slower.
+		const { video: vcodec, audio: acodec } = await probeStreams(inputFile);
+		if (vcodec !== 'h264') {
+			console.info(
+				`smart-cut: video codec ${vcodec ?? 'unknown'} not supported, falling back to full re-encode trim`
+			);
+			await runFFmpeg([
+				'-i',
+				inputFile,
+				'-ss',
+				start.toString(),
+				'-t',
+				(end - start).toString(),
+				'-preset',
+				'ultrafast',
+				outputFile
+			]);
+			return;
+		}
+
+		const keyframes = await getKeyframes(inputFile);
+		// Tolerance accounts for fractional pts_time rounding and audio/video drift.
+		const tol = 0.05;
+		const startOnKeyframe = keyframes.some((k) => Math.abs(k - start) < tol);
+		const nextKf = keyframes.find((k) => k > start + tol);
+
+		// Fall back to plain stream-copy when smart-cut can't help: start is
+		// already aligned to a keyframe, no later keyframe exists, or the next
+		// keyframe is past the trim end (re-encoding the whole range is what the
+		// user gets from the regular re-encode option).
+		if (startOnKeyframe || !nextKf || nextKf >= end - tol) {
+			await runFFmpeg([
+				'-i',
+				inputFile,
+				'-ss',
+				start.toString(),
+				'-t',
+				(end - start).toString(),
+				'-c:v',
+				'copy',
+				'-c:a',
+				'copy',
+				outputFile
+			]);
+			return;
+		}
+
+		const hasAudio = !!acodec;
+		// Explicit stream selection: take the first video + first audio, drop
+		// subtitle/data/attached-pic streams. Keeps both segments structurally
+		// identical so the concat: protocol doesn't get confused.
+		const mapArgs = ['-map', '0:v:0', ...(hasAudio ? ['-map', '0:a:0'] : []), '-sn', '-dn'];
+		// aac_adtstoasc is needed when going TS → MP4 because mpegts wraps AAC in
+		// ADTS. mp3/ac3/etc don't need any unwrap.
+		const audioOutBsf = acodec === 'aac' ? ['-bsf:a', 'aac_adtstoasc'] : [];
+
+		const seg1 = 'smartcut_seg1.ts';
+		const seg2 = 'smartcut_seg2.ts';
+		try {
+			// Segment 1: accurate seek + re-encode from trimStart to the next keyframe.
+			await runFFmpeg([
+				'-i',
+				inputFile,
+				'-ss',
+				start.toString(),
+				'-t',
+				(nextKf - start).toString(),
+				...mapArgs,
+				'-c:v',
+				'libx264',
+				'-preset',
+				'ultrafast',
+				...(hasAudio ? ['-c:a', 'aac'] : ['-an']),
+				'-bsf:v',
+				'h264_mp4toannexb',
+				'-f',
+				'mpegts',
+				seg1
+			]);
+
+			// Segment 2: fast seek (we're on a keyframe) + stream copy through to trimEnd.
+			await runFFmpeg([
+				'-ss',
+				nextKf.toString(),
+				'-i',
+				inputFile,
+				'-t',
+				(end - nextKf).toString(),
+				...mapArgs,
+				'-c',
+				'copy',
+				'-bsf:v',
+				'h264_mp4toannexb',
+				'-f',
+				'mpegts',
+				seg2
+			]);
+
+			await runFFmpeg([
+				'-i',
+				`concat:${seg1}|${seg2}`,
+				'-c',
+				'copy',
+				...audioOutBsf,
+				outputFile
+			]);
+		} finally {
+			await ffmpeg.deleteFile(seg1).catch(() => {});
+			await ffmpeg.deleteFile(seg2).catch(() => {});
+		}
+	}
 
 	async function saveVideo() {
 		processState = ProcessingState.WRITING;
@@ -161,15 +287,24 @@
 			// For resource intensive calls, we trim first, then run other filters
 			if (willBeTrimmed && !trimOnNextCall) {
 				console.info('Running intermediary FFmpeg command');
-				await runFFmpeg([
-					'-i',
-					`in.${extension}`,
-					...trimArgs,
-					...(trimReencoding
-						? ['-preset', 'ultrafast']
-						: ['-c:v', 'copy', '-c:a', 'copy']),
-					`clip.${extension}`
-				]);
+				if (trimSmartCut) {
+					await smartCutTrim(
+						`in.${extension}`,
+						`clip.${extension}`,
+						trimStart,
+						trimEnd
+					);
+				} else {
+					await runFFmpeg([
+						'-i',
+						`in.${extension}`,
+						...trimArgs,
+						...(trimReencoding
+							? ['-preset', 'ultrafast']
+							: ['-c:v', 'copy', '-c:a', 'copy']),
+						`clip.${extension}`
+					]);
+				}
 				await ffmpeg.deleteFile(`in.${extension}`);
 				await ffmpeg.rename(`clip.${extension}`, `in.${extension}`);
 			}
@@ -318,6 +453,7 @@
 	let toExtension: string | null = null;
 	$: cantTrimReencode = extension === 'webm';
 	let trimReencoding = false;
+	let trimSmartCut = false;
 	let compressionLevel = 0;
 	let bitrate = 0;
 	let speedFactor = 1;
@@ -748,10 +884,18 @@
 				{duration}
 				{currentTime}
 				{trimReencoding}
+				{trimSmartCut}
 				{cantTrimReencode}
 				on:setstart={(e) => (trimStart = e.detail)}
 				on:setend={(e) => (trimEnd = e.detail)}
-				on:setreencoding={(e) => (trimReencoding = e.detail)}
+				on:setreencoding={(e) => {
+					trimReencoding = e.detail;
+					if (trimReencoding) trimSmartCut = false;
+				}}
+				on:setsmartcut={(e) => {
+					trimSmartCut = e.detail;
+					if (trimSmartCut) trimReencoding = false;
+				}}
 			/>
 		{:else if tab === 'volume'}
 			<Volume
