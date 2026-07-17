@@ -2,6 +2,7 @@
 	import Icon from '@iconify/svelte';
 	import type { Tags } from 'jsmediatags/types';
 	import { createEventDispatcher } from 'svelte';
+	import { bytesToBase64 } from '$lib/util';
 	import downloadIcon from '@iconify-icons/mdi/download';
 	import clearIcon from '@iconify-icons/mdi/close';
 	import revertIcon from '@iconify-icons/mdi/undo';
@@ -84,7 +85,7 @@
 	function downloadCover() {
 		if (tags?.picture?.data) {
 			const a = document.createElement('a');
-			a.href = `data:${tags.picture.format};charset=utf-8;base64,${btoa(String.fromCharCode.apply(null, tags.picture.data))}`;
+			a.href = `data:${tags.picture.format};charset=utf-8;base64,${bytesToBase64(tags.picture.data)}`;
 			a.download = `catcut_cover_${basename}.${tags.picture.format.split('/')[1]}`;
 			a.click();
 			a.remove();

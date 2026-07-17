@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ProcessingState, RemoteFile, splitFilename, validEvent } from '$lib/util';
+	import { bytesToBase64, ProcessingState, RemoteFile, splitFilename, validEvent } from '$lib/util';
 	import { filesize } from 'filesize';
 	import ms from 'pretty-ms';
 	import type { Tags } from 'jsmediatags/types';
@@ -345,7 +345,7 @@
 	let tagType: string | null = null;
 	$: console.log(`Audio metadata (${tagType})`, audioTags);
 	$: coverSrc = audioTags?.picture?.data
-		? `data:${audioTags.picture.format};charset=utf-8;base64,${btoa(String.fromCharCode.apply(null, audioTags.picture.data))}`
+		? `data:${audioTags.picture.format};charset=utf-8;base64,${bytesToBase64(audioTags.picture.data)}`
 		: null;
 	$: window.jsmediatags?.read(file instanceof RemoteFile ? file.blob! : file, {
 		onSuccess: (tag) => {

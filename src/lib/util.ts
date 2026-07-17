@@ -42,6 +42,14 @@ export function blobToDataURL(blob: Blob): Promise<string> {
 	});
 }
 
+export function bytesToBase64(data: number[]): string {
+	let binary = '';
+	const chunkSize = 0x8000;
+	for (let i = 0; i < data.length; i += chunkSize)
+		binary += String.fromCharCode.apply(null, data.slice(i, i + chunkSize));
+	return btoa(binary);
+}
+
 export function splitFilename(filename: string): [string, string] {
 	const reverseParts = filename.split('.').reverse();
 	return [reverseParts.slice(1).reverse().join('.'), reverseParts[0]];
