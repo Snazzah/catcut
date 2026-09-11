@@ -1,18 +1,22 @@
 <script lang="ts">
-	import '@fontsource-variable/inter';
-	import '@fontsource-variable/source-code-pro';
-	import '../app.css';
 	import { env } from '$env/dynamic/public';
+	import '../app.css';
+	import type { Snippet } from 'svelte';
+
+	let { children }: { children: Snippet } = $props();
 </script>
 
 <svelte:head>
-	<script src="/lib/jsmediatags.min.js"></script>
 	{#if env.PUBLIC_PLAUSIBLE_HOSTNAME}
 		<script
-			data-domain={location.hostname}
+			data-domain="catcut.snaz.in"
 			src="https://{env.PUBLIC_PLAUSIBLE_HOSTNAME}/js/script.pageview-props.tagged-events.js"
 		></script>
 	{/if}
 </svelte:head>
 
-<slot />
+<div
+	class="min-h-screen min-w-80 bg-neutral-950 font-['Satoshi',system-ui,sans-serif] text-neutral-400 scheme-dark"
+>
+	{@render children()}
+</div>
