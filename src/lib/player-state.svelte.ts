@@ -48,7 +48,6 @@ export class PlayerState {
 	#videoFrameIterator: AsyncGenerator<WrappedCanvas, void, unknown> | null = null;
 	#audioBufferIterator: AsyncGenerator<WrappedAudioBuffer, void, unknown> | null = null;
 	#nextFrame: WrappedCanvas | null = null;
-	// Runtime nodes do not drive UI, so this intentionally stays non-reactive.
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity
 	#queuedAudioNodes = new Set<AudioBufferSourceNode>();
 	#asyncId = 0;
@@ -113,6 +112,7 @@ export class PlayerState {
 		});
 		this.#input = input;
 
+		// Get tracks
 		const [primaryVideoTrack, primaryAudioTrack, mimeType, tags] = await Promise.all([
 			input.getPrimaryVideoTrack(),
 			input.getPrimaryAudioTrack(),
@@ -124,6 +124,7 @@ export class PlayerState {
 		if (!this.#isCurrent(input)) return;
 		if (!videoTrack && !audioTrack) throw new Error('No audio or video track found.');
 
+		// Get timestamps
 		const tracks = [videoTrack, audioTrack].filter((track) => track !== null);
 		const [firstTimestamp, endTimestamp, relativeFlags] = await Promise.all([
 			input.getFirstTimestamp(tracks),
@@ -152,6 +153,7 @@ export class PlayerState {
 		if (!this.#isCurrent(input)) return;
 		if (!videoTrack && !audioTrack) throw new Error(warnings.join(' '));
 
+		// Get track information
 		const [video, audio] = await Promise.all([
 			videoTrack
 				? Promise.all([
@@ -175,6 +177,7 @@ export class PlayerState {
 		]);
 		if (!this.#isCurrent(input)) return;
 
+		// Create the A/V sinks
 		const audioContext = new AudioContext(audio ? { sampleRate: audio.sampleRate } : {});
 		const gainNode = audioContext.createGain();
 		gainNode.connect(audioContext.destination);
@@ -212,9 +215,7 @@ export class PlayerState {
 		const artworkSink = videoTrack
 			? new CanvasSink(videoTrack, { width: 512, height: 512, fit: 'cover' })
 			: null;
-		void this.#loadMediaSessionArtwork(tags, artworkSink, input).catch(() => {
-			// Artwork is optional and must not prevent media playback.
-		});
+		void this.#loadMediaSessionArtwork(tags, artworkSink, input).catch(() => {});
 		await this.#restartVideoIterator();
 	}
 
@@ -446,11 +447,12 @@ export class PlayerState {
 
 	async #renderScrubPreviews() {
 		const operationId = ++this.#asyncId;
-		await this.#videoFrameIterator?.return();
-		this.#videoFrameIterator = null;
-		this.#nextFrame = null;
 
 		try {
+			await this.#videoFrameIterator?.return();
+			this.#videoFrameIterator = null;
+			this.#nextFrame = null;
+
 			while (operationId === this.#asyncId && !this.disposed && this.#scrubPreviewTime !== null) {
 				const target = this.#scrubPreviewTime;
 				this.#scrubPreviewTime = null;
@@ -566,6 +568,8 @@ export class PlayerState {
 		return canvas.convertToBlob({ type: 'image/jpeg', quality: 0.85 });
 	}
 
+	// #region Media Session API
+
 	#setMediaSessionMetadata(tags: MetadataTags, artwork?: MediaImage) {
 		if (!this.#mediaSession || typeof MediaMetadata === 'undefined') return;
 
@@ -582,9 +586,7 @@ export class PlayerState {
 
 		try {
 			this.#mediaSession.setActionHandler(action, handler);
-		} catch {
-			// Browsers may expose Media Session without supporting every action.
-		}
+		} catch {}
 	}
 
 	#updateMediaSessionState() {
@@ -600,9 +602,7 @@ export class PlayerState {
 		const position = Math.max(0, Math.min(this.currentTime - this.#firstTimestamp, this.duration));
 		try {
 			this.#mediaSession.setPositionState({ duration: this.duration, playbackRate: 1, position });
-		} catch {
-			// Some partial implementations do not support position state.
-		}
+		} catch {}
 	}
 
 	#disposeMediaSession() {
@@ -621,15 +621,15 @@ export class PlayerState {
 			this.#mediaSession.playbackState = 'none';
 			try {
 				this.#mediaSession.setPositionState();
-			} catch {
-				// Some partial implementations do not support position state.
-			}
+			} catch {}
 		}
 
 		this.#mediaSession = null;
 		if (this.#mediaSessionArtworkUrl) URL.revokeObjectURL(this.#mediaSessionArtworkUrl);
 		this.#mediaSessionArtworkUrl = null;
 	}
+
+	// #endregion
 
 	#isCurrent(input: Input) {
 		return !this.disposed && input === this.#input;
