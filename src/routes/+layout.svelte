@@ -16,7 +16,7 @@
 </svelte:head>
 
 <div
-	class="min-h-screen min-w-80 bg-neutral-950 font-['Satoshi',system-ui,sans-serif] text-neutral-400 scheme-dark"
+	class="min-h-screen min-w-80 bg-neutral-950 font-sans text-neutral-400 scheme-dark"
 >
 	{@render children()}
 </div>

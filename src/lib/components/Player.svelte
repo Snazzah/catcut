@@ -2,6 +2,13 @@
 	import { onMount, untrack } from 'svelte';
 	import type { MediaSource } from '$lib/media';
 	import { PlayerState } from '$lib/player-state.svelte';
+	import playIcon from '@iconify-icons/mdi/play-arrow';
+	import pauseIcon from '@iconify-icons/mdi/pause';
+	import fullscreenIcon from '@iconify-icons/mdi/fullscreen';
+	import volumeIcon from '@iconify-icons/mdi/volume-high';
+	import volumeMutedIcon from '@iconify-icons/mdi/volume-off';
+	import closeIcon from '@iconify-icons/mdi/close';
+	import PlayerButton from './PlayerButton.svelte';
 
 	let { source, onclose }: { source: MediaSource; onclose: () => void } = $props();
 	const player = new PlayerState(untrack(() => source));
@@ -80,8 +87,8 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-<section class="grid w-full max-w-4xl gap-3 bg-neutral-950 p-3" bind:this={playerElement}>
-	<div class="grid min-h-48 place-items-center overflow-hidden bg-black">
+<section class="relative h-full w-full overflow-hidden bg-neutral-950" bind:this={playerElement}>
+	<div class="grid h-full w-full place-items-center overflow-hidden bg-black">
 		{#if player.loadState.status === 'loading'}
 			<p class="col-start-1 row-start-1 m-0 text-sm text-neutral-300">
 				Loading {player.filename}…
@@ -93,64 +100,90 @@
 		{/if}
 
 		<canvas
-			class={['col-start-1 row-start-1 max-h-[70svh] max-w-full', !player.hasVideo && 'hidden']}
+			class={[
+				'col-start-1 row-start-1 h-full min-h-0 w-full min-w-0 object-contain',
+				!player.hasVideo && 'hidden'
+			]}
 			bind:this={canvas}
 			onclick={() => void player.togglePlayback()}
 		></canvas>
 	</div>
+	<div class="absolute inset-x-0 top-0 z-10 flex justify-between gap-2 bg-linear-to-t from-black/0 via-black/50 to-black/75 p-3">
+		<div class="flex gap-2 text-white font-medium">
+			<div class="flex flex-col">
+				<span>{player.filename}</span>
 
-	{#if player.loadState.status === 'ready'}
-		<div class="grid gap-2" aria-label="Media controls">
-			<input
-				type="range"
-				min={player.startTime}
-				max={player.endTime}
-				step="0.001"
-				value={shownTime}
-				onpointerdown={startScrub}
-				oninput={handleScrub}
-				onchange={commitScrub}
-				onpointerup={commitScrub}
-				onpointercancel={commitScrub}
-				aria-label="Seek"
-			/>
-
-			<div class="flex items-center gap-3 text-sm text-neutral-200">
-				<button type="button" onclick={() => void player.togglePlayback()}>
-					{player.paused ? 'Play' : 'Pause'}
-				</button>
-				<span class="tabular-nums">
-					{player.formatTimestamp(shownTime)} / {player.formatTimestamp(player.endTime)}
-				</span>
-
-				{#if player.hasAudio}
-					<button type="button" onclick={() => player.toggleMuted()}>
-						{player.muted ? 'Unmute' : 'Mute'}
-					</button>
-					<input
-						class="w-24"
-						type="range"
-						min="0"
-						max="1"
-						step="0.01"
-						value={player.volume}
-						oninput={handleVolume}
-						aria-label="Volume"
-					/>
+				{#if player.loadState.status === 'ready' && player.loadState.warning}
+					<p class="m-0 text-sm text-amber-300">{player.loadState.warning}</p>
 				{/if}
-
-				<button class="ml-auto" type="button" onclick={() => void toggleFullscreen()}>
-					Fullscreen
-				</button>
 			</div>
+
 		</div>
 
-		{#if player.loadState.warning}
-			<p class="m-0 text-sm text-amber-300">{player.loadState.warning}</p>
-		{/if}
-	{/if}
+		<PlayerButton
+			title="Close media"
+			icon={closeIcon}
+			onclick={onclose}
+		/>
+	</div>
 
-	<button class="justify-self-start text-sm text-neutral-300" type="button" onclick={onclose}>
-		Close
-	</button>
+	<div class="absolute inset-x-0 bottom-0 z-10 grid gap-2 bg-linear-to-b from-black/0 via-black/50 to-black/75 p-3">
+		{#if player.loadState.status === 'ready'}
+			<div class="grid gap-2" aria-label="Media controls">
+				<input
+					type="range"
+					min={player.startTime}
+					max={player.endTime}
+					step="0.001"
+					value={shownTime}
+					onpointerdown={startScrub}
+					oninput={handleScrub}
+					onchange={commitScrub}
+					onpointerup={commitScrub}
+					onpointercancel={commitScrub}
+					aria-label="Seek"
+				/>
+
+				<div class="flex flex-wrap items-center gap-3 text-sm text-neutral-200">
+					<PlayerButton
+						title={player.paused ? 'Play' : 'Pause'}
+						icon={player.paused ? playIcon : pauseIcon}
+						onclick={() => void player.togglePlayback()}
+					/>
+
+					{#if player.hasAudio}
+						<PlayerButton
+							title={player.muted ? 'Unmute' : 'Mute'}
+							icon={player.muted ? volumeMutedIcon : volumeIcon}
+							onclick={() => void player.toggleMuted()}
+						/>
+						<input
+							class="w-24"
+							type="range"
+							min="0"
+							max="1"
+							step="0.01"
+							value={player.volume}
+							oninput={handleVolume}
+							aria-label="Volume"
+						/>
+					{/if}
+
+					<span class="tabular-nums">
+						{player.formatTimestamp(shownTime)} / {player.formatTimestamp(player.endTime)}
+					</span>
+
+					<!-- boowomp -->
+					<span class="mx-auto"></span>
+
+
+					<PlayerButton
+						title="Fullscreen"
+						icon={fullscreenIcon}
+						onclick={() => void toggleFullscreen()}
+					/>
+				</div>
+			</div>
+		{/if}
+	</div>
 </section>

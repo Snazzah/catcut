@@ -52,7 +52,11 @@
 	<link href="https://catcut.snaz.in/" rel="canonical" />
 </svelte:head>
 
-<main class="flex min-h-svh flex-col items-center justify-center gap-4 p-6">
+<main
+	class={source
+		? 'h-svh w-full overflow-hidden'
+		: 'flex min-h-svh flex-col items-center justify-center gap-4 p-6'}
+>
 	{#if source}
 		{#key source}
 			<Player {source} onclose={() => (source = null)} />
