@@ -200,7 +200,7 @@
 							/>
 							<div
 								class={[
-									'overflow-hidden transition-[width,opacity] duration-200 ease-out',
+									'transition-[width,opacity] duration-200 ease-out',
 									volumeSliderExpanded ? 'w-28 opacity-100' : 'pointer-events-none w-0 opacity-0'
 								]}
 								aria-hidden={!volumeSliderExpanded}
@@ -214,7 +214,7 @@
 										{#snippet child({ props })}
 											<div {...props}>
 												<PlayerSlider
-													class="mx-2 w-24"
+													class="w-24"
 													min={0}
 													max={1}
 													step={0.01}
