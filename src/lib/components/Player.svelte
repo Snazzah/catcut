@@ -7,17 +7,27 @@
 	import fullscreenIcon from '@iconify-icons/mdi/fullscreen';
 	import volumeIcon from '@iconify-icons/mdi/volume-high';
 	import volumeMutedIcon from '@iconify-icons/mdi/volume-off';
+	import replayIcon from '@iconify-icons/mdi/replay';
 	import closeIcon from '@iconify-icons/mdi/close';
+	import { Tooltip } from 'bits-ui';
 	import PlayerButton from './PlayerButton.svelte';
+	import PlayerSlider from './PlayerSlider.svelte';
+	import SmallTooltipContent from './SmallTooltipContent.svelte';
+
+	const SEEK_STEP_COUNT = 10_000;
 
 	let { source, onclose }: { source: MediaSource; onclose: () => void } = $props();
 	const player = new PlayerState(untrack(() => source));
 	let canvas: HTMLCanvasElement;
 	let playerElement: HTMLElement;
 	let scrubTime = $state<number | null>(null);
+	let volumeSliderExpanded = $state(false);
 	let scrubbing = false;
 	let resumeAfterScrub = false;
+	let controlsHovered = false;
+	let controlsFocused = false;
 	let shownTime = $derived(scrubTime ?? player.currentTime);
+	let seekStep = $derived(player.duration > 0 ? player.duration / SEEK_STEP_COUNT : 0.001);
 
 	onMount(() => {
 		player.attachCanvas(canvas);
@@ -37,16 +47,14 @@
 		resumeAfterScrub = player.beginScrub();
 	}
 
-	function handleScrub(event: Event) {
-		if (!(event.currentTarget instanceof HTMLInputElement)) return;
-		startScrub();
-		scrubTime = event.currentTarget.valueAsNumber;
-		player.previewScrub(scrubTime);
+	function handleScrub(time: number) {
+		if (!scrubbing) return;
+		scrubTime = time;
+		player.previewScrub(time);
 	}
 
-	function commitScrub(event: Event) {
-		if (!(event.currentTarget instanceof HTMLInputElement) || !scrubbing) return;
-		const time = event.currentTarget.valueAsNumber;
+	function commitScrub(time: number) {
+		if (!scrubbing) return;
 		const shouldResume = resumeAfterScrub;
 		scrubTime = null;
 		scrubbing = false;
@@ -54,13 +62,28 @@
 		void player.endScrub(time, shouldResume);
 	}
 
-	function handleVolume(event: Event) {
-		if (!(event.currentTarget instanceof HTMLInputElement)) return;
-		player.setVolume(event.currentTarget.valueAsNumber);
+	function handleControlsPointerLeave() {
+		controlsHovered = false;
+		if (!controlsFocused) volumeSliderExpanded = false;
+	}
+
+	function handleControlsFocusOut(event: FocusEvent) {
+		if (
+			event.currentTarget instanceof HTMLElement &&
+			event.relatedTarget instanceof Node &&
+			event.currentTarget.contains(event.relatedTarget)
+		)
+			return;
+		controlsFocused = false;
+		if (!controlsHovered) volumeSliderExpanded = false;
 	}
 
 	function handleKeydown(event: KeyboardEvent) {
-		if (event.target instanceof HTMLInputElement) return;
+		if (
+			event.target instanceof HTMLInputElement ||
+			(event.target instanceof HTMLElement && event.target.closest('[role="slider"]'))
+		)
+			return;
 
 		if (event.code === 'Space' || event.code === 'KeyK') {
 			void player.togglePlayback();
@@ -108,8 +131,10 @@
 			onclick={() => void player.togglePlayback()}
 		></canvas>
 	</div>
-	<div class="absolute inset-x-0 top-0 z-10 flex justify-between gap-2 bg-linear-to-t from-black/0 via-black/50 to-black/75 p-3">
-		<div class="min-w-0 flex-1 text-white font-medium">
+	<div
+		class="absolute inset-x-0 top-0 z-10 flex justify-between gap-2 bg-linear-to-t from-black/0 via-black/50 to-black/75 p-3"
+	>
+		<div class="min-w-0 flex-1 font-medium text-white">
 			<div class="flex min-w-0 flex-col">
 				<span class="block truncate">{player.filename}</span>
 
@@ -117,70 +142,104 @@
 					<p class="m-0 text-sm text-amber-300">{player.loadState.warning}</p>
 				{/if}
 			</div>
-
 		</div>
 
-		<PlayerButton
-			title="Close media"
-			icon={closeIcon}
-			onclick={onclose}
-		/>
+		<PlayerButton title="Close media" icon={closeIcon} onclick={onclose} offset={8} />
 	</div>
 
-	<div class="absolute inset-x-0 bottom-0 z-10 grid gap-2 bg-linear-to-b from-black/0 via-black/50 to-black/75 p-3">
+	<div
+		class="absolute inset-x-0 bottom-0 z-10 grid gap-2 bg-linear-to-b from-black/0 via-black/50 to-black/75 p-3"
+	>
 		{#if player.loadState.status === 'ready'}
-			<div class="grid gap-2" aria-label="Media controls">
-				<input
-					type="range"
+			<div
+				class="grid gap-2"
+				role="group"
+				aria-label="Media controls"
+				onpointerenter={() => (controlsHovered = true)}
+				onpointerleave={handleControlsPointerLeave}
+				onfocusin={() => (controlsFocused = true)}
+				onfocusout={handleControlsFocusOut}
+			>
+				<PlayerSlider
 					min={player.startTime}
 					max={player.endTime}
-					step="0.001"
+					step={seekStep}
 					value={shownTime}
-					onpointerdown={startScrub}
-					oninput={handleScrub}
-					onchange={commitScrub}
-					onpointerup={commitScrub}
-					onpointercancel={commitScrub}
-					aria-label="Seek"
+					onValueChange={handleScrub}
+					onValueCommit={commitScrub}
+					onInteractionStart={startScrub}
+					label="Seek"
 				/>
 
-				<div class="flex flex-wrap items-center gap-3 text-sm text-neutral-200">
+				<div
+					class="flex flex-wrap items-center gap-3 text-sm text-neutral-200"
+					role="group"
+					aria-label="Playback controls"
+				>
 					<PlayerButton
-						title={player.paused ? 'Play' : 'Pause'}
-						icon={player.paused ? playIcon : pauseIcon}
+						title={player.progress === 1 ? 'Replay' : player.paused ? 'Play' : 'Pause'}
+						icon={player.progress === 1 ? replayIcon : player.paused ? playIcon : pauseIcon}
+						key="K"
 						onclick={() => void player.togglePlayback()}
 					/>
 
 					{#if player.hasAudio}
-						<PlayerButton
-							title={player.muted ? 'Unmute' : 'Mute'}
-							icon={player.muted ? volumeMutedIcon : volumeIcon}
-							onclick={() => void player.toggleMuted()}
-						/>
-						<input
-							class="w-24"
-							type="range"
-							min="0"
-							max="1"
-							step="0.01"
-							value={player.volume}
-							oninput={handleVolume}
-							aria-label="Volume"
-						/>
+						<div
+							class="flex shrink-0 items-center gap-3"
+							role="group"
+							aria-label="Volume controls"
+							onpointerenter={() => (volumeSliderExpanded = true)}
+							onfocusin={() => (volumeSliderExpanded = true)}
+						>
+							<PlayerButton
+								title={player.muted ? 'Unmute' : 'Mute'}
+								icon={player.muted ? volumeMutedIcon : volumeIcon}
+								onclick={() => void player.toggleMuted()}
+								key="M"
+							/>
+							<div
+								class={[
+									'overflow-hidden transition-[width,opacity] duration-200 ease-out',
+									volumeSliderExpanded ? 'w-28 opacity-100' : 'pointer-events-none w-0 opacity-0'
+								]}
+								aria-hidden={!volumeSliderExpanded}
+							>
+								<Tooltip.Root delayDuration={200} disabled={!volumeSliderExpanded} disableHoverableContent>
+									<Tooltip.Trigger tabindex={-1} type={undefined}>
+										{#snippet child({ props })}
+											<div {...props}>
+												<PlayerSlider
+													class="mx-2 w-24"
+													min={0}
+													max={1}
+													step={0.01}
+													value={player.volume}
+													disabled={!volumeSliderExpanded}
+													onValueChange={(volume) => player.setVolume(volume)}
+													label="Volume"
+												/>
+											</div>
+										{/snippet}
+									</Tooltip.Trigger>
+									<SmallTooltipContent>Volume</SmallTooltipContent>
+								</Tooltip.Root>
+							</div>
+						</div>
 					{/if}
 
-					<span class="tabular-nums">
-						{player.formatTimestamp(shownTime)} / {player.formatTimestamp(player.endTime)}
+					<span class="font-medium text-neutral-50 tabular-nums">
+						{player.formatTimestamp(shownTime)}
+						<span class="text-neutral-300">/ {player.formatTimestamp(player.endTime)}</span>
 					</span>
 
 					<!-- boowomp -->
 					<span class="mx-auto"></span>
 
-
 					<PlayerButton
 						title="Fullscreen"
 						icon={fullscreenIcon}
 						onclick={() => void toggleFullscreen()}
+						key="F"
 					/>
 				</div>
 			</div>

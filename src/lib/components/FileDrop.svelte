@@ -23,7 +23,7 @@
 
 <label
 	class={[
-		'relative flex w-full max-w-96 cursor-pointer items-center justify-center rounded-xl border-2 border-dashed text-center text-neutral-100 transition-[min-height,background-color,border-color,transform] duration-150 ease-out hover:border-neutral-400 hover:bg-neutral-700 has-[input:focus-visible]:border-neutral-400 has-[input:focus-visible]:bg-neutral-700 has-[input:focus-visible]:ring-3 has-[input:focus-visible]:ring-violet-500/35',
+		'relative flex w-full max-w-96 cursor-pointer items-center justify-center rounded-xl border-2 border-dashed text-center text-neutral-100 transition-[min-height,background-color,border-color,transform] duration-150 ease-out hover:border-neutral-400 hover:bg-neutral-700 has-[input:focus-visible]:border-neutral-400 has-[input:focus-visible]:bg-neutral-700 has-[input:focus-visible]:ring-3 has-[input:focus-visible]:ring-accent/35',
 		dragging
 			? 'min-h-32 scale-[1.01] border-violet-500 bg-violet-900'
 			: 'min-h-26 border-neutral-600 bg-neutral-800'
