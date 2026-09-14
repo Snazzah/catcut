@@ -43,8 +43,8 @@
 	>
 		<Icon class="size-7 text-violet-400" icon={uploadIcon} aria-hidden="true" />
 		<span class="text-white">{dragging ? 'drop it here!' : 'drag or select a file'}</span>
-		<small class="max-w-80 overflow-hidden text-xs">
-			supports
+		<small class="max-w-80 text-xs flex gap-1 flex-wrap justify-center items-center">
+			<span>supports</span>
 			<span class="rounded-lg bg-green-600/25 p-1 text-neutral-100">
 				<Icon class="inline text-green-400 size-3" icon={videoIcon} aria-hidden="true" inline />
 				<span>mp4, webm, mkv, mov</span>
