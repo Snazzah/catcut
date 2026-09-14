@@ -1,7 +1,9 @@
 <script lang="ts">
 	import FileDrop from '$lib/components/FileDrop.svelte';
 	import Player from '$lib/components/Player.svelte';
+	import { catcut } from '$lib/icons';
 	import { createLocalMediaSource, type MediaSource } from '$lib/media';
+	import Icon from '@iconify/svelte';
 
 	let source = $state.raw<MediaSource | null>(null);
 	let draggingMedia = $state(false);
@@ -55,13 +57,17 @@
 <main
 	class={source
 		? 'h-svh w-full overflow-hidden'
-		: 'flex min-h-svh flex-col items-center justify-center gap-4 p-6'}
+		: 'flex min-h-svh flex-col items-center justify-center gap-2 p-6'}
 >
 	{#if source}
 		{#key source}
 			<Player {source} onclose={() => (source = null)} />
 		{/key}
 	{:else}
+		<div class="flex gap-2 justify-center items-center text-violet-500 font-black text-xl">
+			<Icon icon={catcut} class="size-6" />
+			<h1>catcut</h1>
+		</div>
 		<FileDrop dragging={draggingMedia} onselect={(selectedSource) => (source = selectedSource)} />
 	{/if}
 </main>
