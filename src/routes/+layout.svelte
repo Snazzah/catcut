@@ -2,7 +2,7 @@
 	import { env } from '$env/dynamic/public';
 	import '../app.css';
 	import type { Snippet } from 'svelte';
-  import { Tooltip } from "bits-ui";
+	import { Tooltip } from 'bits-ui';
 
 	let { children }: { children: Snippet } = $props();
 </script>
@@ -16,9 +16,7 @@
 	{/if}
 </svelte:head>
 
-<div
-	class="min-h-screen min-w-80 bg-neutral-950 font-sans text-neutral-400 scheme-dark"
->
+<div class="min-h-screen min-w-80 bg-neutral-950 font-sans text-neutral-400 scheme-dark">
 	<Tooltip.Provider>
 		{@render children()}
 	</Tooltip.Provider>
