@@ -26,6 +26,7 @@
 	let resumeAfterScrub = false;
 	let controlsHovered = false;
 	let controlsFocused = false;
+	let alternateDurationFormat = $state(false);
 	let shownTime = $derived(scrubTime ?? player.currentTime);
 	let seekStep = $derived(player.duration > 0 ? player.duration / SEEK_STEP_COUNT : 0.001);
 
@@ -231,10 +232,10 @@
 						</div>
 					{/if}
 
-					<span class="font-medium text-neutral-50 tabular-nums">
-						{player.formatTimestamp(shownTime)}
+					<button class="font-medium text-neutral-50 tabular-nums group cursor-pointer" onclick={() => (alternateDurationFormat = !alternateDurationFormat)}>
+						<span class="group-hover:underline font-medium">{alternateDurationFormat ? '-' : ''}{player.formatTimestamp(alternateDurationFormat ? player.endTime - shownTime : shownTime)}</span>
 						<span class="text-neutral-300">/ {player.formatTimestamp(player.endTime)}</span>
-					</span>
+					</button>
 
 					<!-- boowomp -->
 					<span class="mx-auto"></span>
