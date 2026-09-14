@@ -204,7 +204,11 @@
 								]}
 								aria-hidden={!volumeSliderExpanded}
 							>
-								<Tooltip.Root delayDuration={200} disabled={!volumeSliderExpanded} disableHoverableContent>
+								<Tooltip.Root
+									delayDuration={200}
+									disabled={!volumeSliderExpanded}
+									disableHoverableContent
+								>
 									<Tooltip.Trigger tabindex={-1} type={undefined}>
 										{#snippet child({ props })}
 											<div {...props}>

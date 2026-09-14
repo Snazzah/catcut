@@ -13,6 +13,16 @@ import {
 } from 'mediabunny';
 import type { MediaSource } from '$lib/media';
 
+import { registerAc3Decoder } from '@mediabunny/ac3';
+import { registerDtsDecoder } from '@mediabunny/dts';
+import { registerProresDecoder } from '@mediabunny/prores';
+
+registerAc3Decoder();
+registerDtsDecoder();
+registerProresDecoder();
+
+const SCRUB_PREVIEW_DEBOUNCE_MS = 100;
+
 type PlayerMetadata = {
 	duration: number;
 	mimeType: string;
@@ -37,6 +47,7 @@ export class PlayerState {
 	#canvas: HTMLCanvasElement | null = null;
 	#context: CanvasRenderingContext2D | null = null;
 	#videoSink: CanvasSink | null = null;
+	#scrubPreviewSink: CanvasSink | null = null;
 	#audioSink: AudioBufferSink | null = null;
 	#audioContext: AudioContext | null = null;
 	#gainNode: GainNode | null = null;
@@ -54,7 +65,9 @@ export class PlayerState {
 	#animationFrameId: number | null = null;
 	#backgroundRenderId: number | null = null;
 	#scrubPreviewTime: number | null = null;
+	#scrubPreviewTimer: number | null = null;
 	#scrubPreviewTask: Promise<void> | null = null;
+	#scrubPreviewId = 0;
 	#mediaSession: MediaSession | null = null;
 	#mediaSessionArtworkUrl: string | null = null;
 
@@ -192,6 +205,13 @@ export class PlayerState {
 					alpha: video?.transparent ?? false
 				})
 			: null;
+		this.#scrubPreviewSink = videoTrack
+			? new CanvasSink(videoTrack, {
+					poolSize: 1,
+					fit: 'contain',
+					alpha: video?.transparent ?? false
+				})
+			: null;
 		this.#audioSink = audioTrack ? new AudioBufferSink(audioTrack) : null;
 
 		if (video && this.#canvas) {
@@ -288,7 +308,11 @@ export class PlayerState {
 		this.currentTime = target;
 		this.#updateMediaSessionPosition();
 		this.#scrubPreviewTime = target;
-		this.#startScrubPreview();
+		if (this.#scrubPreviewTimer !== null) window.clearTimeout(this.#scrubPreviewTimer);
+		this.#scrubPreviewTimer = window.setTimeout(() => {
+			this.#scrubPreviewTimer = null;
+			this.#startScrubPreview();
+		}, SCRUB_PREVIEW_DEBOUNCE_MS);
 	}
 
 	async endScrub(seconds: number, resumeAfterScrub: boolean) {
@@ -298,7 +322,7 @@ export class PlayerState {
 		this.#playbackTimeAtStart = target;
 		this.currentTime = target;
 		this.#updateMediaSessionPosition();
-		this.#scrubPreviewTime = null;
+		this.#cancelScrubPreview();
 		const current = await this.#restartVideoIterator();
 		if (current && resumeAfterScrub && target < this.#endTimestamp) await this.play();
 	}
@@ -335,6 +359,7 @@ export class PlayerState {
 
 		this.disposed = true;
 		this.#asyncId += 1;
+		this.#cancelScrubPreview();
 		this.pause();
 		void this.#videoFrameIterator?.return();
 		this.#videoFrameIterator = null;
@@ -367,8 +392,7 @@ export class PlayerState {
 
 	async #restartVideoIterator() {
 		const operationId = ++this.#asyncId;
-		this.#scrubPreviewTime = null;
-		await this.#scrubPreviewTask;
+		this.#cancelScrubPreview();
 		await this.#videoFrameIterator?.return();
 		if (operationId !== this.#asyncId || this.disposed || !this.#videoSink) return true;
 
@@ -435,34 +459,37 @@ export class PlayerState {
 	}
 
 	#startScrubPreview() {
-		if (this.#scrubPreviewTask || !this.#videoSink) return;
+		if (this.#scrubPreviewTask || !this.#scrubPreviewSink) return;
 
-		const task = this.#renderScrubPreviews();
+		const task = this.#renderScrubPreview();
 		this.#scrubPreviewTask = task;
 		void task.finally(() => {
 			if (this.#scrubPreviewTask === task) this.#scrubPreviewTask = null;
-			if (this.#scrubPreviewTime !== null && !this.disposed) this.#startScrubPreview();
+			if (this.#scrubPreviewTime !== null && this.#scrubPreviewTimer === null && !this.disposed)
+				this.#startScrubPreview();
 		});
 	}
 
-	async #renderScrubPreviews() {
-		const operationId = ++this.#asyncId;
+	async #renderScrubPreview() {
+		const previewId = this.#scrubPreviewId;
+		const target = this.#scrubPreviewTime;
+		this.#scrubPreviewTime = null;
+		if (target === null) return;
 
 		try {
-			await this.#videoFrameIterator?.return();
-			this.#videoFrameIterator = null;
-			this.#nextFrame = null;
-
-			while (operationId === this.#asyncId && !this.disposed && this.#scrubPreviewTime !== null) {
-				const target = this.#scrubPreviewTime;
-				this.#scrubPreviewTime = null;
-				const frame = await this.#videoSink?.getCanvas(target);
-				if (operationId !== this.#asyncId || this.disposed) return;
-				if (frame && this.#scrubPreviewTime === null) this.#draw(frame);
-			}
+			const frame = await this.#scrubPreviewSink?.getCanvas(target);
+			if (previewId !== this.#scrubPreviewId || this.disposed) return;
+			if (frame && this.#scrubPreviewTime === null) this.#draw(frame);
 		} catch {
 			// A preview frame is optional; the final seek will still render normally.
 		}
+	}
+
+	#cancelScrubPreview() {
+		this.#scrubPreviewId += 1;
+		this.#scrubPreviewTime = null;
+		if (this.#scrubPreviewTimer !== null) window.clearTimeout(this.#scrubPreviewTimer);
+		this.#scrubPreviewTimer = null;
 	}
 
 	async #runAudioIterator(iterator: AsyncGenerator<WrappedAudioBuffer, void, unknown>) {
