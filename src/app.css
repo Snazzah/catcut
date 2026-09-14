@@ -1,4 +1,5 @@
 @import 'tailwindcss' source('./');
+@import 'tw-animate-css';
 
 @font-face {
 	font-family: 'Satoshi';
@@ -10,6 +11,7 @@
 
 @theme {
 	--font-sans: 'Satoshi', ui-sans-serif, system-ui, sans-serif;
+	--color-accent: var(--color-violet-500);
 }
 
 @layer base {

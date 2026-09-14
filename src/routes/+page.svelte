@@ -57,14 +57,14 @@
 <main
 	class={source
 		? 'h-svh w-full overflow-hidden'
-		: 'flex min-h-svh flex-col items-center justify-center gap-2 p-6'}
+		: 'flex min-h-svh flex-col items-center justify-center gap-2 p-6 bg-linear-to-b from-transparent via-violet-300/2 to-violet-500/5'}
 >
 	{#if source}
 		{#key source}
 			<Player {source} onclose={() => (source = null)} />
 		{/key}
 	{:else}
-		<div class="flex gap-2 justify-center items-center text-violet-500 font-black text-xl">
+		<div class="flex gap-2 justify-center items-center text-accent font-black text-xl">
 			<Icon icon={catcut} class="size-6" />
 			<h1>catcut</h1>
 		</div>
