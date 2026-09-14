@@ -109,9 +109,9 @@
 		></canvas>
 	</div>
 	<div class="absolute inset-x-0 top-0 z-10 flex justify-between gap-2 bg-linear-to-t from-black/0 via-black/50 to-black/75 p-3">
-		<div class="flex gap-2 text-white font-medium">
-			<div class="flex flex-col">
-				<span>{player.filename}</span>
+		<div class="min-w-0 flex-1 text-white font-medium">
+			<div class="flex min-w-0 flex-col">
+				<span class="block truncate">{player.filename}</span>
 
 				{#if player.loadState.status === 'ready' && player.loadState.warning}
 					<p class="m-0 text-sm text-amber-300">{player.loadState.warning}</p>
