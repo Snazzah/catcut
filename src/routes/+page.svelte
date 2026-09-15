@@ -4,6 +4,7 @@
 	import { catcut } from '$lib/icons';
 	import { createLocalMediaSource, type MediaSource } from '$lib/media';
 	import Icon from '@iconify/svelte';
+	import { onMount } from 'svelte';
 
 	let source = $state.raw<MediaSource | null>(null);
 	let draggingMedia = $state(false);
@@ -11,6 +12,18 @@
 	function isMediaType(type: string) {
 		return type === '' || type.startsWith('audio/') || type.startsWith('video/');
 	}
+
+	async function openLaunchFile(launchParams: LaunchParams) {
+		const handle = launchParams.files.find((h: FileSystemHandle): h is FileSystemFileHandle => handle.kind === 'file');
+		if (!handle) return;
+
+		const file = await handle.getFile();
+		if (isMediaType(file.type)) source = createLocalMediaSource(file);
+	}
+
+	onMount(() => {
+		window.launchQueue?.setConsumer((launchParams) => void openLaunchFile(launchParams));
+	});
 
 	function isMediaDrag(dataTransfer: DataTransfer | null) {
 		if (!dataTransfer?.types.includes('Files')) return false;
