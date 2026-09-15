@@ -8,6 +8,9 @@
 		"binding": "ASSETS",
 		"directory": ".svelte-kit/cloudflare"
 	},
+	"vars": {
+    "BUN_VERSION": "1.4.2"
+  },
 	"observability": {
 		"enabled": true
 	},
