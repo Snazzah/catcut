@@ -4,6 +4,41 @@
 	"id": "catcut",
 	"description": "quick in-browser media editing with no uploads",
 	"start_url": "/",
+	"file_handlers": [
+		{
+			"action": "/",
+			"name": "Audio or video file",
+			"accept": {
+				"audio/*": [
+					".aac",
+					".adts",
+					".flac",
+					".m4a",
+					".mka",
+					".mp3",
+					".oga",
+					".ogg",
+					".opus",
+					".wav",
+					".weba"
+				],
+				"video/*": [
+					".3g2",
+					".3gp",
+					".m2ts",
+					".m4v",
+					".mkv",
+					".mov",
+					".mp4",
+					".mts",
+					".ogv",
+					".qt",
+					".ts",
+					".webm"
+				]
+			}
+		}
+	],
   "screenshots": [
     {
       "src": "/images/screenshots/desktop-main.png",
