@@ -1,8 +1,6 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
 	import uploadIcon from '@iconify-icons/mdi/file-upload-outline';
-	import videoIcon from '@iconify-icons/mdi/video';
-	import audioIcon from '@iconify-icons/mdi/music-note';
 	import { createLocalMediaSource, type LocalMediaSource } from '$lib/media';
 
 	let {
@@ -43,16 +41,8 @@
 	>
 		<Icon class="size-7 text-violet-400" icon={uploadIcon} aria-hidden="true" />
 		<span class="text-white">{dragging ? 'drop it here!' : 'drag or select a file'}</span>
-		<small class="max-w-80 text-xs flex gap-1 flex-wrap justify-center items-center">
-			<span>supports</span>
-			<span class="rounded-lg bg-green-600/25 p-1 text-neutral-100">
-				<Icon class="inline text-green-400 size-3" icon={videoIcon} aria-hidden="true" inline />
-				<span>mp4, webm, mkv, mov</span>
-			</span>
-			<span class="rounded-lg bg-sky-600/25 p-1 text-neutral-100">
-				<Icon class="inline text-sky-400 size-3" icon={audioIcon} aria-hidden="true" inline />
-				<span>mp3, wav, flac, aac</span>
-			</span>
+		<small class="max-w-80 text-xs">
+			supports video & audio files
 		</small>
 	</span>
 </label>

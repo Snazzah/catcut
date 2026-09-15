@@ -8,11 +8,13 @@
 	import volumeIcon from '@iconify-icons/mdi/volume-high';
 	import volumeMutedIcon from '@iconify-icons/mdi/volume-off';
 	import replayIcon from '@iconify-icons/mdi/replay';
+	import loadingIcon from '@iconify-icons/mdi/loading';
 	import closeIcon from '@iconify-icons/mdi/close';
 	import { Tooltip } from 'bits-ui';
 	import PlayerButton from './PlayerButton.svelte';
 	import PlayerSlider from './PlayerSlider.svelte';
 	import SmallTooltipContent from './SmallTooltipContent.svelte';
+	import Icon from '@iconify/svelte';
 
 	const SEEK_STEP_COUNT = 10_000;
 
@@ -96,6 +98,8 @@
 			player.toggleMuted();
 		} else if (event.code === 'KeyF') {
 			void toggleFullscreen();
+		} else if (event.code === 'Escape') {
+			void onclose();
 		} else {
 			return;
 		}
@@ -112,15 +116,32 @@
 <svelte:window onkeydown={handleKeydown} />
 
 <section class="relative h-full w-full overflow-hidden bg-neutral-950" bind:this={playerElement}>
+	<!-- main area -->
 	<div class="grid h-full w-full place-items-center overflow-hidden bg-black">
 		{#if player.loadState.status === 'loading'}
-			<p class="col-start-1 row-start-1 m-0 text-sm text-neutral-300">
-				Loading {player.filename}…
+			<p class="m-0 text-sm text-neutral-300">
+				<Icon icon={loadingIcon} class="animate-spin size-16" />
 			</p>
 		{:else if !player.hasVideo}
-			<p class="col-start-1 row-start-1 m-0 px-6 text-center text-neutral-300">
-				{player.loadState.metadata.tags.title ?? player.filename}
-			</p>
+			<!-- Audio view -->
+			<div class="w-full min-w-0 h-full m-0 px-6 gap-6 text-center text-neutral-200 bg-linear-to-t from-violet-950/50 to-transparent flex flex-col items-center justify-center">
+				{#if player.coverImageUrl}
+					<img
+						src={player.coverImageUrl}
+						alt="Cover art"
+						class="size-[min(16rem,75vw,75vh)] shrink-0 rounded-lg object-cover shadow-2xl"
+					/>
+				{/if}
+				<div class="flex w-full min-w-0 max-w-lg flex-col items-center justify-center">
+					<h3 class="w-full truncate text-2xl font-bold text-white" title={player.loadState.metadata.tags.title ?? player.filename}>{player.loadState.metadata.tags.title ?? player.filename}</h3>
+					{#if player.loadState.metadata.tags.artist}
+						<h4 class="w-full truncate text-xl text-neutral-100" title={player.loadState.metadata.tags.artist}>{player.loadState.metadata.tags.artist}</h4>
+					{/if}
+					{#if player.loadState.metadata.tags.album}
+						<span class="w-full truncate" title={player.loadState.metadata.tags.album}>{player.loadState.metadata.tags.album}</span>
+					{/if}
+				</div>
+			</div>
 		{/if}
 
 		<canvas
@@ -132,6 +153,8 @@
 			onclick={() => void player.togglePlayback()}
 		></canvas>
 	</div>
+
+	<!-- Top area -->
 	<div
 		class="absolute inset-x-0 top-0 z-10 flex justify-between gap-2 bg-linear-to-t from-black/0 via-black/50 to-black/75 p-3"
 	>
@@ -145,9 +168,10 @@
 			</div>
 		</div>
 
-		<PlayerButton title="Close media" icon={closeIcon} onclick={onclose} offset={8} />
+		<PlayerButton title="Close media" icon={closeIcon} onclick={onclose} offset={8} key="Esc" />
 	</div>
 
+	<!-- Bottom area -->
 	<div
 		class="absolute inset-x-0 bottom-0 z-10 grid gap-2 bg-linear-to-b from-black/0 via-black/50 to-black/75 p-3"
 	>
@@ -209,6 +233,7 @@
 									delayDuration={200}
 									disabled={!volumeSliderExpanded}
 									disableHoverableContent
+									disableCloseOnTriggerClick
 								>
 									<Tooltip.Trigger tabindex={-1} type={undefined}>
 										{#snippet child({ props })}
@@ -218,6 +243,7 @@
 													min={0}
 													max={1}
 													step={0.01}
+													white
 													value={player.volume}
 													disabled={!volumeSliderExpanded}
 													onValueChange={(volume) => player.setVolume(volume)}
@@ -226,10 +252,16 @@
 											</div>
 										{/snippet}
 									</Tooltip.Trigger>
-									<SmallTooltipContent>Volume</SmallTooltipContent>
+									<SmallTooltipContent class="tabular-nums">Volume: {Math.round(player.volume * 100)}%</SmallTooltipContent>
 								</Tooltip.Root>
 							</div>
 						</div>
+					{:else}
+						<PlayerButton
+							title="Media has no audio"
+							icon={volumeMutedIcon}
+							disabled
+						/>
 					{/if}
 
 					<button class="font-medium text-neutral-50 tabular-nums group cursor-pointer" onclick={() => (alternateDurationFormat = !alternateDurationFormat)}>
