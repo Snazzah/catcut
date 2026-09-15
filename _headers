@@ -1,4 +1,4 @@
-https://:project.pages.dev/*
+https://:version.:subdomain.workers.dev/*
   X-Robots-Tag: noindex
 
 /*
