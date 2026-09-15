@@ -2,7 +2,7 @@
 	import FileDrop from '$lib/components/FileDrop.svelte';
 	import Player from '$lib/components/Player.svelte';
 	import { catcut } from '$lib/icons';
-	import { createLocalMediaSource, type MediaSource } from '$lib/media';
+	import { createLocalMediaSource, createRemoteMediaSource, type MediaSource } from '$lib/media';
 	import Icon from '@iconify/svelte';
 	import { onMount } from 'svelte';
 
@@ -14,7 +14,9 @@
 	}
 
 	async function openLaunchFile(launchParams: LaunchParams) {
-		const handle = launchParams.files.find((h: FileSystemHandle): h is FileSystemFileHandle => handle.kind === 'file');
+		const handle = launchParams.files.find(
+			(h: FileSystemHandle): h is FileSystemFileHandle => h.kind === 'file'
+		);
 		if (!handle) return;
 
 		const file = await handle.getFile();
@@ -22,6 +24,9 @@
 	}
 
 	onMount(() => {
+		const mediaUrl = new URL(window.location.href).searchParams.get('url');
+		if (mediaUrl) source = createRemoteMediaSource(mediaUrl);
+
 		window.launchQueue?.setConsumer((launchParams) => void openLaunchFile(launchParams));
 	});
 
