@@ -3,9 +3,12 @@ import {
 	AudioBufferSink,
 	BlobSource,
 	CanvasSink,
+	getDecodableCodecs,
+	getEncodableCodecs,
 	Input,
 	UrlSource,
 	type AudioCodec,
+	type MediaCodec,
 	type MetadataTags,
 	type VideoCodec,
 	type WrappedAudioBuffer,
@@ -13,13 +16,42 @@ import {
 } from 'mediabunny';
 import type { MediaSource } from '$lib/media';
 
-import { registerAc3Decoder } from '@mediabunny/ac3';
-import { registerDtsDecoder } from '@mediabunny/dts';
+import { registerAacEncoder } from '@mediabunny/aac-encoder';
+import { registerAc3Decoder, registerAc3Encoder } from '@mediabunny/ac3';
+import { registerDtsDecoder, registerDtsEncoder } from '@mediabunny/dts';
+import { registerFlacEncoder } from '@mediabunny/flac-encoder';
+import { registerMp3Encoder } from '@mediabunny/mp3-encoder';
 import { registerProresDecoder } from '@mediabunny/prores';
 
-registerAc3Decoder();
-registerDtsDecoder();
-registerProresDecoder();
+export type CodecRegistration = {
+	nativelyDecodable: ReadonlySet<MediaCodec>;
+	nativelyEncodable: ReadonlySet<MediaCodec>;
+};
+
+let codecRegistration: Promise<CodecRegistration> | null = null;
+
+export function registerAllCodecs() {
+	codecRegistration ??= registerCodecs();
+	return codecRegistration;
+}
+
+async function registerCodecs(): Promise<CodecRegistration> {
+	const [decodable, encodable] = await Promise.all([getDecodableCodecs(), getEncodableCodecs()]);
+	const nativelyDecodable = new Set(decodable);
+	const nativelyEncodable = new Set(encodable);
+
+	registerAc3Decoder();
+	registerDtsDecoder();
+	registerProresDecoder();
+
+	registerDtsEncoder();
+	registerAc3Encoder();
+	if (!nativelyEncodable.has('aac')) registerAacEncoder();
+	if (!nativelyEncodable.has('flac')) registerFlacEncoder();
+	if (!nativelyEncodable.has('mp3')) registerMp3Encoder();
+
+	return { nativelyDecodable, nativelyEncodable };
+}
 
 const SCRUB_PREVIEW_DEBOUNCE_MS = 100;
 
@@ -115,6 +147,7 @@ export class PlayerState {
 	}
 
 	async load() {
+		await registerAllCodecs();
 		this.loadState = { status: 'loading' };
 
 		const input = new Input({

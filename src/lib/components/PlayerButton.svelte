@@ -9,7 +9,7 @@
 		icon,
 		onclick,
 		title,
-		offset = 36,
+		offset = 8,
 		key,
 		disabled = false
 	}: {

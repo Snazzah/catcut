@@ -177,7 +177,7 @@
 			</div>
 		</div>
 
-		<PlayerButton title="Close media" icon={closeIcon} onclick={onclose} offset={8} key="Esc" />
+		<PlayerButton title="Close media" icon={closeIcon} onclick={onclose} key="Esc" />
 	</div>
 
 	<!-- Bottom area -->
@@ -215,6 +215,7 @@
 						icon={player.progress === 1 ? replayIcon : player.paused ? playIcon : pauseIcon}
 						key="K"
 						onclick={() => void player.togglePlayback()}
+						offset={36}
 					/>
 
 					{#if player.hasAudio}
@@ -230,6 +231,7 @@
 								icon={player.muted ? volumeMutedIcon : volumeIcon}
 								onclick={() => void player.toggleMuted()}
 								key="M"
+								offset={36}
 							/>
 							<div
 								class={[
@@ -270,6 +272,7 @@
 							title="Media has no audio"
 							icon={volumeMutedIcon}
 							disabled
+							offset={36}
 						/>
 					{/if}
 
@@ -286,6 +289,7 @@
 						icon={fullscreenIcon}
 						onclick={() => void toggleFullscreen()}
 						key="F"
+						offset={36}
 					/>
 				</div>
 			</div>
