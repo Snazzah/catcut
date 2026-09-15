@@ -41,6 +41,7 @@ export class PlayerState {
 	paused = $state(true);
 	volume = $state(0.7);
 	muted = $state(false);
+	coverImageUrl = $state<string | null>(null);
 	disposed = false;
 
 	#input: Input | null = null;
@@ -575,17 +576,18 @@ export class PlayerState {
 			if (frame) blob = await this.#canvasToBlob(frame.canvas);
 		}
 
-		if (!blob || !this.#isCurrent(input) || !this.#mediaSession) return;
+		if (!blob || !this.#isCurrent(input) || (!embeddedImage && !this.#mediaSession)) return;
 
 		const url = URL.createObjectURL(blob);
-		if (!this.#isCurrent(input) || !this.#mediaSession) {
+		if (!this.#isCurrent(input)) {
 			URL.revokeObjectURL(url);
 			return;
 		}
 
 		if (this.#mediaSessionArtworkUrl) URL.revokeObjectURL(this.#mediaSessionArtworkUrl);
 		this.#mediaSessionArtworkUrl = url;
-		this.#setMediaSessionMetadata(tags, { src: url, type: blob.type });
+		this.coverImageUrl = embeddedImage ? url : null;
+		if (this.#mediaSession) this.#setMediaSessionMetadata(tags, { src: url, type: blob.type });
 	}
 
 	#canvasToBlob(canvas: HTMLCanvasElement | OffscreenCanvas) {
@@ -654,6 +656,7 @@ export class PlayerState {
 		this.#mediaSession = null;
 		if (this.#mediaSessionArtworkUrl) URL.revokeObjectURL(this.#mediaSessionArtworkUrl);
 		this.#mediaSessionArtworkUrl = null;
+		this.coverImageUrl = null;
 	}
 
 	// #endregion

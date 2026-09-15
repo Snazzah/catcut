@@ -9,6 +9,7 @@
 		label: string;
 		disabled?: boolean;
 		class?: string;
+		white?: boolean;
 		onValueChange: (value: number) => void;
 		onValueCommit?: (value: number) => void;
 		onInteractionStart?: () => void;
@@ -22,6 +23,7 @@
 		label,
 		disabled = false,
 		class: className = '',
+		white,
 		onValueChange,
 		onValueCommit,
 		onInteractionStart
@@ -70,10 +72,10 @@
 	class={['relative flex h-5 w-full touch-none items-center select-none', className]}
 >
 	<span class="relative h-1 w-full grow cursor-pointer overflow-hidden bg-neutral-300/25">
-		<Slider.Range class="bg-accent absolute h-full" />
+		<Slider.Range class="{white ? 'bg-white' : 'bg-accent'} absolute h-full" />
 	</span>
 	<Slider.Thumb
 		index={0}
-		class="bg-accent block size-4 cursor-grab rounded-full shadow-sm transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-violet-200 focus-visible:outline-none active:cursor-grabbing data-active:scale-110"
+		class="{white ? 'bg-white' : 'bg-accent'} block size-4 cursor-grab rounded-full shadow-sm transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-violet-200 focus-visible:outline-none active:cursor-grabbing data-active:scale-110"
 	/>
 </Slider.Root>
