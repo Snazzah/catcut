@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import FileDrop from '$lib/components/FileDrop.svelte';
 	import Player from '$lib/components/Player.svelte';
 	import { catcut } from '$lib/icons';
@@ -75,7 +76,7 @@
 <main
 	class={source
 		? 'h-svh w-full overflow-hidden'
-		: 'flex min-h-svh flex-col items-center justify-center gap-2 bg-linear-to-b from-transparent via-violet-300/2 to-violet-500/5 p-6'}
+		: 'flex min-h-svh flex-col items-center justify-center gap-2 p-6'}
 >
 	{#if source}
 		{#key source}
@@ -87,5 +88,9 @@
 			<h1>catcut</h1>
 		</div>
 		<FileDrop dragging={draggingMedia} onselect={(selectedSource) => (source = selectedSource)} />
+
+		<div class="fixed bottom-0 flex gap-2 flex-wrap p-2 font-medium">
+			<a href={resolve('/codecs')} class="hover:underline hover:text-white">Codecs</a>
+		</div>
 	{/if}
 </main>

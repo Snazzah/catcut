@@ -16,7 +16,8 @@
 	{/if}
 </svelte:head>
 
-<div class="min-h-screen min-w-80 bg-neutral-950 font-sans text-neutral-400 scheme-dark">
+<div class="min-h-screen min-w-80 font-sans text-neutral-400 scheme-dark">
+	<div class="fixed -z-1 bg-linear-to-b from-transparent via-violet-300/2 to-violet-500/5 inset-0"></div>
 	<Tooltip.Provider>
 		{@render children()}
 	</Tooltip.Provider>
