@@ -41,7 +41,10 @@
 			onclose();
 		});
 
-		return () => player.dispose();
+		return () => {
+			player.dispose();
+			document.title = 'catcut';
+		};
 	});
 
 	function startScrub() {
@@ -114,6 +117,12 @@
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
+
+<svelte:head>
+	{#if player.loadState.status === 'ready'}
+		<title>{player.loadState.metadata.tags.title ?? player.filename} - catcut</title>
+	{/if}
+</svelte:head>
 
 <section class="relative h-full w-full overflow-hidden bg-neutral-950" bind:this={playerElement}>
 	<!-- main area -->
