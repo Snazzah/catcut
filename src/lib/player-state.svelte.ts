@@ -22,6 +22,8 @@ import { registerDtsDecoder, registerDtsEncoder } from '@mediabunny/dts';
 import { registerFlacEncoder } from '@mediabunny/flac-encoder';
 import { registerMp3Encoder } from '@mediabunny/mp3-encoder';
 import { registerProresDecoder } from '@mediabunny/prores';
+import soundTouchProcessorUrl from '@soundtouchjs/audio-worklet/processor?url';
+import type { SoundTouchNode } from '@soundtouchjs/audio-worklet';
 
 export type CodecRegistration = {
 	nativelyDecodable: ReadonlySet<MediaCodec>;
@@ -72,6 +74,7 @@ export class PlayerState {
 	currentTime = $state(0);
 	paused = $state(true);
 	volume = $state(0.7);
+	playbackRate = $state(1);
 	muted = $state(false);
 	coverImageUrl = $state<string | null>(null);
 	disposed = false;
@@ -83,6 +86,8 @@ export class PlayerState {
 	#scrubPreviewSink: CanvasSink | null = null;
 	#audioSink: AudioBufferSink | null = null;
 	#audioContext: AudioContext | null = null;
+	#soundTouchNode: SoundTouchNode | null = null;
+	#soundTouchNodeFactory: (() => SoundTouchNode) | null = null;
 	#gainNode: GainNode | null = null;
 	#firstTimestamp = 0;
 	#endTimestamp = 0;
@@ -227,6 +232,15 @@ export class PlayerState {
 		// Create the A/V sinks
 		const audioContext = new AudioContext(audio ? { sampleRate: audio.sampleRate } : {});
 		const gainNode = audioContext.createGain();
+		if (audio) {
+			const { SoundTouchNode } = await import('@soundtouchjs/audio-worklet');
+			await SoundTouchNode.register(audioContext, soundTouchProcessorUrl);
+			if (!this.#isCurrent(input)) {
+				void audioContext.close();
+				return;
+			}
+			this.#soundTouchNodeFactory = () => new SoundTouchNode({ context: audioContext });
+		}
 		gainNode.connect(audioContext.destination);
 		this.#audioContext = audioContext;
 		this.#gainNode = gainNode;
@@ -292,6 +306,7 @@ export class PlayerState {
 
 		this.#audioContextStartTime = audioContext.currentTime;
 		this.paused = false;
+		this.#ensureSoundTouchNode();
 		this.#updateMediaSessionState();
 
 		if (this.#audioSink) {
@@ -311,6 +326,7 @@ export class PlayerState {
 		void this.#audioBufferIterator?.return();
 		this.#audioBufferIterator = null;
 		this.#stopQueuedAudio();
+		this.#disconnectSoundTouchNode();
 		this.#updateMediaSessionState();
 	}
 
@@ -367,6 +383,30 @@ export class PlayerState {
 		this.#updateGain();
 	}
 
+	setPlaybackRate(playbackRate: number) {
+		const nextPlaybackRate = Math.max(0.25, Math.min(playbackRate, 2));
+		if (nextPlaybackRate === this.playbackRate) return;
+
+		if (!this.paused) {
+			this.#playbackTimeAtStart = Math.min(this.#getPlaybackTime(), this.#endTimestamp);
+			this.currentTime = this.#playbackTimeAtStart;
+			this.#audioContextStartTime = this.#audioContext?.currentTime ?? null;
+		}
+
+		this.playbackRate = nextPlaybackRate;
+		this.#disconnectSoundTouchNode();
+		if (!this.paused) this.#ensureSoundTouchNode();
+		this.#updateMediaSessionPosition();
+
+		if (!this.paused && this.#audioSink) {
+			void this.#audioBufferIterator?.return();
+			this.#stopQueuedAudio();
+			const iterator = this.#audioSink.buffers(this.#playbackTimeAtStart);
+			this.#audioBufferIterator = iterator;
+			void this.#runAudioIterator(iterator);
+		}
+	}
+
 	toggleMuted() {
 		this.muted = !this.muted;
 		this.#updateGain();
@@ -404,8 +444,10 @@ export class PlayerState {
 		this.#animationFrameId = null;
 		this.#backgroundRenderId = null;
 
+		this.#disconnectSoundTouchNode();
 		this.#gainNode?.disconnect();
 		void this.#audioContext?.close();
+		this.#soundTouchNodeFactory = null;
 		this.#gainNode = null;
 		this.#audioContext = null;
 		this.#input?.dispose();
@@ -418,7 +460,8 @@ export class PlayerState {
 	#getPlaybackTime() {
 		if (!this.paused && this.#audioContextStartTime !== null && this.#audioContext) {
 			return (
-				this.#audioContext.currentTime - this.#audioContextStartTime + this.#playbackTimeAtStart
+				(this.#audioContext.currentTime - this.#audioContextStartTime) * this.playbackRate +
+				this.#playbackTimeAtStart
 			);
 		}
 		return this.#playbackTimeAtStart;
@@ -528,23 +571,29 @@ export class PlayerState {
 
 	async #runAudioIterator(iterator: AsyncGenerator<WrappedAudioBuffer, void, unknown>) {
 		const audioContext = this.#audioContext;
-		const gainNode = this.#gainNode;
+		const destinationNode = this.#soundTouchNode ?? this.#gainNode;
 		const audioContextStartTime = this.#audioContextStartTime;
 		const playbackTimeAtStart = this.#playbackTimeAtStart;
-		if (!audioContext || !gainNode || audioContextStartTime === null) return;
+		if (!audioContext || !destinationNode || audioContextStartTime === null) return;
 
 		for await (const { buffer, timestamp } of iterator) {
 			if (iterator !== this.#audioBufferIterator || this.disposed) return;
 
 			const node = audioContext.createBufferSource();
 			node.buffer = buffer;
-			node.connect(gainNode);
-			let startTimestamp = audioContextStartTime + timestamp - playbackTimeAtStart;
+			node.playbackRate.value = this.playbackRate;
+			node.connect(destinationNode);
+			let startTimestamp =
+				audioContextStartTime + (timestamp - playbackTimeAtStart) / this.playbackRate;
 			startTimestamp =
 				Math.round(audioContext.sampleRate * startTimestamp) / audioContext.sampleRate;
 
 			if (startTimestamp >= audioContext.currentTime) node.start(startTimestamp);
-			else node.start(audioContext.currentTime, audioContext.currentTime - startTimestamp);
+			else
+				node.start(
+					audioContext.currentTime,
+					(audioContext.currentTime - startTimestamp) * this.playbackRate
+				);
 
 			this.#queuedAudioNodes.add(node);
 			node.onended = () => this.#queuedAudioNodes.delete(node);
@@ -559,6 +608,25 @@ export class PlayerState {
 	#stopQueuedAudio() {
 		for (const node of this.#queuedAudioNodes) node.stop();
 		this.#queuedAudioNodes.clear();
+	}
+
+	#ensureSoundTouchNode() {
+		if (this.playbackRate === 1 || this.#soundTouchNode) return;
+
+		const createSoundTouchNode = this.#soundTouchNodeFactory;
+		const gainNode = this.#gainNode;
+		if (!createSoundTouchNode || !gainNode || !this.#audioSink) return;
+
+		const soundTouchNode = createSoundTouchNode();
+		soundTouchNode.playbackRate.value = this.playbackRate;
+		soundTouchNode.connect(gainNode);
+		this.#soundTouchNode = soundTouchNode;
+	}
+
+	#disconnectSoundTouchNode() {
+		this.#soundTouchNode?.disconnect();
+		this.#soundTouchNode?.port.close();
+		this.#soundTouchNode = null;
 	}
 
 	#updateGain() {
@@ -663,7 +731,11 @@ export class PlayerState {
 
 		const position = Math.max(0, Math.min(this.currentTime - this.#firstTimestamp, this.duration));
 		try {
-			this.#mediaSession.setPositionState({ duration: this.duration, playbackRate: 1, position });
+			this.#mediaSession.setPositionState({
+				duration: this.duration,
+				playbackRate: this.playbackRate,
+				position
+			});
 		} catch {}
 	}
 
