@@ -6,7 +6,7 @@
 	import arrowIcon from '@iconify-icons/mdi/arrow-left';
 	import checkIcon from '@iconify-icons/mdi/check-circle';
 	import closeIcon from '@iconify-icons/mdi/close-circle';
-	import informationIcon from '@iconify-icons/mdi/information-outline';
+	import asteriskIcon from '@iconify-icons/mdi/asterisk';
 	import loadingIcon from '@iconify-icons/mdi/loading';
 	import Icon from '@iconify/svelte';
 	import { Tooltip } from 'bits-ui';
@@ -176,7 +176,7 @@
 																		class="block text-neutral-500 hover:text-neutral-300"
 																		{...props}
 																	>
-																		<Icon icon={informationIcon} class="size-3.5" />
+																		<Icon icon={asteriskIcon} class="size-3.5" />
 																	</button>
 																{/snippet}
 															</Tooltip.Trigger>
@@ -221,7 +221,7 @@
 																	class="block text-neutral-500 hover:text-neutral-300"
 																	{...props}
 																>
-																	<Icon icon={informationIcon} class="size-3.5" />
+																	<Icon icon={asteriskIcon} class="size-3.5" />
 																</button>
 															{/snippet}
 														</Tooltip.Trigger>

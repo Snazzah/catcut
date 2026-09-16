@@ -12,7 +12,9 @@
 	import closeIcon from '@iconify-icons/mdi/close';
 	import { Tooltip } from 'bits-ui';
 	import PlayerButton from './PlayerButton.svelte';
+	import PlayerInfo from './PlayerInfo.svelte';
 	import PlayerSlider from './PlayerSlider.svelte';
+	import PlayerSettings from './PlayerSettings.svelte';
 	import SmallTooltipContent from './SmallTooltipContent.svelte';
 	import Icon from '@iconify/svelte';
 
@@ -177,7 +179,10 @@
 			</div>
 		</div>
 
-		<PlayerButton title="Close media" icon={closeIcon} onclick={onclose} key="Esc" />
+		<div class="flex shrink-0 items-center gap-3 text-neutral-50">
+			<PlayerInfo loadState={player.loadState} />
+			<PlayerButton title="Close media" icon={closeIcon} onclick={onclose} key="Esc" />
+		</div>
 	</div>
 
 	<!-- Bottom area -->
@@ -283,6 +288,11 @@
 
 					<!-- boowomp -->
 					<span class="mx-auto"></span>
+
+					<PlayerSettings
+						playbackRate={player.playbackRate}
+						onPlaybackRateChange={(playbackRate) => player.setPlaybackRate(playbackRate)}
+					/>
 
 					<PlayerButton
 						title="Fullscreen"
