@@ -7,8 +7,10 @@ import {
 	getEncodableCodecs,
 	Input,
 	UrlSource,
+	type AudioCodec,
 	type MediaCodec,
 	type MetadataTags,
+	type VideoCodec,
 	type WrappedAudioBuffer,
 	type WrappedCanvas
 } from 'mediabunny';
@@ -57,6 +59,8 @@ const SCRUB_PREVIEW_DEBOUNCE_MS = 100;
 
 type PlayerMetadata = {
 	tags: MetadataTags;
+	video: { codec: VideoCodec; width: number; height: number } | null;
+	audio: { codec: AudioCodec; sampleRate: number; channels: number } | null;
 };
 
 export type PlayerLoadState =
@@ -72,8 +76,8 @@ export class PlayerState {
 	muted = $state(false);
 	coverImageUrl = $state<string | null>(null);
 	disposed = false;
-	input = $state.raw<Input | null>(null);
 
+	input: Input | null = null;
 	#canvas: HTMLCanvasElement | null = null;
 	#context: CanvasRenderingContext2D | null = null;
 	#videoSink: CanvasSink | null = null;
@@ -128,11 +132,11 @@ export class PlayerState {
 	}
 
 	get hasAudio() {
-		return this.#audioSink !== null;
+		return this.loadState.status === 'ready' && this.loadState.metadata.audio !== null;
 	}
 
 	get hasVideo() {
-		return this.#videoSink !== null;
+		return this.loadState.status === 'ready' && this.loadState.metadata.video !== null;
 	}
 
 	attachCanvas(canvas: HTMLCanvasElement) {
@@ -262,7 +266,11 @@ export class PlayerState {
 
 		this.loadState = {
 			status: 'ready',
-			metadata: { tags },
+			metadata: {
+				tags,
+				video: video ? { codec: video.codec, width: video.width, height: video.height } : null,
+				audio
+			},
 			warning: warnings.length > 0 ? warnings.join(' ') : null
 		};
 
