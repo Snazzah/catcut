@@ -180,7 +180,7 @@
 		</div>
 
 		<div class="flex shrink-0 items-center gap-3 text-neutral-50">
-			<PlayerInfo loadState={player.loadState} />
+			<PlayerInfo {player} />
 			<PlayerButton title="Close media" icon={closeIcon} onclick={onclose} key="Esc" />
 		</div>
 	</div>
