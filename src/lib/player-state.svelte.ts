@@ -7,10 +7,8 @@ import {
 	getEncodableCodecs,
 	Input,
 	UrlSource,
-	type AudioCodec,
 	type MediaCodec,
 	type MetadataTags,
-	type VideoCodec,
 	type WrappedAudioBuffer,
 	type WrappedCanvas
 } from 'mediabunny';

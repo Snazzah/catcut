@@ -5,6 +5,7 @@
 	import { catcut } from '$lib/icons';
 	import { createLocalMediaSource, createRemoteMediaSource, type MediaSource } from '$lib/media';
 	import Icon from '@iconify/svelte';
+	import { BitsConfig } from 'bits-ui';
 	import { onMount } from 'svelte';
 
 	let source = $state.raw<MediaSource | null>(null);
@@ -80,7 +81,9 @@
 >
 	{#if source}
 		{#key source}
-			<Player {source} onclose={() => (source = null)} />
+			<BitsConfig defaultPortalTo="#catcut-player">
+				<Player {source} onclose={() => (source = null)} />
+			</BitsConfig>
 		{/key}
 	{:else}
 		<div class="text-accent flex items-center justify-center gap-2 text-xl font-black">
