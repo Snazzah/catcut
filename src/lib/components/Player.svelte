@@ -40,7 +40,7 @@
 			if (player.disposed) return;
 
 			alert(error instanceof Error ? error.message : String(error));
-			onclose();
+			void onclose();
 		});
 
 		return () => {
@@ -126,7 +126,11 @@
 	{/if}
 </svelte:head>
 
-<section class="relative h-full w-full overflow-hidden bg-neutral-950" bind:this={playerElement}>
+<section
+	id="catcut-player"
+	class="relative h-full w-full overflow-hidden bg-neutral-950"
+	bind:this={playerElement}
+>
 	<!-- main area -->
 	<div class="grid h-full w-full place-items-center overflow-hidden bg-black">
 		{#if player.loadState.status === 'loading'}
@@ -181,7 +185,12 @@
 
 		<div class="flex shrink-0 items-center gap-3 text-neutral-50">
 			<PlayerInfo {player} />
-			<PlayerButton title="Close media" icon={closeIcon} onclick={onclose} key="Esc" />
+			<PlayerButton
+				title="Close media"
+				icon={closeIcon}
+				onclick={() => void onclose()}
+				key="Esc"
+			/>
 		</div>
 	</div>
 
