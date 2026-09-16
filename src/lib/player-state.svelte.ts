@@ -7,10 +7,8 @@ import {
 	getEncodableCodecs,
 	Input,
 	UrlSource,
-	type AudioCodec,
 	type MediaCodec,
 	type MetadataTags,
-	type VideoCodec,
 	type WrappedAudioBuffer,
 	type WrappedCanvas
 } from 'mediabunny';
@@ -58,11 +56,7 @@ async function registerCodecs(): Promise<CodecRegistration> {
 const SCRUB_PREVIEW_DEBOUNCE_MS = 100;
 
 type PlayerMetadata = {
-	duration: number;
-	mimeType: string;
 	tags: MetadataTags;
-	video: { codec: VideoCodec; width: number; height: number } | null;
-	audio: { codec: AudioCodec; sampleRate: number; channels: number } | null;
 };
 
 export type PlayerLoadState =
@@ -78,8 +72,8 @@ export class PlayerState {
 	muted = $state(false);
 	coverImageUrl = $state<string | null>(null);
 	disposed = false;
+	input = $state.raw<Input | null>(null);
 
-	#input: Input | null = null;
 	#canvas: HTMLCanvasElement | null = null;
 	#context: CanvasRenderingContext2D | null = null;
 	#videoSink: CanvasSink | null = null;
@@ -134,11 +128,11 @@ export class PlayerState {
 	}
 
 	get hasAudio() {
-		return this.loadState.status === 'ready' && this.loadState.metadata.audio !== null;
+		return this.#audioSink !== null;
 	}
 
 	get hasVideo() {
-		return this.loadState.status === 'ready' && this.loadState.metadata.video !== null;
+		return this.#videoSink !== null;
 	}
 
 	attachCanvas(canvas: HTMLCanvasElement) {
@@ -162,13 +156,12 @@ export class PlayerState {
 					? new BlobSource(this.source.file)
 					: new UrlSource(this.source.url)
 		});
-		this.#input = input;
+		this.input = input;
 
 		// Get tracks
-		const [primaryVideoTrack, primaryAudioTrack, mimeType, tags] = await Promise.all([
+		const [primaryVideoTrack, primaryAudioTrack, tags] = await Promise.all([
 			input.getPrimaryVideoTrack(),
 			input.getPrimaryAudioTrack(),
-			input.getMimeType(),
 			input.getMetadataTags()
 		]);
 		let videoTrack = primaryVideoTrack;
@@ -269,13 +262,7 @@ export class PlayerState {
 
 		this.loadState = {
 			status: 'ready',
-			metadata: {
-				duration: this.duration,
-				mimeType,
-				tags,
-				video: video ? { codec: video.codec, width: video.width, height: video.height } : null,
-				audio
-			},
+			metadata: { tags },
 			warning: warnings.length > 0 ? warnings.join(' ') : null
 		};
 
@@ -450,8 +437,8 @@ export class PlayerState {
 		this.#soundTouchNodeFactory = null;
 		this.#gainNode = null;
 		this.#audioContext = null;
-		this.#input?.dispose();
-		this.#input = null;
+		this.input?.dispose();
+		this.input = null;
 		this.#disposeMediaSession();
 		this.#canvas = null;
 		this.#context = null;
@@ -767,6 +754,6 @@ export class PlayerState {
 	// #endregion
 
 	#isCurrent(input: Input) {
-		return !this.disposed && input === this.#input;
+		return !this.disposed && input === this.input;
 	}
 }

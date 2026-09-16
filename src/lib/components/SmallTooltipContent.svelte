@@ -17,7 +17,7 @@
 		class="origin-(--bits-tooltip-content-transform-origin)"
 	>
 		<div
-			class={['z-0 flex items-center justify-center rounded bg-neutral-900/75 px-2 py-1 text-sm font-semibold text-white outline-hidden backdrop-blur-lg', className]}
+			class={['z-0 flex items-center justify-center rounded bg-neutral-900/75 px-2 py-1 text-sm font-semibold text-white outline-hidden backdrop-blur-lg shadow-sm shadow-black/75', className]}
 		>
 			{@render children?.()}
 			{#if key}
