@@ -67,10 +67,12 @@
 			['Date', 'date'],
 			['Comment', 'comment'],
 		] as const satisfies (readonly [string, keyof MetadataTags][]);
-		return knownTags.filter(([, key]) => {
+
+		const shownTags = knownTags.filter(([, key]) => {
 			const value = tags[key];
 			return value !== null && value !== undefined;
 		});
+		return shownTags.length > 0 ? shownTags : null;
 	});
 
 	function formatFileSize(bytes: number) {

@@ -59,8 +59,6 @@ const SCRUB_PREVIEW_DEBOUNCE_MS = 100;
 
 type PlayerMetadata = {
 	tags: MetadataTags;
-	video: { codec: VideoCodec; width: number; height: number } | null;
-	audio: { codec: AudioCodec; sampleRate: number; channels: number } | null;
 };
 
 export type PlayerLoadState =
@@ -132,11 +130,11 @@ export class PlayerState {
 	}
 
 	get hasAudio() {
-		return this.loadState.status === 'ready' && this.loadState.metadata.audio !== null;
+		return this.loadState.status === 'ready' && this.#audioSink !== null;
 	}
 
 	get hasVideo() {
-		return this.loadState.status === 'ready' && this.loadState.metadata.video !== null;
+		return this.loadState.status === 'ready' && this.#videoSink !== null
 	}
 
 	attachCanvas(canvas: HTMLCanvasElement) {
@@ -266,11 +264,7 @@ export class PlayerState {
 
 		this.loadState = {
 			status: 'ready',
-			metadata: {
-				tags,
-				video: video ? { codec: video.codec, width: video.width, height: video.height } : null,
-				audio
-			},
+			metadata: { tags },
 			warning: warnings.length > 0 ? warnings.join(' ') : null
 		};
 
