@@ -141,8 +141,10 @@
 			</p>
 		{:else if !player.hasVideo}
 			<!-- Audio view -->
+			<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 			<div
 				class="m-0 flex h-full w-full min-w-0 flex-col items-center justify-center gap-6 bg-linear-to-t from-violet-950/50 to-transparent px-6 text-center text-neutral-200"
+				onclick={() => void player.togglePlayback()}
 			>
 				{#if player.coverImageUrl}
 					<img
