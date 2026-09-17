@@ -92,8 +92,8 @@
 		</div>
 		<FileDrop dragging={draggingMedia} onselect={(selectedSource) => (source = selectedSource)} />
 
-		<div class="fixed bottom-0 flex gap-2 flex-wrap p-2 font-medium">
-			<a href={resolve('/codecs')} class="hover:underline hover:text-white">Codecs</a>
+		<div class="fixed bottom-0 flex flex-wrap gap-2 p-2 font-medium">
+			<a href={resolve('/codecs')} class="hover:text-white hover:underline">Codecs</a>
 		</div>
 	{/if}
 </main>

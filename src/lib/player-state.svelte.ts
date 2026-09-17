@@ -92,7 +92,7 @@ export class PlayerState {
 	#videoFrameIterator: AsyncGenerator<WrappedCanvas, void, unknown> | null = null;
 	#audioBufferIterator: AsyncGenerator<WrappedAudioBuffer, void, unknown> | null = null;
 	#nextFrame: WrappedCanvas | null = null;
-	#lastDrawnFrame: Pick<WrappedCanvas, 'timestamp' |'duration'> | null = null;
+	#lastDrawnFrame: Pick<WrappedCanvas, 'timestamp' | 'duration'> | null = null;
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity
 	#queuedAudioNodes = new Set<AudioBufferSourceNode>();
 	#asyncId = 0;
@@ -135,7 +135,7 @@ export class PlayerState {
 	}
 
 	get hasVideo() {
-		return this.loadState.status === 'ready' && this.#videoSink !== null
+		return this.loadState.status === 'ready' && this.#videoSink !== null;
 	}
 
 	attachCanvas(canvas: HTMLCanvasElement) {
@@ -345,9 +345,10 @@ export class PlayerState {
 	async #stepFrame(direction: -1 | 1) {
 		if (this.loadState.status !== 'ready' || !this.#lastDrawnFrame || !this.paused) return;
 
-		const target = direction === -1 ?
-			this.#lastDrawnFrame.timestamp - FRAME_STEP_EPSILON_SECONDS
-			: this.#lastDrawnFrame.timestamp + this.#lastDrawnFrame.duration;
+		const target =
+			direction === -1
+				? this.#lastDrawnFrame.timestamp - FRAME_STEP_EPSILON_SECONDS
+				: this.#lastDrawnFrame.timestamp + this.#lastDrawnFrame.duration;
 
 		if (target < this.#firstTimestamp || target >= this.#endTimestamp) return;
 
@@ -506,7 +507,7 @@ export class PlayerState {
 		if (operationId !== this.#asyncId || this.disposed) return false;
 
 		this.#nextFrame = secondFrame;
-		if (firstFrame) this.#draw(firstFrame)
+		if (firstFrame) this.#draw(firstFrame);
 		return true;
 	}
 
@@ -558,7 +559,7 @@ export class PlayerState {
 
 		context.clearRect(0, 0, canvas.width, canvas.height);
 		context.drawImage(frame.canvas, 0, 0);
-		this.#lastDrawnFrame = { timestamp: frame.timestamp, duration: frame.duration }
+		this.#lastDrawnFrame = { timestamp: frame.timestamp, duration: frame.duration };
 	}
 
 	#startScrubPreview() {
