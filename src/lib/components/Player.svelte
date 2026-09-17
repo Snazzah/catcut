@@ -99,6 +99,8 @@
 			void player.seek(player.currentTime - 5);
 		} else if (event.code === 'ArrowRight') {
 			void player.seek(player.currentTime + 5);
+		} else if (player.paused && (event.code === 'Comma' || event.code === 'Period')) {
+			void player.stepFrame(event.code === 'Comma' ? -1 : 1);
 		} else if (event.code === 'KeyM') {
 			player.toggleMuted();
 		} else if (event.code === 'KeyF') {
