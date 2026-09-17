@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { env } from '$env/dynamic/public';
 	import '../app.css';
-	import type { Snippet } from 'svelte';
+	import { onMount, type Snippet } from 'svelte';
 	import { Tooltip } from 'bits-ui';
 	import { isDiscordActivity, initDiscordActivity } from '$lib/discord';
 
 	let { children }: { children: Snippet } = $props();
 
-	$effect(() => {
+	onMount(() => {
 		if (isDiscordActivity()) {
 			initDiscordActivity().catch((err) => console.error('Discord activity init failed', err));
 		}

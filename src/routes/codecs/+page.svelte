@@ -104,7 +104,7 @@
 	<link href="https://catcut.snaz.in/codecs" rel="canonical" />
 </svelte:head>
 
-<main class="mx-auto min-h-svh w-full max-w-3xl p-4">
+<main class="mx-auto min-h-svh w-full max-w-3xl p-4 pt-[calc(var(--sait, 0) + var(--spacing) * 4)]">
 	<header>
 		<a
 			href={resolve('/')}

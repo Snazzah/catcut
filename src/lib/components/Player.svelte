@@ -130,7 +130,7 @@
 
 <section
 	id="catcut-player"
-	class="relative h-full w-full overflow-hidden bg-neutral-950"
+	class="relative h-full w-full overflow-hidden bg-neutral-950 pt-(--sait)"
 	bind:this={playerElement}
 >
 	<!-- main area -->
@@ -187,7 +187,7 @@
 
 	<!-- Top area -->
 	<div
-		class="absolute inset-x-0 top-0 z-10 flex justify-between gap-2 bg-linear-to-t from-black/0 via-black/50 to-black/75 p-3"
+		class="absolute inset-x-0 top-(--sait) z-10 flex justify-between gap-2 bg-linear-to-t from-black/0 via-black/50 to-black/75 p-3"
 	>
 		<div class="min-w-0 flex-1 font-medium text-white">
 			<div class="flex min-w-0 flex-col">
@@ -207,7 +207,7 @@
 
 	<!-- Bottom area -->
 	<div
-		class="absolute inset-x-0 bottom-0 z-10 grid gap-2 bg-linear-to-b from-black/0 via-black/50 to-black/75 p-3"
+		class="absolute inset-x-0 bottom-(--saib) z-10 grid gap-2 bg-linear-to-b from-black/0 via-black/50 to-black/75 p-3"
 	>
 		{#if player.loadState.status === 'ready'}
 			<div

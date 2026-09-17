@@ -20,3 +20,10 @@
 		background-color: var(--color-neutral-950);
 	}
 }
+
+:root {
+	--sait: env(safe-area-inset-top, 0);
+	--saib: env(safe-area-inset-bottom, 0);
+	--sail: env(safe-area-inset-left, 0);
+	--sair: env(safe-area-inset-right, 0);
+}
