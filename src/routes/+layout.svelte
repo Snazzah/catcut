@@ -3,8 +3,15 @@
 	import '../app.css';
 	import type { Snippet } from 'svelte';
 	import { Tooltip } from 'bits-ui';
+	import { isDiscordActivity, initDiscordActivity } from '$lib/discord';
 
 	let { children }: { children: Snippet } = $props();
+
+	$effect(() => {
+		if (isDiscordActivity()) {
+			initDiscordActivity().catch((err) => console.error('Discord activity init failed', err));
+		}
+	});
 </script>
 
 <svelte:head>
