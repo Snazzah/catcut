@@ -76,6 +76,8 @@
 	</span>
 	<Slider.Thumb
 		index={0}
-		class="{white ? 'bg-white' : 'bg-accent'} block size-4 cursor-grab rounded-full shadow-sm transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-violet-200 focus-visible:outline-none active:cursor-grabbing data-active:scale-110"
+		class="{white
+			? 'bg-white'
+			: 'bg-accent'} block size-4 cursor-grab rounded-full shadow-sm transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-violet-200 focus-visible:outline-none active:cursor-grabbing data-active:scale-110"
 	/>
 </Slider.Root>

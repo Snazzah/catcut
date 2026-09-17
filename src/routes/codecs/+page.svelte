@@ -145,8 +145,7 @@
 								<th class="px-4 py-3 font-medium text-neutral-200" scope="row">
 									{row.name}
 									{#if 'package' in row && row.package && (!supportsEvery(row.codecs, nativelyDecodableCodecs) || !supportsEvery(row.codecs, nativelyEncodableCodecs))}
-										<span class="block text-xs font-medium text-neutral-400"
-											>via {row.package}</span
+										<span class="block text-xs font-medium text-neutral-400">via {row.package}</span
 										>
 									{/if}
 								</th>

@@ -7,7 +7,7 @@
 		key,
 		class: className = '',
 		offset = 36
-	}: { children?: Snippet; offset?: number; key?: string; class?: string; } = $props();
+	}: { children?: Snippet; offset?: number; key?: string; class?: string } = $props();
 </script>
 
 <Tooltip.Portal>
@@ -17,11 +17,14 @@
 		class="origin-(--bits-tooltip-content-transform-origin)"
 	>
 		<div
-			class={['z-0 flex items-center justify-center rounded bg-neutral-900/75 px-2 py-1 text-sm font-semibold text-white outline-hidden backdrop-blur-lg shadow-sm shadow-black/75', className]}
+			class={[
+				'z-0 flex items-center justify-center rounded bg-neutral-900/75 px-2 py-1 text-sm font-semibold text-white shadow-sm shadow-black/75 outline-hidden backdrop-blur-lg',
+				className
+			]}
 		>
 			{@render children?.()}
 			{#if key}
-				<kbd class="ml-1 rounded-sm border border-neutral-400 px-1 tabular-nums text-xs">{key}</kbd>
+				<kbd class="ml-1 rounded-sm border border-neutral-400 px-1 text-xs tabular-nums">{key}</kbd>
 			{/if}
 		</div>
 	</Tooltip.Content>

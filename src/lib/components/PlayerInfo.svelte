@@ -65,8 +65,8 @@
 			['Total Discs', 'discsTotal'],
 			['Genre', 'genre'],
 			['Date', 'date'],
-			['Comment', 'comment'],
-		] as const satisfies (readonly [string, keyof MetadataTags][]);
+			['Comment', 'comment']
+		] as const satisfies readonly [string, keyof MetadataTags][];
 
 		const shownTags = knownTags.filter(([, key]) => {
 			const value = tags[key];
@@ -126,7 +126,7 @@
 							{/if}
 						</dl>
 					</section>
-					{/await}
+				{/await}
 			{/if}
 
 			{#if trackInfo}
@@ -179,7 +179,10 @@
 					<dl class="grid grid-cols-[auto_minmax(0,1fr)] gap-x-5 gap-y-1.5">
 						{#each metaTags as [label, key] (key)}
 							<dt class="text-neutral-400">{label}</dt>
-							<dd class="m-0 text-right text-neutral-100" title={String(player.loadState.metadata.tags[key])}>
+							<dd
+								class="m-0 text-right text-neutral-100"
+								title={String(player.loadState.metadata.tags[key])}
+							>
 								{#if Array.isArray(player.loadState.metadata.tags[key])}
 									{player.loadState.metadata.tags[key].join(', ')}
 								{:else}

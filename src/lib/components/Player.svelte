@@ -137,11 +137,13 @@
 	<div class="grid h-full w-full place-items-center overflow-hidden bg-black">
 		{#if player.loadState.status === 'loading'}
 			<p class="m-0 text-sm text-neutral-300">
-				<Icon icon={loadingIcon} class="animate-spin size-16" />
+				<Icon icon={loadingIcon} class="size-16 animate-spin" />
 			</p>
 		{:else if !player.hasVideo}
 			<!-- Audio view -->
-			<div class="w-full min-w-0 h-full m-0 px-6 gap-6 text-center text-neutral-200 bg-linear-to-t from-violet-950/50 to-transparent flex flex-col items-center justify-center">
+			<div
+				class="m-0 flex h-full w-full min-w-0 flex-col items-center justify-center gap-6 bg-linear-to-t from-violet-950/50 to-transparent px-6 text-center text-neutral-200"
+			>
 				{#if player.coverImageUrl}
 					<img
 						src={player.coverImageUrl}
@@ -149,13 +151,25 @@
 						class="size-[min(16rem,75vw,75vh)] shrink-0 rounded-lg object-cover shadow-2xl"
 					/>
 				{/if}
-				<div class="flex w-full min-w-0 max-w-lg flex-col items-center justify-center">
-					<h3 class="w-full truncate text-2xl font-bold text-white" title={player.loadState.metadata.tags.title ?? player.filename}>{player.loadState.metadata.tags.title ?? player.filename}</h3>
+				<div class="flex w-full max-w-lg min-w-0 flex-col items-center justify-center">
+					<h3
+						class="w-full truncate text-2xl font-bold text-white"
+						title={player.loadState.metadata.tags.title ?? player.filename}
+					>
+						{player.loadState.metadata.tags.title ?? player.filename}
+					</h3>
 					{#if player.loadState.metadata.tags.artist}
-						<h4 class="w-full truncate text-xl text-neutral-100" title={player.loadState.metadata.tags.artist}>{player.loadState.metadata.tags.artist}</h4>
+						<h4
+							class="w-full truncate text-xl text-neutral-100"
+							title={player.loadState.metadata.tags.artist}
+						>
+							{player.loadState.metadata.tags.artist}
+						</h4>
 					{/if}
 					{#if player.loadState.metadata.tags.album}
-						<span class="w-full truncate" title={player.loadState.metadata.tags.album}>{player.loadState.metadata.tags.album}</span>
+						<span class="w-full truncate" title={player.loadState.metadata.tags.album}
+							>{player.loadState.metadata.tags.album}</span
+						>
 					{/if}
 				</div>
 			</div>
@@ -187,12 +201,7 @@
 
 		<div class="flex shrink-0 items-center gap-3 text-neutral-50">
 			<PlayerInfo {player} />
-			<PlayerButton
-				title="Close media"
-				icon={closeIcon}
-				onclick={() => void onclose()}
-				key="Esc"
-			/>
+			<PlayerButton title="Close media" icon={closeIcon} onclick={() => void onclose()} key="Esc" />
 		</div>
 	</div>
 
@@ -279,21 +288,25 @@
 											</div>
 										{/snippet}
 									</Tooltip.Trigger>
-									<SmallTooltipContent class="tabular-nums">Volume: {Math.round(player.volume * 100)}%</SmallTooltipContent>
+									<SmallTooltipContent class="tabular-nums"
+										>Volume: {Math.round(player.volume * 100)}%</SmallTooltipContent
+									>
 								</Tooltip.Root>
 							</div>
 						</div>
 					{:else}
-						<PlayerButton
-							title="Media has no audio"
-							icon={volumeMutedIcon}
-							disabled
-							offset={36}
-						/>
+						<PlayerButton title="Media has no audio" icon={volumeMutedIcon} disabled offset={36} />
 					{/if}
 
-					<button class="font-medium text-neutral-50 tabular-nums group cursor-pointer" onclick={() => (alternateDurationFormat = !alternateDurationFormat)}>
-						<span class="group-hover:underline font-medium">{alternateDurationFormat ? '-' : ''}{player.formatTimestamp(alternateDurationFormat ? player.endTime - shownTime : shownTime)}</span>
+					<button
+						class="group cursor-pointer font-medium text-neutral-50 tabular-nums"
+						onclick={() => (alternateDurationFormat = !alternateDurationFormat)}
+					>
+						<span class="font-medium group-hover:underline"
+							>{alternateDurationFormat ? '-' : ''}{player.formatTimestamp(
+								alternateDurationFormat ? player.endTime - shownTime : shownTime
+							)}</span
+						>
 						<span class="text-neutral-300">/ {player.formatTimestamp(player.endTime)}</span>
 					</button>
 

@@ -41,8 +41,6 @@
 	>
 		<Icon class="size-7 text-violet-400" icon={uploadIcon} aria-hidden="true" />
 		<span class="text-white">{dragging ? 'drop it here!' : 'drag or select a file'}</span>
-		<small class="max-w-80 text-xs">
-			supports video & audio files
-		</small>
+		<small class="max-w-80 text-xs"> supports video & audio files </small>
 	</span>
 </label>

@@ -17,7 +17,9 @@
 </svelte:head>
 
 <div class="min-h-svh min-w-80 font-sans text-neutral-400 scheme-dark">
-	<div class="fixed -z-1 bg-linear-to-b from-transparent via-violet-300/2 to-violet-500/5 top-0 left-0 right-0 h-svh"></div>
+	<div
+		class="fixed top-0 right-0 left-0 -z-1 h-svh bg-linear-to-b from-transparent via-violet-300/2 to-violet-500/5"
+	></div>
 	<Tooltip.Provider>
 		{@render children()}
 	</Tooltip.Provider>

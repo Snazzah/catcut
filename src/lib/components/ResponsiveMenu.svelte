@@ -49,8 +49,12 @@
 				class="fixed inset-x-0 bottom-0 z-50 flex max-h-[85dvh] flex-col rounded-t-2xl border border-white/10 bg-neutral-900 p-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] text-neutral-100 shadow-2xl outline-none"
 			>
 				<div class="mx-auto my-2 h-1 w-10 shrink-0 rounded-full bg-neutral-600"></div>
-			<Drawer.Title class="shrink-0 px-3 pb-2 text-base font-bold text-white">{title}</Drawer.Title>
-			<div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-1">{@render children()}</div>
+				<Drawer.Title class="shrink-0 px-3 pb-2 text-base font-bold text-white"
+					>{title}</Drawer.Title
+				>
+				<div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-1">
+					{@render children()}
+				</div>
 			</Drawer.Content>
 		</Drawer.Portal>
 	</Drawer.Root>
