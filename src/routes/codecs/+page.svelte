@@ -32,7 +32,7 @@
 			title: 'Video',
 			rows: [
 				{ name: 'AVC (H.264)', codecs: ['avc'] },
-				{ name: 'HEVC (H.265)', codecs: ['hevc'] },
+				{ name: 'HEVC (H.265)', codecs: ['hevc'], package: '@snazzah/mediabunny-hevc' },
 				{ name: 'VP8', codecs: ['vp8'] },
 				{ name: 'VP9', codecs: ['vp9'] },
 				{ name: 'AV1', codecs: ['av1'] },

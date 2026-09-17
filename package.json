@@ -26,6 +26,7 @@
 		"@mediabunny/flac-encoder": "^1.56.3",
 		"@mediabunny/mp3-encoder": "^1.56.3",
 		"@mediabunny/prores": "^1.56.2",
+		"@snazzah/mediabunny-hevc": "^0.1.0",
 		"@sveltejs/adapter-cloudflare": "7.2.9",
 		"@sveltejs/kit": "^2.70.3",
 		"@sveltejs/vite-plugin-svelte": "^7.3.0",

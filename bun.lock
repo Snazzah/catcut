@@ -22,6 +22,7 @@
         "@mediabunny/flac-encoder": "^1.56.3",
         "@mediabunny/mp3-encoder": "^1.56.3",
         "@mediabunny/prores": "^1.56.2",
+        "@snazzah/mediabunny-hevc": "^0.1.0",
         "@sveltejs/adapter-cloudflare": "7.2.9",
         "@sveltejs/kit": "^2.70.3",
         "@sveltejs/vite-plugin-svelte": "^7.3.0",
@@ -305,6 +306,8 @@
     "@rollup/rollup-linux-x64-gnu": ["@rollup/rollup-linux-x64-gnu@4.62.1", "", { "os": "linux", "cpu": "x64" }, "sha512-nVQGk/jStQc2V4rrkI+vPD2J+85boKqS4R4nOdPhc3eWw0kyW/b+AYRGoH8qo057XSVqaTx13AliH5qPeLTtgQ=="],
 
     "@sindresorhus/is": ["@sindresorhus/is@7.2.0", "", {}, "sha512-P1Cz1dWaFfR4IR+U13mqqiGsLFf1KbayybWwdd2vfctdV6hDpUkgCY0nKOLLTMSoRd/jJNjtbqzf13K8DCCXQw=="],
+
+    "@snazzah/mediabunny-hevc": ["@snazzah/mediabunny-hevc@0.1.0", "", { "peerDependencies": { "mediabunny": "^1.0.0" } }, "sha512-BK4KMUwzc5y23T5vGmqg3WMwlS5PoL1yB48GcRns18WSw2eGED1wKp15gwbUmah8quiMuAoedoNK5dHaIqutKw=="],
 
     "@soundtouchjs/audio-worklet": ["@soundtouchjs/audio-worklet@2.1.1", "", { "dependencies": { "@soundtouchjs/core": "2.1.1", "@soundtouchjs/interpolation-strategy-lanczos": "2.1.1", "@soundtouchjs/worklet-base": "2.1.1" } }, "sha512-itxSW62gbtDKoFo6eEr4PXzVz3oF+wCVREupFi5JiUR31tWWwCizr+2XezYD1SnkrSDfdmZvvviTtoyejYeD0Q=="],
 
