@@ -54,6 +54,7 @@ async function registerCodecs(): Promise<CodecRegistration> {
 }
 
 const SCRUB_PREVIEW_DEBOUNCE_MS = 100;
+const FRAME_STEP_EPSILON_SECONDS = 0.00001;
 
 type PlayerMetadata = {
 	tags: MetadataTags;
@@ -91,6 +92,7 @@ export class PlayerState {
 	#videoFrameIterator: AsyncGenerator<WrappedCanvas, void, unknown> | null = null;
 	#audioBufferIterator: AsyncGenerator<WrappedAudioBuffer, void, unknown> | null = null;
 	#nextFrame: WrappedCanvas | null = null;
+	#lastDrawnFrame: Pick<WrappedCanvas, 'timestamp' |'duration'> | null = null;
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity
 	#queuedAudioNodes = new Set<AudioBufferSourceNode>();
 	#asyncId = 0;
@@ -100,6 +102,7 @@ export class PlayerState {
 	#scrubPreviewTimer: number | null = null;
 	#scrubPreviewTask: Promise<void> | null = null;
 	#scrubPreviewId = 0;
+	#frameStepTask: Promise<void> | null = null;
 	#mediaSession: MediaSession | null = null;
 	#mediaSessionArtworkUrl: string | null = null;
 
@@ -331,6 +334,40 @@ export class PlayerState {
 		if (current && wasPlaying && target < this.#endTimestamp) await this.play();
 	}
 
+	stepFrame(direction: -1 | 1) {
+		if (this.#frameStepTask) return this.#frameStepTask;
+
+		const promise = this.#stepFrame(direction).finally(() => (this.#frameStepTask = null));
+		this.#frameStepTask = promise;
+		return promise;
+	}
+
+	async #stepFrame(direction: -1 | 1) {
+		if (this.loadState.status !== 'ready' || !this.#lastDrawnFrame || !this.paused) return;
+
+		const target = direction === -1 ?
+			this.#lastDrawnFrame.timestamp - FRAME_STEP_EPSILON_SECONDS
+			: this.#lastDrawnFrame.timestamp + this.#lastDrawnFrame.duration;
+
+		if (target < this.#firstTimestamp || target >= this.#endTimestamp) return;
+
+		if (direction === -1) {
+			await this.seek(target);
+			return;
+		}
+
+		// Manually draw the next frame, its not entirely ideal (with restaring the iterator n stuff) but it works
+		const frame = (await this.#scrubPreviewSink?.getCanvas(target)) ?? null;
+		if (!frame || this.disposed) return;
+
+		this.#playbackTimeAtStart = target;
+		this.currentTime = target;
+		this.#updateMediaSessionPosition();
+		await this.#restartVideoIterator();
+		if (this.disposed) return;
+		this.#draw(frame);
+	}
+
 	beginScrub() {
 		const resumeAfterScrub = !this.paused;
 		if (resumeAfterScrub) this.pause();
@@ -425,6 +462,7 @@ export class PlayerState {
 		void this.#videoFrameIterator?.return();
 		this.#videoFrameIterator = null;
 		this.#nextFrame = null;
+		this.#lastDrawnFrame = null;
 
 		if (this.#animationFrameId !== null) cancelAnimationFrame(this.#animationFrameId);
 		if (this.#backgroundRenderId !== null) clearInterval(this.#backgroundRenderId);
@@ -468,7 +506,7 @@ export class PlayerState {
 		if (operationId !== this.#asyncId || this.disposed) return false;
 
 		this.#nextFrame = secondFrame;
-		if (firstFrame) this.#draw(firstFrame);
+		if (firstFrame) this.#draw(firstFrame)
 		return true;
 	}
 
@@ -520,6 +558,7 @@ export class PlayerState {
 
 		context.clearRect(0, 0, canvas.width, canvas.height);
 		context.drawImage(frame.canvas, 0, 0);
+		this.#lastDrawnFrame = { timestamp: frame.timestamp, duration: frame.duration }
 	}
 
 	#startScrubPreview() {
@@ -544,9 +583,7 @@ export class PlayerState {
 			const frame = await this.#scrubPreviewSink?.getCanvas(target);
 			if (previewId !== this.#scrubPreviewId || this.disposed) return;
 			if (frame && this.#scrubPreviewTime === null) this.#draw(frame);
-		} catch {
-			// A preview frame is optional; the final seek will still render normally.
-		}
+		} catch {}
 	}
 
 	#cancelScrubPreview() {
