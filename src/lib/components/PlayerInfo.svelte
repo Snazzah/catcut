@@ -11,8 +11,8 @@
 		const input = player.input;
 		if (!input) return null;
 
-		return Promise.all([input.getFormat(), input.getMimeType(), input.source.getSizeOrNull()]).then(
-			([format, mimeType, size]) => ({ format: format.name, mimeType, size })
+		return Promise.all([input.getFormat(), input.source.getSizeOrNull()]).then(
+			([format, size]) => ({ format: format.name, size })
 		);
 	});
 
@@ -114,10 +114,6 @@
 						<dl class="grid grid-cols-[auto_minmax(0,1fr)] gap-x-5 gap-y-1.5">
 							<dt class="text-neutral-400">Container</dt>
 							<dd class="m-0 text-right text-neutral-100">{info.format}</dd>
-							<dt class="text-neutral-400">MIME type</dt>
-							<dd class="m-0 truncate text-right text-neutral-100" title={info.mimeType}>
-								{info.mimeType}
-							</dd>
 							{#if info.size !== null}
 								<dt class="text-neutral-400">Size</dt>
 								<dd class="m-0 text-right text-neutral-100 tabular-nums">
