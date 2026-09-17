@@ -70,7 +70,7 @@
 
 		const shownTags = knownTags.filter(([, key]) => {
 			const value = tags[key];
-			return value !== null && value !== undefined;
+			return value !== null && value !== undefined && value !== '';
 		});
 		return shownTags.length > 0 ? shownTags : null;
 	});
@@ -181,6 +181,13 @@
 							>
 								{#if Array.isArray(player.loadState.metadata.tags[key])}
 									{player.loadState.metadata.tags[key].join(', ')}
+								{:else if key === 'date'}
+									{@const raw = player.loadState.metadata.tags.raw}
+									{#if raw && ('TYER' in raw || 'TYE' in raw)}
+										{player.loadState.metadata.tags.date?.getFullYear()}
+									{:else}
+										{player.loadState.metadata.tags.date?.toISOString().slice(0, 10)}
+									{/if}
 								{:else}
 									{player.loadState.metadata.tags[key]}
 								{/if}
