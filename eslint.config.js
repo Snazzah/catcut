@@ -27,5 +27,10 @@ export default tseslint.config(
 			}
 		}
 	},
-	prettier
+	prettier,
+	{
+		rules: {
+			'no-empty': 0
+		}
+	}
 );

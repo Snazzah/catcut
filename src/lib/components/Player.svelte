@@ -17,6 +17,7 @@
 	import PlayerSettings from './PlayerSettings.svelte';
 	import SmallTooltipContent from './SmallTooltipContent.svelte';
 	import Icon from '@iconify/svelte';
+	import { mobile } from '$lib/platform.svelte';
 
 	const SEEK_STEP_COUNT = 10_000;
 
@@ -260,41 +261,44 @@
 								key="M"
 								offset={36}
 							/>
-							<div
-								class={[
-									'transition-[width,opacity] duration-200 ease-out',
-									volumeSliderExpanded ? 'w-28 opacity-100' : 'pointer-events-none w-0 opacity-0'
-								]}
-								aria-hidden={!volumeSliderExpanded}
-							>
-								<Tooltip.Root
-									delayDuration={200}
-									disabled={!volumeSliderExpanded}
-									disableHoverableContent
-									disableCloseOnTriggerClick
+
+							{#if !mobile.current}
+								<div
+									class={[
+										'transition-[width,opacity] duration-200 ease-out',
+										volumeSliderExpanded ? 'w-28 opacity-100' : 'pointer-events-none w-0 opacity-0'
+									]}
+									aria-hidden={!volumeSliderExpanded}
 								>
-									<Tooltip.Trigger tabindex={-1} type={undefined}>
-										{#snippet child({ props })}
-											<div {...props}>
-												<PlayerSlider
-													class="w-24"
-													min={0}
-													max={1}
-													step={0.01}
-													white
-													value={player.volume}
-													disabled={!volumeSliderExpanded}
-													onValueChange={(volume) => player.setVolume(volume)}
-													label="Volume"
-												/>
-											</div>
-										{/snippet}
-									</Tooltip.Trigger>
-									<SmallTooltipContent class="tabular-nums"
-										>Volume: {Math.round(player.volume * 100)}%</SmallTooltipContent
+									<Tooltip.Root
+										delayDuration={200}
+										disabled={!volumeSliderExpanded}
+										disableHoverableContent
+										disableCloseOnTriggerClick
 									>
-								</Tooltip.Root>
-							</div>
+										<Tooltip.Trigger tabindex={-1} type={undefined}>
+											{#snippet child({ props })}
+												<div {...props}>
+													<PlayerSlider
+														class="w-24"
+														min={0}
+														max={1}
+														step={0.01}
+														white
+														value={player.volume}
+														disabled={!volumeSliderExpanded}
+														onValueChange={(volume) => player.setVolume(volume)}
+														label="Volume"
+													/>
+												</div>
+											{/snippet}
+										</Tooltip.Trigger>
+										<SmallTooltipContent class="tabular-nums"
+											>Volume: {Math.round(player.volume * 100)}%</SmallTooltipContent
+										>
+									</Tooltip.Root>
+								</div>
+							{/if}
 						</div>
 					{:else}
 						<PlayerButton title="Media has no audio" icon={volumeMutedIcon} disabled offset={36} />
