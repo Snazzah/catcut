@@ -1,7 +1,7 @@
 <script lang="ts">
+	import { mobile } from '$lib/platform.svelte';
 	import { DropdownMenu } from 'bits-ui';
 	import type { Snippet } from 'svelte';
-	import { MediaQuery } from 'svelte/reactivity';
 	import { Drawer } from 'vaul-svelte';
 
 	let {
@@ -16,7 +16,6 @@
 		onOpenChange?: (open: boolean) => void;
 	} = $props();
 
-	const mobile = new MediaQuery('max-width: 639px', false);
 	let open = $state(false);
 	let triggerAnchor = $state<HTMLElement>();
 

@@ -71,7 +71,7 @@ export class PlayerState {
 	loadState = $state.raw<PlayerLoadState>({ status: 'loading' });
 	currentTime = $state(0);
 	paused = $state(true);
-	volume = $state(0.7);
+	volume = $state(1);
 	playbackRate = $state(1);
 	muted = $state(false);
 	coverImageUrl = $state<string | null>(null);
