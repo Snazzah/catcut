@@ -146,6 +146,8 @@
 	}
 
 	function handleKeydown(event: KeyboardEvent) {
+		if (event.defaultPrevented) return;
+
 		if (
 			event.target instanceof HTMLInputElement ||
 			(event.target instanceof HTMLElement && event.target.closest('[role="slider"]'))
