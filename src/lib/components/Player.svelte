@@ -44,12 +44,19 @@
 	let controlsVisible = $derived(
 		mobile.current
 			? mobileControlsVisible || surfaces.open
-			: documentFocused || playerHovered || surfaces.open
+			: documentFocused || playerHovered || player.paused || surfaces.open
 	);
 
 	$effect(() => {
 		if (surfaces.open) clearMobileControlsTimeout();
 		else showMobileControls();
+	});
+
+	$effect(() => {
+		if (player.paused) {
+			clearMobileControlsTimeout();
+			mobileControlsVisible = true;
+		} else if (!surfaces.open && mobileControlsVisible) showMobileControls();
 	});
 
 	onMount(() => {
@@ -79,9 +86,10 @@
 		if (!mobile.current) return;
 		mobileControlsVisible = true;
 		clearMobileControlsTimeout();
+		if (surfaces.open || player.paused) return;
 		mobileControlsTimeout = setTimeout(() => {
 			mobileControlsTimeout = undefined;
-			if (surfaces.open) return;
+			if (surfaces.open || player.paused) return;
 			mobileControlsVisible = false;
 		}, MOBILE_CONTROLS_TIMEOUT_MS);
 	}
