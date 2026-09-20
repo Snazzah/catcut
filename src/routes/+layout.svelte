@@ -4,10 +4,45 @@
 	import { onMount, type Snippet } from 'svelte';
 	import { Tooltip } from 'bits-ui';
 	import { isDiscordActivity, initDiscordActivity } from '$lib/discord';
+	import { Toaster, toast } from 'svelte-sonner';
 
 	let { children }: { children: Snippet } = $props();
 
 	onMount(() => {
+		function showUpdateToast(registration: ServiceWorkerRegistration) {
+			if (!registration.waiting || !navigator.serviceWorker.controller) return;
+
+			toast('An update is ready.', {
+				description: 'Reload when you are ready to use the latest version.',
+				duration: Infinity,
+				action: {
+					label: 'Reload',
+					onClick: () => registration.waiting?.postMessage({ type: 'SKIP_WAITING' })
+				}
+			});
+		}
+
+		async function watchForServiceWorkerUpdate() {
+			const registration = await navigator.serviceWorker.getRegistration();
+			if (!registration) return;
+
+			showUpdateToast(registration);
+			registration.addEventListener('updatefound', () => {
+				registration.installing?.addEventListener('statechange', () =>
+					showUpdateToast(registration)
+				);
+			});
+			navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
+		}
+
+		if ('serviceWorker' in navigator) {
+			if (document.readyState === 'complete') {
+				void watchForServiceWorkerUpdate();
+			} else {
+				window.addEventListener('load', () => void watchForServiceWorkerUpdate(), { once: true });
+			}
+		}
+
 		if (isDiscordActivity()) {
 			initDiscordActivity().catch((err) => console.error('Discord activity init failed', err));
 		}
@@ -30,4 +65,5 @@
 	<Tooltip.Provider>
 		{@render children()}
 	</Tooltip.Provider>
+	<Toaster theme="dark" position="bottom-right" />
 </div>

@@ -57,6 +57,7 @@
 	"dependencies": {
 		"@discord/embedded-app-sdk": "^2.5.0",
 		"@soundtouchjs/audio-worklet": "2.1.1",
-		"mediabunny": "^1.56.1"
+		"mediabunny": "^1.56.1",
+		"svelte-sonner": "^1.2.1"
 	}
 }
