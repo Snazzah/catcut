@@ -17,9 +17,10 @@
 	import PlayerSettings from './PlayerSettings.svelte';
 	import SmallTooltipContent from './SmallTooltipContent.svelte';
 	import Icon from '@iconify/svelte';
-	import { mobile } from '$lib/platform.svelte';
+	import { mobile, surfaces } from '$lib/platform.svelte';
 
 	const SEEK_STEP_COUNT = 10_000;
+	const MOBILE_CONTROLS_TIMEOUT_MS = 3_000;
 
 	let { source, onclose }: { source: MediaSource; onclose: () => void } = $props();
 	const player = new PlayerState(untrack(() => source));
@@ -35,7 +36,24 @@
 	let shownTime = $derived(scrubTime ?? player.currentTime);
 	let seekStep = $derived(player.duration > 0 ? player.duration / SEEK_STEP_COUNT : 0.001);
 
+	// Controls
+	let playerHovered = $state(false);
+	let documentFocused = $state(true);
+	let mobileControlsVisible = $state(false);
+	let mobileControlsTimeout: ReturnType<typeof setTimeout> | undefined;
+	let controlsVisible = $derived(
+		mobile.current
+			? mobileControlsVisible || surfaces.open
+			: documentFocused || playerHovered || surfaces.open
+	);
+
+	$effect(() => {
+		if (surfaces.open) clearMobileControlsTimeout();
+		else showMobileControls();
+	});
+
 	onMount(() => {
+		documentFocused = document.hasFocus();
 		player.attachCanvas(canvas);
 		void player.load().catch((error: unknown) => {
 			if (player.disposed) return;
@@ -45,10 +63,42 @@
 		});
 
 		return () => {
+			clearMobileControlsTimeout();
 			player.dispose();
 			document.title = 'catcut';
 		};
 	});
+
+	function clearMobileControlsTimeout() {
+		if (mobileControlsTimeout === undefined) return;
+		clearTimeout(mobileControlsTimeout);
+		mobileControlsTimeout = undefined;
+	}
+
+	function showMobileControls() {
+		if (!mobile.current) return;
+		mobileControlsVisible = true;
+		clearMobileControlsTimeout();
+		mobileControlsTimeout = setTimeout(() => {
+			mobileControlsTimeout = undefined;
+			if (surfaces.open) return;
+			mobileControlsVisible = false;
+		}, MOBILE_CONTROLS_TIMEOUT_MS);
+	}
+
+	function handlePlayerClick() {
+		if (!mobile.current) {
+			void player.togglePlayback();
+			return;
+		}
+
+		if (mobileControlsVisible) {
+			clearMobileControlsTimeout();
+			mobileControlsVisible = false;
+		} else {
+			showMobileControls();
+		}
+	}
 
 	function startScrub() {
 		if (scrubbing) return;
@@ -121,7 +171,11 @@
 	}
 </script>
 
-<svelte:window onkeydown={handleKeydown} />
+<svelte:window
+	onkeydown={handleKeydown}
+	onfocus={() => (documentFocused = true)}
+	onblur={() => (documentFocused = false)}
+/>
 
 <svelte:head>
 	{#if player.loadState.status === 'ready'}
@@ -131,8 +185,11 @@
 
 <section
 	id="catcut-player"
+	aria-label="Media player"
 	class="relative h-full w-full overflow-hidden bg-neutral-950 pt-(--sait)"
 	bind:this={playerElement}
+	onpointerenter={() => (playerHovered = true)}
+	onpointerleave={() => (playerHovered = false)}
 >
 	<!-- main area -->
 	<div class="grid h-full w-full place-items-center overflow-hidden bg-black">
@@ -145,7 +202,7 @@
 			<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 			<div
 				class="m-0 flex h-full w-full min-w-0 flex-col items-center justify-center gap-6 bg-linear-to-t from-violet-950/50 to-transparent px-6 text-center text-neutral-200"
-				onclick={() => void player.togglePlayback()}
+				onclick={handlePlayerClick}
 			>
 				{#if player.coverImageUrl}
 					<img
@@ -184,13 +241,19 @@
 				!player.hasVideo && 'hidden'
 			]}
 			bind:this={canvas}
-			onclick={() => void player.togglePlayback()}
+			onclick={handlePlayerClick}
 		></canvas>
 	</div>
 
 	<!-- Top area -->
 	<div
-		class="absolute inset-x-0 top-(--sait) z-10 flex justify-between gap-2 bg-linear-to-t from-black/0 via-black/50 to-black/75 p-3"
+		class={[
+			'absolute inset-x-0 top-(--sait) z-10 flex justify-between gap-2 bg-linear-to-t from-black/0 via-black/50 to-black/75 p-3 transition-opacity duration-200',
+			controlsVisible ? 'opacity-100' : 'pointer-events-none opacity-0'
+		]}
+		aria-hidden={!controlsVisible}
+		inert={!controlsVisible}
+		onpointerdown={showMobileControls}
 	>
 		<div class="min-w-0 flex-1 font-medium text-white">
 			<div class="flex min-w-0 flex-col">
@@ -210,7 +273,13 @@
 
 	<!-- Bottom area -->
 	<div
-		class="absolute inset-x-0 bottom-(--saib) z-10 grid gap-2 bg-linear-to-b from-black/0 via-black/50 to-black/75 p-3"
+		class={[
+			'absolute inset-x-0 bottom-(--saib) z-10 grid gap-2 bg-linear-to-b from-black/0 via-black/50 to-black/75 p-3 transition-opacity duration-200',
+			controlsVisible ? 'opacity-100' : 'pointer-events-none opacity-0'
+		]}
+		aria-hidden={!controlsVisible}
+		inert={!controlsVisible}
+		onpointerdown={showMobileControls}
 	>
 		{#if player.loadState.status === 'ready'}
 			<div

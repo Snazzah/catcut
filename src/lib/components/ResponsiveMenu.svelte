@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { mobile } from '$lib/platform.svelte';
+	import { mobile, surfaces } from '$lib/platform.svelte';
 	import { DropdownMenu } from 'bits-ui';
-	import type { Snippet } from 'svelte';
+	import { onDestroy, type Snippet } from 'svelte';
 	import { Drawer } from 'vaul-svelte';
 
 	let {
@@ -18,6 +18,7 @@
 
 	let open = $state(false);
 	let triggerAnchor = $state<HTMLElement>();
+	const unsubscribeSurface = surfaces.subscribe(() => open);
 
 	function handleOpenChange(nextOpen: boolean) {
 		open = nextOpen;
@@ -27,6 +28,8 @@
 	function toggleOpen() {
 		handleOpenChange(!open);
 	}
+
+	onDestroy(unsubscribeSurface);
 </script>
 
 <span class="inline-flex" bind:this={triggerAnchor}>
