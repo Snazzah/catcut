@@ -96,6 +96,17 @@
 		if (channels === 2) return '2 (stereo)';
 		return channels.toString();
 	}
+
+	function formatAspectRatio(width: number, height: number) {
+		let divisor = Math.min(width, height);
+		let remainder = Math.max(width, height) % divisor;
+
+		while (remainder !== 0) {
+			[divisor, remainder] = [remainder, divisor % remainder];
+		}
+
+		return `${width / divisor}:${height / divisor}`;
+	}
 </script>
 
 <ResponsiveMenu title="Media information">
@@ -140,6 +151,10 @@
 								<dt class="text-neutral-400">Resolution</dt>
 								<dd class="m-0 text-right text-neutral-100 tabular-nums">
 									{tracks.video.width} × {tracks.video.height}
+								</dd>
+								<dt class="text-neutral-400">Aspect ratio</dt>
+								<dd class="m-0 text-right text-neutral-100 tabular-nums">
+									{formatAspectRatio(tracks.video.width, tracks.video.height)}
 								</dd>
 							</dl>
 						</section>
