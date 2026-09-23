@@ -94,6 +94,8 @@
 	function formatChannels(channels: number) {
 		if (channels === 1) return '1 (mono)';
 		if (channels === 2) return '2 (stereo)';
+		if (channels === 6) return '6 (5.1)';
+		if (channels === 8) return '8 (7.1)';
 		return channels.toString();
 	}
 
