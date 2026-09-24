@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import FileDrop from '$lib/components/FileDrop.svelte';
-	import Player from '$lib/components/Player.svelte';
+	import MediaWorkspace from '$lib/components/MediaWorkspace.svelte';
 	import { catcut } from '$lib/icons';
 	import { createLocalMediaSource, createRemoteMediaSource, type MediaSource } from '$lib/media';
 	import Icon from '@iconify/svelte';
@@ -82,7 +82,7 @@
 	{#if source}
 		{#key source}
 			<BitsConfig defaultPortalTo="#catcut-player">
-				<Player {source} onclose={() => (source = null)} />
+				<MediaWorkspace {source} onclose={() => (source = null)} />
 			</BitsConfig>
 		{/key}
 	{:else}
