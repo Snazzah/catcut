@@ -2,7 +2,7 @@
 	import contentCutIcon from '@iconify-icons/mdi/content-cut';
 	import fullscreenIcon from '@iconify-icons/mdi/fullscreen';
 	import restartIcon from '@iconify-icons/mdi/restart';
-	import { createTrimRange, type TimelineRange } from '$lib/editing';
+	import { createTrimRange, type CatcutConversionOptions, type TimelineRange } from '$lib/editing';
 	import type { PlayerState } from '$lib/player-state.svelte';
 	import PlayerButton from '../PlayerButton.svelte';
 	import PlayerPlayButton from '../PlayerPlayButton.svelte';
@@ -19,9 +19,11 @@
 
 	let {
 		player,
+		options = $bindable<CatcutConversionOptions>({}),
 		onfullscreen
 	}: {
 		player: PlayerState;
+		options?: CatcutConversionOptions;
 		onfullscreen: () => void;
 	} = $props();
 
@@ -31,7 +33,13 @@
 
 	$effect(() => {
 		if (player.loadState.status !== 'ready' || trimInitialized) return;
-		trim = createTrimRange({ start: player.startTime, end: player.endTime });
+		updateTrim(
+			createTrimRange(
+				{ start: player.startTime, end: player.endTime },
+				options.trim?.start,
+				options.trim?.end
+			)
+		);
 		trimInitialized = true;
 	});
 
@@ -49,7 +57,12 @@
 	}
 
 	function revertSettings() {
-		trim = createTrimRange({ start: player.startTime, end: player.endTime });
+		updateTrim(createTrimRange({ start: player.startTime, end: player.endTime }));
+	}
+
+	function updateTrim(nextTrim: TimelineRange) {
+		trim = nextTrim;
+		options = { ...options, trim: $state.snapshot(nextTrim) };
 	}
 </script>
 
@@ -65,7 +78,8 @@
 		<PlayerPlayButton {player} offset={32} onclick={() => void togglePlayback()} />
 		<PlayerVolumeControl {player} offset={32} />
 		<span class="text-neutral-300 tabular-nums">
-			<span class="text-neutral-100 font-medium">{player.formatTimestamp(player.currentTime)}</span> / {player.formatTimestamp(player.endTime)}
+			<span class="font-medium text-neutral-100">{player.formatTimestamp(player.currentTime)}</span>
+			/ {player.formatTimestamp(player.endTime)}
 		</span>
 		<span class="mx-auto"></span>
 		<PlayerButton
@@ -87,7 +101,7 @@
 
 	<div class="pt-4 pb-1 sm:pt-5 sm:pb-2">
 		{#if trimInitialized}
-			<EditorTimeline {player} {trim} ontrimchange={(nextTrim) => (trim = nextTrim)} />
+			<EditorTimeline {player} {trim} ontrimchange={updateTrim} />
 		{:else}
 			<div class="h-10 animate-pulse bg-neutral-900 sm:h-18"></div>
 		{/if}
@@ -95,7 +109,7 @@
 
 	<div class="relative min-h-0">
 		{#if activeTab === 'trim' && trimInitialized}
-			<TrimControls {player} {trim} ontrimchange={(nextTrim) => (trim = nextTrim)} />
+			<TrimControls {player} {trim} ontrimchange={updateTrim} />
 		{/if}
 		<EditorTabs {tabs} active={activeTab} onselect={(tab) => (activeTab = tab)} />
 	</div>

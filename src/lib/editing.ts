@@ -1,6 +1,6 @@
 import type { ConversionOptions } from 'mediabunny';
 
-export type CatcutConversionOptions = ConversionOptions;
+export type CatcutConversionOptions = Omit<ConversionOptions, 'input' | 'output'>;
 
 export type TimelineRange = Readonly<{
 	start: number;
@@ -32,6 +32,14 @@ export function stepTimelineTime(bounds: TimelineRange, time: number, direction:
 }
 
 // TODO whenever more options to edit things are added, this will convert the main conversion options from our catcut options
-export function optionsIntoConversionOptions(options: CatcutConversionOptions): ConversionOptions {
-	return options;
+export function optionsIntoConversionOptions({
+	options,
+	input,
+	output
+}: {
+	options: CatcutConversionOptions;
+	input: ConversionOptions['input'];
+	output: ConversionOptions['output'];
+}): ConversionOptions {
+	return { input, output, ...options };
 }
