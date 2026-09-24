@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
+	import type { CatcutConversionOptions } from '$lib/editing';
 	import type { MediaSource } from '$lib/media';
 	import { PlayerState } from '$lib/player-state.svelte';
 	import EditingShell from './editor/EditingShell.svelte';
@@ -10,6 +11,7 @@
 	const player = new PlayerState(untrack(() => source));
 	let workspace: HTMLElement;
 	let editing = $state(false);
+	let conversionOptions = $state.raw<CatcutConversionOptions>({});
 
 	function handleClose() {
 		if (editing) editing = false;
@@ -63,7 +65,7 @@
 
 	<div class="min-h-0 overflow-hidden">
 		{#if editing}
-			<EditingShell {player} onfullscreen={toggleFullscreen} />
+			<EditingShell {player} bind:options={conversionOptions} onfullscreen={toggleFullscreen} />
 		{/if}
 	</div>
 </section>

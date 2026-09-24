@@ -33,7 +33,7 @@
 			role="tab"
 			aria-selected={active === tab.id}
 			class={[
-				'flex size-8 sm:size-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full text-sm font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-violet-200 motion-reduce:transition-none md:h-10 md:w-auto md:px-4',
+				'flex size-8 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full text-sm font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-violet-200 motion-reduce:transition-none sm:size-12 md:h-10 md:w-auto md:px-4',
 				active === tab.id
 					? 'text-accent md:bg-violet-500 md:text-white'
 					: 'text-neutral-100 hover:bg-white/8 hover:text-white md:bg-neutral-800'
