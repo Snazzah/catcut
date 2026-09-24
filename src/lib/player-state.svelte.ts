@@ -6,6 +6,8 @@ import {
 	getDecodableCodecs,
 	getEncodableCodecs,
 	Input,
+	type InputAudioTrack,
+	type InputVideoTrack,
 	UrlSource,
 	type MediaCodec,
 	type MetadataTags,
@@ -83,6 +85,8 @@ export class PlayerState {
 	#videoSink: CanvasSink | null = null;
 	#scrubPreviewSink: CanvasSink | null = null;
 	#audioSink: AudioBufferSink | null = null;
+	#videoTrack: InputVideoTrack | null = null;
+	#audioTrack: InputAudioTrack | null = null;
 	#audioContext: AudioContext | null = null;
 	#soundTouchNode: SoundTouchNode | null = null;
 	#soundTouchNodeFactory: (() => SoundTouchNode) | null = null;
@@ -139,6 +143,14 @@ export class PlayerState {
 
 	get hasVideo() {
 		return this.loadState.status === 'ready' && this.#videoSink !== null;
+	}
+
+	get videoTrack() {
+		return this.#videoTrack;
+	}
+
+	get audioTrack() {
+		return this.#audioTrack;
 	}
 
 	attachCanvas(canvas: HTMLCanvasElement) {
@@ -260,6 +272,8 @@ export class PlayerState {
 				})
 			: null;
 		this.#audioSink = audioTrack ? new AudioBufferSink(audioTrack) : null;
+		this.#videoTrack = videoTrack;
+		this.#audioTrack = audioTrack;
 
 		if (video && this.#canvas) {
 			this.#canvas.width = video.width;
@@ -375,6 +389,7 @@ export class PlayerState {
 	beginScrub() {
 		const resumeAfterScrub = !this.paused;
 		if (resumeAfterScrub) this.pause();
+		this.#suspendVideoIterator();
 		return resumeAfterScrub;
 	}
 
@@ -447,7 +462,11 @@ export class PlayerState {
 			return new Date(seconds * 1000).toISOString().replace('T', ' ');
 		}
 
-		const rounded = Math.max(0, Math.floor(seconds - this.#firstTimestamp));
+		return this.formatDuration(seconds - this.#firstTimestamp);
+	}
+
+	formatDuration(seconds: number) {
+		const rounded = Math.max(0, Math.floor(seconds));
 		const hours = Math.floor(rounded / 3600);
 		const minutes = Math.floor((rounded % 3600) / 60);
 		const remainingSeconds = rounded % 60;
@@ -467,6 +486,8 @@ export class PlayerState {
 		this.#videoFrameIterator = null;
 		this.#nextFrame = null;
 		this.#lastDrawnFrame = null;
+		this.#videoTrack = null;
+		this.#audioTrack = null;
 
 		if (this.#animationFrameId !== null) cancelAnimationFrame(this.#animationFrameId);
 		if (this.#backgroundRenderId !== null) clearInterval(this.#backgroundRenderId);
@@ -636,6 +657,13 @@ export class PlayerState {
 	#stopQueuedAudio() {
 		for (const node of this.#queuedAudioNodes) node.stop();
 		this.#queuedAudioNodes.clear();
+	}
+
+	#suspendVideoIterator() {
+		this.#asyncId += 1;
+		void this.#videoFrameIterator?.return();
+		this.#videoFrameIterator = null;
+		this.#nextFrame = null;
 	}
 
 	#ensureSoundTouchNode() {
