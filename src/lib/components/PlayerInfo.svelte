@@ -17,35 +17,25 @@
 	});
 
 	let trackInfo = $derived.by(() => {
-		const input = player.input;
-		if (!input) return null;
+		if (player.loadState.status !== 'ready') return null;
+		const videoTrack = player.videoTrack;
+		const audioTrack = player.audioTrack;
+		const videoSize = player.videoSize;
 
-		return Promise.all([input.getPrimaryVideoTrack(), input.getPrimaryAudioTrack()]).then(
-			async ([videoTrack, audioTrack]) => {
-				const [video, audio] = await Promise.all([
-					videoTrack
-						? Promise.all([
-								videoTrack.getCodec(),
-								videoTrack.getDisplayWidth(),
-								videoTrack.getDisplayHeight()
-							]).then(([codec, width, height]) =>
-								codec === null ? null : { codec, width, height }
-							)
-						: null,
-					audioTrack
-						? Promise.all([
-								audioTrack.getCodec(),
-								audioTrack.getSampleRate(),
-								audioTrack.getNumberOfChannels()
-							]).then(([codec, sampleRate, channels]) =>
-								codec === null ? null : { codec, sampleRate, channels }
-							)
-						: null
-				]);
-
-				return { video, audio };
-			}
-		);
+		return Promise.all([
+			videoTrack && videoSize
+				? videoTrack.getCodec().then((codec) => (codec === null ? null : { codec, ...videoSize }))
+				: null,
+			audioTrack
+				? Promise.all([
+						audioTrack.getCodec(),
+						audioTrack.getSampleRate(),
+						audioTrack.getNumberOfChannels()
+					]).then(([codec, sampleRate, channels]) =>
+						codec === null ? null : { codec, sampleRate, channels }
+					)
+				: null
+		]).then(([video, audio]) => ({ video, audio }));
 	});
 
 	let metaTags = $derived.by(() => {

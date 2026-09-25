@@ -109,12 +109,8 @@ export async function renderTimelinePreview(options: TimelinePreviewOptions) {
 	const context = prepareCanvas(options.canvas, options.width, options.height);
 	if (!context) throw new Error('This browser does not support 2D canvas rendering.');
 
-	const videoTrack = options.player.videoTrack;
-	const mediaAspectRatio = videoTrack
-		? await Promise.all([videoTrack.getDisplayWidth(), videoTrack.getDisplayHeight()]).then(
-				([displayWidth, displayHeight]) => displayWidth / displayHeight
-			)
-		: 16 / 9;
+	const videoSize = options.player.videoSize;
+	const mediaAspectRatio = videoSize ? videoSize.width / videoSize.height : 16 / 9;
 	const layout = getTimelineTileLayout(options.width, options.height, mediaAspectRatio);
 	drawLoadingTrack(context, options.width, options.height, layout);
 	if (await drawVideoTrack({ ...options, context, layout })) return;

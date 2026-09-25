@@ -25,6 +25,7 @@ import { registerProresDecoder } from '@mediabunny/prores';
 import { registerHevcDecoder, registerHevcEncoder } from '@snazzah/mediabunny-hevc';
 import soundTouchProcessorUrl from '@soundtouchjs/audio-worklet/processor?url';
 import type { SoundTouchNode } from '@soundtouchjs/audio-worklet';
+import type { VideoSize } from '$lib/editing';
 
 export type CodecRegistration = {
 	nativelyDecodable: ReadonlySet<MediaCodec>;
@@ -63,6 +64,7 @@ const FRAME_STEP_EPSILON_SECONDS = 0.00001;
 
 type PlayerMetadata = {
 	tags: MetadataTags;
+	videoSize: VideoSize | null;
 };
 
 export type PlayerLoadState =
@@ -147,6 +149,10 @@ export class PlayerState {
 
 	get videoTrack() {
 		return this.#videoTrack;
+	}
+
+	get videoSize() {
+		return this.loadState.status === 'ready' ? this.loadState.metadata.videoSize : null;
 	}
 
 	get audioTrack() {
@@ -282,7 +288,10 @@ export class PlayerState {
 
 		this.loadState = {
 			status: 'ready',
-			metadata: { tags },
+			metadata: {
+				tags,
+				videoSize: video ? { width: video.width, height: video.height } : null
+			},
 			warning: warnings.length > 0 ? warnings.join(' ') : null
 		};
 

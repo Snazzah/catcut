@@ -11,9 +11,16 @@
 	import PlayerVolumeControl from './PlayerVolumeControl.svelte';
 	import Icon from '@iconify/svelte';
 	import { mobile, surfaces } from '$lib/platform.svelte';
+	import type { CropRectangle } from 'mediabunny';
+	import CropOverlay from './editor/CropOverlay.svelte';
 
 	const SEEK_STEP_COUNT = 10_000;
 	const MOBILE_CONTROLS_TIMEOUT_MS = 3_000;
+	type CropEditor = Readonly<{
+		crop: CropRectangle;
+		handlesActive: boolean;
+		onchange: (crop: CropRectangle) => void;
+	}>;
 
 	type Props = {
 		player: PlayerState;
@@ -21,9 +28,10 @@
 		onedit?: () => void;
 		onfullscreen: () => void;
 		showControls?: boolean;
+		cropEditor?: CropEditor;
 	};
 
-	let { player, onclose, onedit, onfullscreen, showControls = true }: Props = $props();
+	let { player, onclose, onedit, onfullscreen, showControls = true, cropEditor }: Props = $props();
 	let canvas: HTMLCanvasElement;
 	let scrubTime = $state<number | null>(null);
 	let scrubbing = false;
@@ -169,12 +177,12 @@
 
 <section
 	aria-label="Media player"
-	class="relative h-full w-full overflow-hidden bg-neutral-950"
+	class="relative h-full w-full bg-neutral-950"
 	onpointerenter={() => (playerHovered = true)}
 	onpointerleave={() => (playerHovered = false)}
 >
 	<!-- main area -->
-	<div class="grid h-full w-full place-items-center overflow-hidden bg-black">
+	<div class="relative grid h-full w-full place-items-center bg-black">
 		{#if player.loadState.status === 'loading'}
 			<p class="m-0 text-sm text-neutral-300">
 				<Icon icon={loadingIcon} class="size-16 animate-spin" />
@@ -225,6 +233,15 @@
 			bind:this={canvas}
 			onclick={handlePlayerClick}
 		></canvas>
+
+		{#if cropEditor && player.videoSize}
+			<CropOverlay
+				bounds={player.videoSize}
+				crop={cropEditor.crop}
+				handlesActive={cropEditor.handlesActive}
+				oncropchange={cropEditor.onchange}
+			/>
+		{/if}
 	</div>
 
 	<!-- Bottom area -->

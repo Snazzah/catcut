@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import type { CatcutConversionOptions } from '$lib/editing';
+	import type { CropRectangle } from 'mediabunny';
+	import { createCropRectangle, isFullFrameCrop, type CatcutConversionOptions } from '$lib/editing';
 	import type { MediaSource } from '$lib/media';
 	import { PlayerState } from '$lib/player-state.svelte';
-	import EditingShell from './editor/EditingShell.svelte';
+	import EditingShell, { type EditorToolId } from './editor/EditingShell.svelte';
 	import MediaHeader from './MediaHeader.svelte';
 	import Player from './Player.svelte';
 
@@ -12,6 +13,14 @@
 	let workspace: HTMLElement;
 	let editing = $state(false);
 	let conversionOptions = $state.raw<CatcutConversionOptions>({});
+	let activeEditorTool = $state<EditorToolId>('trim');
+	let crop = $state.raw<CropRectangle | null>(null);
+
+	$effect(() => {
+		const videoSize = player.videoSize;
+		if (!videoSize || crop) return;
+		crop = createCropRectangle(videoSize, conversionOptions.video?.crop);
+	});
 
 	function handleClose() {
 		if (editing) editing = false;
@@ -21,6 +30,21 @@
 	function openEditor() {
 		player.setPlaybackRate(1);
 		editing = true;
+	}
+
+	function updateCrop(nextCrop: CropRectangle) {
+		const videoSize = player.videoSize;
+		if (!videoSize) return;
+
+		const normalizedCrop = createCropRectangle(videoSize, nextCrop);
+		crop = normalizedCrop;
+		conversionOptions = {
+			...conversionOptions,
+			video: {
+				...conversionOptions.video,
+				crop: isFullFrameCrop(videoSize, normalizedCrop) ? undefined : normalizedCrop
+			}
+		};
 	}
 
 	async function toggleFullscreen() {
@@ -60,12 +84,26 @@
 			onedit={openEditor}
 			onfullscreen={toggleFullscreen}
 			showControls={!editing}
+			cropEditor={editing && crop
+				? {
+						crop,
+						handlesActive: activeEditorTool === 'crop',
+						onchange: updateCrop
+					}
+				: undefined}
 		/>
 	</div>
 
 	<div class="min-h-0 overflow-hidden">
 		{#if editing}
-			<EditingShell {player} bind:options={conversionOptions} onfullscreen={toggleFullscreen} />
+			<EditingShell
+				{player}
+				bind:options={conversionOptions}
+				bind:activeTool={activeEditorTool}
+				{crop}
+				oncropchange={updateCrop}
+				onfullscreen={toggleFullscreen}
+			/>
 		{/if}
 	</div>
 </section>
