@@ -1,6 +1,13 @@
-import type { ConversionOptions } from 'mediabunny';
+import type { ConversionOptions, ConversionVideoOptions, CropRectangle } from 'mediabunny';
 
-export type CatcutConversionOptions = Omit<ConversionOptions, 'input' | 'output'>;
+export type CatcutConversionOptions = Omit<ConversionOptions, 'input' | 'output' | 'video'> & {
+	video?: ConversionVideoOptions;
+};
+
+export type VideoSize = Readonly<{
+	width: number;
+	height: number;
+}>;
 
 export type TimelineRange = Readonly<{
 	start: number;
@@ -27,8 +34,32 @@ export function expandTrimRangeToTime(
 	return trim;
 }
 
+export function isFullTrimRange(bounds: TimelineRange, trim: TimelineRange): boolean {
+	return trim.start === bounds.start && trim.end === bounds.end;
+}
+
 export function stepTimelineTime(bounds: TimelineRange, time: number, direction: -1 | 1): number {
 	return Math.max(bounds.start, Math.min(time + direction, bounds.end));
+}
+
+export function createCropRectangle(
+	bounds: VideoSize,
+	crop: Partial<CropRectangle> = {}
+): CropRectangle {
+	const width = Math.max(1, Math.min(Math.round(crop.width ?? bounds.width), bounds.width));
+	const height = Math.max(1, Math.min(Math.round(crop.height ?? bounds.height), bounds.height));
+	const left = Math.max(0, Math.min(Math.round(crop.left ?? 0), bounds.width - width));
+	const top = Math.max(0, Math.min(Math.round(crop.top ?? 0), bounds.height - height));
+	return { left, top, width, height };
+}
+
+export function isFullFrameCrop(bounds: VideoSize, crop: CropRectangle): boolean {
+	return (
+		crop.left === 0 &&
+		crop.top === 0 &&
+		crop.width === bounds.width &&
+		crop.height === bounds.height
+	);
 }
 
 // TODO whenever more options to edit things are added, this will convert the main conversion options from our catcut options

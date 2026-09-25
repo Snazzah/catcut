@@ -118,7 +118,7 @@
 </script>
 
 <div
-	class="flex h-9 shrink-0 items-center gap-1 rounded-sm border border-neutral-600 bg-neutral-950 px-2 text-neutral-200 focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-400/30 sm:px-2"
+	class="flex h-9 shrink-0 items-center gap-1 rounded-sm border border-neutral-600 bg-neutral-950 px-2 text-neutral-200 tabular-nums focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-400/30 sm:px-2"
 	role="group"
 	aria-label={label}
 >

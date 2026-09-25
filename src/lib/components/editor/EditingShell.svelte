@@ -1,35 +1,63 @@
+<script lang="ts" module>
+	export type EditorToolId = 'trim' | 'crop';
+</script>
+
 <script lang="ts">
 	import contentCutIcon from '@iconify-icons/mdi/content-cut';
+	import cropIcon from '@iconify-icons/mdi/crop';
 	import fullscreenIcon from '@iconify-icons/mdi/fullscreen';
 	import restartIcon from '@iconify-icons/mdi/restart';
-	import { createTrimRange, type CatcutConversionOptions, type TimelineRange } from '$lib/editing';
+	import type { CropRectangle } from 'mediabunny';
+	import {
+		createCropRectangle,
+		createTrimRange,
+		isFullFrameCrop,
+		isFullTrimRange,
+		type CatcutConversionOptions,
+		type TimelineRange
+	} from '$lib/editing';
 	import type { PlayerState } from '$lib/player-state.svelte';
 	import PlayerButton from '../PlayerButton.svelte';
 	import PlayerPlayButton from '../PlayerPlayButton.svelte';
 	import PlayerVolumeControl from '../PlayerVolumeControl.svelte';
 	import EditorTabs, { type EditorTab } from './EditorTabs.svelte';
 	import EditorTimeline from './EditorTimeline.svelte';
-	import TrimControls from './TrimControls.svelte';
+	import CropControls from './tools/CropControls.svelte';
+	import TrimControls from './tools/TrimControls.svelte';
 
-	type EditorTabId = 'trim';
-
-	const tabs = [
-		{ id: 'trim', label: 'Trim', icon: contentCutIcon }
-	] satisfies readonly EditorTab<EditorTabId>[];
+	const toolDefinitions = [
+		{ id: 'trim', label: 'Trim', icon: contentCutIcon, requiresVideo: false },
+		{ id: 'crop', label: 'Crop', icon: cropIcon, requiresVideo: true }
+	] satisfies readonly (Omit<EditorTab<EditorToolId>, 'changed'> & { requiresVideo: boolean })[];
 
 	let {
 		player,
 		options = $bindable<CatcutConversionOptions>({}),
+		activeTool = $bindable<EditorToolId>('trim'),
+		crop,
+		oncropchange,
 		onfullscreen
 	}: {
 		player: PlayerState;
 		options?: CatcutConversionOptions;
+		activeTool?: EditorToolId;
+		crop: CropRectangle | null;
+		oncropchange: (crop: CropRectangle) => void;
 		onfullscreen: () => void;
 	} = $props();
 
-	let activeTab = $state<EditorTabId>('trim');
 	let trim = $state<TimelineRange>({ start: 0, end: 0 });
 	let trimInitialized = $state(false);
+	let toolChanges = $derived<Record<EditorToolId, boolean>>({
+		trim:
+			trimInitialized && !isFullTrimRange({ start: player.startTime, end: player.endTime }, trim),
+		crop: Boolean(player.videoSize && crop && !isFullFrameCrop(player.videoSize, crop))
+	});
+	let tabs = $derived(
+		toolDefinitions
+			.filter((tool) => !tool.requiresVideo || player.hasVideo)
+			.map((tool) => ({ ...tool, changed: toolChanges[tool.id] }))
+	);
 
 	$effect(() => {
 		if (player.loadState.status !== 'ready' || trimInitialized) return;
@@ -58,16 +86,22 @@
 
 	function revertSettings() {
 		updateTrim(createTrimRange({ start: player.startTime, end: player.endTime }));
+		if (player.videoSize) oncropchange(createCropRectangle(player.videoSize));
 	}
 
 	function updateTrim(nextTrim: TimelineRange) {
 		trim = nextTrim;
-		options = { ...options, trim: $state.snapshot(nextTrim) };
+		options = {
+			...options,
+			trim: isFullTrimRange({ start: player.startTime, end: player.endTime }, nextTrim)
+				? undefined
+				: $state.snapshot(nextTrim)
+		};
 	}
 </script>
 
 <section
-	class="relative grid h-full grid-rows-[auto_auto_minmax(0,1fr)] border-t border-white/10 bg-neutral-950 px-3 pb-[max(0.5rem,var(--saib))] sm:px-5"
+	class="relative grid h-full w-full min-w-0 grid-rows-[auto_auto_minmax(0,1fr)] overflow-hidden border-t border-white/10 bg-neutral-950 px-3 pb-[max(0.5rem,var(--saib))] sm:px-5"
 	aria-label="Editing controls"
 >
 	<div
@@ -86,8 +120,7 @@
 			title="Revert all changes"
 			icon={restartIcon}
 			onclick={revertSettings}
-			disabled={!trimInitialized ||
-				(trim.start === player.startTime && trim.end === player.endTime)}
+			disabled={!trimInitialized || (!toolChanges.trim && !toolChanges.crop)}
 			offset={32}
 		/>
 		<PlayerButton
@@ -107,10 +140,14 @@
 		{/if}
 	</div>
 
-	<div class="relative min-h-0">
-		{#if activeTab === 'trim' && trimInitialized}
-			<TrimControls {player} {trim} ontrimchange={updateTrim} />
-		{/if}
-		<EditorTabs {tabs} active={activeTab} onselect={(tab) => (activeTab = tab)} />
+	<div class="relative min-h-0 w-full min-w-0 overflow-hidden">
+		<div class="w-full min-w-0 overflow-x-auto overscroll-x-contain">
+			{#if activeTool === 'trim' && trimInitialized}
+				<TrimControls {player} {trim} ontrimchange={updateTrim} />
+			{:else if activeTool === 'crop' && crop && player.videoSize}
+				<CropControls bounds={player.videoSize} {crop} {oncropchange} />
+			{/if}
+		</div>
+		<EditorTabs {tabs} active={activeTool} onselect={(tool) => (activeTool = tool)} />
 	</div>
 </section>

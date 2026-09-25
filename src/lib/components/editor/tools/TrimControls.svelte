@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createTrimRange, type TimelineRange } from '$lib/editing';
 	import type { PlayerState } from '$lib/player-state.svelte';
-	import TimeInput from '../TimeInput.svelte';
+	import TimeInput from '$lib/components/TimeInput.svelte';
 
 	let {
 		player,
@@ -35,7 +35,7 @@
 </script>
 
 <div
-	class="flex h-13 min-w-0 items-center justify-center gap-1.5 overflow-x-auto sm:justify-start sm:gap-3"
+	class="flex h-13 w-max min-w-full items-center justify-center gap-1.5 sm:justify-start sm:gap-3"
 	role="tabpanel"
 >
 	<TimeInput
