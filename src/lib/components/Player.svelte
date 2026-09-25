@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, type Snippet } from 'svelte';
 	import type { PlayerState } from '$lib/player-state.svelte';
 	import fullscreenIcon from '@iconify-icons/mdi/fullscreen';
 	import loadingIcon from '@iconify-icons/mdi/loading';
@@ -11,27 +11,19 @@
 	import PlayerVolumeControl from './PlayerVolumeControl.svelte';
 	import Icon from '@iconify/svelte';
 	import { mobile, surfaces } from '$lib/platform.svelte';
-	import type { CropRectangle } from 'mediabunny';
-	import CropOverlay from './editor/CropOverlay.svelte';
 
 	const SEEK_STEP_COUNT = 10_000;
 	const MOBILE_CONTROLS_TIMEOUT_MS = 3_000;
-	type CropEditor = Readonly<{
-		crop: CropRectangle;
-		handlesActive: boolean;
-		onchange: (crop: CropRectangle) => void;
-	}>;
-
 	type Props = {
 		player: PlayerState;
 		onclose: () => void;
 		onedit?: () => void;
 		onfullscreen: () => void;
 		showControls?: boolean;
-		cropEditor?: CropEditor;
+		overlay?: Snippet;
 	};
 
-	let { player, onclose, onedit, onfullscreen, showControls = true, cropEditor }: Props = $props();
+	let { player, onclose, onedit, onfullscreen, showControls = true, overlay }: Props = $props();
 	let canvas: HTMLCanvasElement;
 	let scrubTime = $state<number | null>(null);
 	let scrubbing = false;
@@ -234,14 +226,7 @@
 			onclick={handlePlayerClick}
 		></canvas>
 
-		{#if cropEditor && player.videoSize}
-			<CropOverlay
-				bounds={player.videoSize}
-				crop={cropEditor.crop}
-				handlesActive={cropEditor.handlesActive}
-				oncropchange={cropEditor.onchange}
-			/>
-		{/if}
+		{@render overlay?.()}
 	</div>
 
 	<!-- Bottom area -->

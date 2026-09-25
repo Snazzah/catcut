@@ -1,8 +1,4 @@
-import type { ConversionOptions, ConversionVideoOptions, CropRectangle } from 'mediabunny';
-
-export type CatcutConversionOptions = Omit<ConversionOptions, 'input' | 'output' | 'video'> & {
-	video?: ConversionVideoOptions;
-};
+import type { ConversionOptions, CropRectangle } from 'mediabunny';
 
 export type VideoSize = Readonly<{
 	width: number;
@@ -12,6 +8,11 @@ export type VideoSize = Readonly<{
 export type TimelineRange = Readonly<{
 	start: number;
 	end: number;
+}>;
+
+export type EditState = Readonly<{
+	trim: TimelineRange;
+	crop: CropRectangle | null;
 }>;
 
 export function createTrimRange(
@@ -62,15 +63,39 @@ export function isFullFrameCrop(bounds: VideoSize, crop: CropRectangle): boolean
 	);
 }
 
-// TODO whenever more options to edit things are added, this will convert the main conversion options from our catcut options
-export function optionsIntoConversionOptions({
-	options,
+export function createEditState({
+	bounds,
+	videoSize
+}: {
+	bounds: TimelineRange;
+	videoSize: VideoSize | null;
+}): EditState {
+	return {
+		trim: createTrimRange(bounds),
+		crop: videoSize ? createCropRectangle(videoSize) : null
+	};
+}
+
+export function editStateIntoConversionOptions({
+	state,
+	bounds,
+	videoSize,
 	input,
 	output
 }: {
-	options: CatcutConversionOptions;
+	state: EditState;
+	bounds: TimelineRange;
+	videoSize: VideoSize | null;
 	input: ConversionOptions['input'];
 	output: ConversionOptions['output'];
 }): ConversionOptions {
-	return { input, output, ...options };
+	const crop =
+		videoSize && state.crop && !isFullFrameCrop(videoSize, state.crop) ? state.crop : undefined;
+
+	return {
+		input,
+		output,
+		...(!isFullTrimRange(bounds, state.trim) && { trim: state.trim }),
+		...(crop && { video: { crop } })
+	};
 }
