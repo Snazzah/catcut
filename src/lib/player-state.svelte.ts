@@ -26,6 +26,7 @@ import { registerHevcDecoder, registerHevcEncoder } from '@snazzah/mediabunny-he
 import soundTouchProcessorUrl from '@soundtouchjs/audio-worklet/processor?url';
 import type { SoundTouchNode } from '@soundtouchjs/audio-worklet';
 import type { VideoSize } from '$lib/editing';
+import { clearTimelineWaveformCache } from '$lib/timeline';
 
 export type CodecRegistration = {
 	nativelyDecodable: ReadonlySet<MediaCodec>;
@@ -488,6 +489,7 @@ export class PlayerState {
 		if (this.disposed) return;
 
 		this.disposed = true;
+		clearTimelineWaveformCache(this.#audioTrack);
 		this.#asyncId += 1;
 		this.#cancelScrubPreview();
 		this.pause();

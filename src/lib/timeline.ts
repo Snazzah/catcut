@@ -1,4 +1,4 @@
-import { AudioBufferSink, CanvasSink } from 'mediabunny';
+import { AudioBufferSink, CanvasSink, type InputAudioTrack } from 'mediabunny';
 import type { PlayerState } from '$lib/player-state.svelte';
 
 type TimelinePreviewOptions = {
@@ -19,8 +19,22 @@ type WaveformPeaks = Readonly<{
 	bottom: Float32Array;
 }>;
 
+type WaveformEnvelope = {
+	top: Float32Array;
+	bottom: Float32Array | null;
+};
+
+type WaveformCacheEntry = Readonly<{
+	envelope: WaveformEnvelope;
+	abortController: AbortController;
+	listeners: Set<() => void>;
+	ready: Promise<void>;
+}>;
+
 const WAVEFORM_COLOR = '#6d28d9';
 const TRACK_BACKGROUND_COLOR = '#171717';
+const WAVEFORM_ENVELOPE_SIZE = 32 * 1024;
+const waveformCache = new WeakMap<InputAudioTrack, WaveformCacheEntry>();
 
 export function getTimelineTileLayout(
 	timelineWidth: number,
@@ -81,6 +95,123 @@ function addChannelPeaks(
 		const magnitude = Math.abs(channel[sampleIndex] ?? 0);
 		if (magnitude > peaks[pixelIndex]) peaks[pixelIndex] = magnitude;
 	}
+}
+
+function reduceChannelPeaks(source: Float32Array, target: Float32Array) {
+	target.fill(0);
+	const targetScale = target.length / source.length;
+
+	for (let sourceIndex = 0; sourceIndex < source.length; sourceIndex += 1) {
+		const targetIndex = Math.round(sourceIndex * targetScale);
+		if (targetIndex >= target.length) continue;
+
+		const magnitude = source[sourceIndex] ?? 0;
+		if (magnitude > target[targetIndex]) target[targetIndex] = magnitude;
+	}
+}
+
+async function populateWaveformEnvelope(
+	audioTrack: InputAudioTrack,
+	startTime: number,
+	endTime: number,
+	envelope: WaveformEnvelope,
+	abortController: AbortController,
+	listeners: Set<() => void>
+) {
+	const sink = new AudioBufferSink(audioTrack);
+	const duration = endTime - startTime;
+
+	for await (const { buffer, timestamp } of sink.buffers(startTime, endTime, {
+		skipLiveWait: true
+	})) {
+		if (abortController.signal.aborted) return;
+
+		addChannelPeaks(
+			envelope.top,
+			buffer.getChannelData(0),
+			timestamp,
+			buffer.sampleRate,
+			startTime,
+			duration
+		);
+		if (buffer.numberOfChannels > 1) {
+			envelope.bottom ??= new Float32Array(WAVEFORM_ENVELOPE_SIZE);
+			addChannelPeaks(
+				envelope.bottom,
+				buffer.getChannelData(1),
+				timestamp,
+				buffer.sampleRate,
+				startTime,
+				duration
+			);
+		}
+
+		for (const listener of listeners) listener();
+	}
+}
+
+function getWaveformCacheEntry(audioTrack: InputAudioTrack, startTime: number, endTime: number) {
+	const cached = waveformCache.get(audioTrack);
+	if (cached) return cached;
+
+	const envelope: WaveformEnvelope = {
+		top: new Float32Array(WAVEFORM_ENVELOPE_SIZE),
+		bottom: null
+	};
+	const abortController = new AbortController();
+	const listeners = new Set<() => void>();
+	const ready = populateWaveformEnvelope(
+		audioTrack,
+		startTime,
+		endTime,
+		envelope,
+		abortController,
+		listeners
+	);
+	const entry = { envelope, abortController, listeners, ready } satisfies WaveformCacheEntry;
+	waveformCache.set(audioTrack, entry);
+	void ready.catch(() => {
+		if (waveformCache.get(audioTrack) === entry) waveformCache.delete(audioTrack);
+	});
+	return entry;
+}
+
+function waitForWaveformCache(entry: WaveformCacheEntry, signal: AbortSignal) {
+	if (signal.aborted || entry.abortController.signal.aborted) return Promise.resolve();
+
+	return new Promise<void>((resolve, reject) => {
+		const cleanup = () => {
+			signal.removeEventListener('abort', handleAbort);
+			entry.abortController.signal.removeEventListener('abort', handleAbort);
+		};
+		const handleAbort = () => {
+			cleanup();
+			resolve();
+		};
+
+		signal.addEventListener('abort', handleAbort, { once: true });
+		entry.abortController.signal.addEventListener('abort', handleAbort, { once: true });
+		entry.ready.then(
+			() => {
+				cleanup();
+				resolve();
+			},
+			(error: unknown) => {
+				cleanup();
+				reject(error);
+			}
+		);
+	});
+}
+
+export function clearTimelineWaveformCache(audioTrack: InputAudioTrack | null) {
+	if (!audioTrack) return;
+
+	const entry = waveformCache.get(audioTrack);
+	if (!entry) return;
+	entry.abortController.abort();
+	entry.listeners.clear();
+	waveformCache.delete(audioTrack);
 }
 
 function drawWaveform(
@@ -159,51 +290,33 @@ async function drawAudioTrack({
 	const audioTrack = player.audioTrack;
 	if (!audioTrack || !Number.isFinite(player.duration) || player.duration <= 0) return false;
 
-	const sink = new AudioBufferSink(audioTrack);
 	const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
 	const peakCount = Math.max(1, Math.floor(width * pixelRatio));
 	const top = new Float32Array(peakCount);
 	let bottom: Float32Array | null = null;
 	let animationFrameId: number | null = null;
+	const cacheEntry = getWaveformCacheEntry(audioTrack, player.startTime, player.endTime);
 
 	const render = () => {
 		animationFrameId = null;
 		if (signal.aborted) return;
+		reduceChannelPeaks(cacheEntry.envelope.top, top);
+		if (cacheEntry.envelope.bottom) {
+			bottom ??= new Float32Array(peakCount);
+			reduceChannelPeaks(cacheEntry.envelope.bottom, bottom);
+		}
 		drawWaveform(context, width, height, pixelRatio, { top, bottom: bottom ?? top });
 	};
 	const scheduleRender = () => {
 		if (animationFrameId === null) animationFrameId = requestAnimationFrame(render);
 	};
 
+	cacheEntry.listeners.add(scheduleRender);
 	render();
 	try {
-		for await (const { buffer, timestamp } of sink.buffers(player.startTime, player.endTime, {
-			skipLiveWait: true
-		})) {
-			if (signal.aborted) return true;
-
-			addChannelPeaks(
-				top,
-				buffer.getChannelData(0),
-				timestamp,
-				buffer.sampleRate,
-				player.startTime,
-				player.duration
-			);
-			if (buffer.numberOfChannels > 1) {
-				bottom ??= new Float32Array(peakCount);
-				addChannelPeaks(
-					bottom,
-					buffer.getChannelData(1),
-					timestamp,
-					buffer.sampleRate,
-					player.startTime,
-					player.duration
-				);
-			}
-			scheduleRender();
-		}
+		await waitForWaveformCache(cacheEntry, signal);
 	} finally {
+		cacheEntry.listeners.delete(scheduleRender);
 		if (animationFrameId !== null) cancelAnimationFrame(animationFrameId);
 	}
 
