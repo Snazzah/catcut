@@ -7,15 +7,13 @@ import CropToolOverlay from './tools/CropToolOverlay.svelte';
 import CropControls from './tools/CropControls.svelte';
 import TrimControls from './tools/TrimControls.svelte';
 
-export const EDITOR_TOOL_IDS = ['trim', 'crop'] as const;
-export type EditorToolId = (typeof EDITOR_TOOL_IDS)[number];
 export type EditorToolMedia = 'any' | 'audio' | 'video';
 
 type ToolComponent = Component<{ session: EditorSession }>;
 type OverlayComponent = Component<{ session: EditorSession; active: boolean }>;
 
-export type EditorToolDefinition = Readonly<{
-	id: EditorToolId;
+type EditorToolDefinitionShape = Readonly<{
+	id: string;
 	label: string;
 	icon: IconifyIcon;
 	media: EditorToolMedia;
@@ -62,4 +60,8 @@ export const editorTools = [
 		isChanged: (session) => session.cropChanged,
 		reset: (session) => session.resetCrop()
 	}
-] satisfies readonly EditorToolDefinition[];
+] satisfies readonly EditorToolDefinitionShape[];
+
+export const EDITOR_TOOL_IDS = editorTools.map((tool) => tool.id);
+export type EditorToolId = (typeof editorTools)[number]['id'];
+export type EditorToolDefinition = EditorToolDefinitionShape & Readonly<{ id: EditorToolId }>;
