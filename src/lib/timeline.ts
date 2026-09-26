@@ -1,4 +1,4 @@
-import { AudioBufferSink, CanvasSink, type InputAudioTrack } from 'mediabunny';
+import { AudioSampleSink, CanvasSink, type InputAudioTrack } from 'mediabunny';
 import type { PlayerState } from '$lib/player-state.svelte';
 
 type TimelinePreviewOptions = {
@@ -22,12 +22,12 @@ type WaveformPeaks = Readonly<{
 type WaveformEnvelope = {
 	top: Float32Array;
 	bottom: Float32Array | null;
+	distanceToCenter: Float32Array;
 };
 
 type WaveformCacheEntry = Readonly<{
 	envelope: WaveformEnvelope;
 	abortController: AbortController;
-	listeners: Set<() => void>;
 	ready: Promise<void>;
 }>;
 
@@ -76,24 +76,54 @@ function drawLoadingTrack(
 	}
 }
 
-function addChannelPeaks(
-	peaks: Float32Array,
-	channel: Float32Array,
-	bufferTimestamp: number,
-	sampleRate: number,
-	startTime: number,
-	duration: number
-) {
-	const pixelsPerSecond = peaks.length / duration;
-	const firstSamplePosition = (bufferTimestamp - startTime) * pixelsPerSecond;
-	const pixelsPerSample = pixelsPerSecond / sampleRate;
+function addSamplePeaks({
+	envelope,
+	topSamples,
+	bottomSamples,
+	frameCount,
+	sampleTimestamp,
+	sampleRate,
+	startTime,
+	duration
+}: {
+	envelope: WaveformEnvelope;
+	topSamples: Float32Array;
+	bottomSamples: Float32Array | null;
+	frameCount: number;
+	sampleTimestamp: number;
+	sampleRate: number;
+	startTime: number;
+	duration: number;
+}) {
+	if (frameCount === 0) return;
 
-	for (let sampleIndex = 0; sampleIndex < channel.length; sampleIndex += 1) {
-		const pixelIndex = Math.round(firstSamplePosition + sampleIndex * pixelsPerSample);
-		if (pixelIndex < 0 || pixelIndex >= peaks.length) continue;
+	const binsPerSecond = envelope.top.length / duration;
+	const firstSamplePosition = (sampleTimestamp - startTime) * binsPerSecond;
+	const binsPerSample = binsPerSecond / sampleRate;
+	const lastSamplePosition = firstSamplePosition + (frameCount - 1) * binsPerSample;
+	const firstBin = Math.max(0, Math.round(firstSamplePosition));
+	const lastBin = Math.min(envelope.top.length - 1, Math.round(lastSamplePosition));
+	if (firstBin > lastBin) return;
 
-		const magnitude = Math.abs(channel[sampleIndex] ?? 0);
-		if (magnitude > peaks[pixelIndex]) peaks[pixelIndex] = magnitude;
+	const bottomPeaks = bottomSamples
+		? (envelope.bottom ??= new Float32Array(WAVEFORM_ENVELOPE_SIZE))
+		: null;
+	for (let binIndex = firstBin; binIndex <= lastBin; binIndex += 1) {
+		const sampleIndex = Math.max(
+			0,
+			Math.min(frameCount - 1, Math.round((binIndex - firstSamplePosition) / binsPerSample))
+		);
+		const samplePosition = firstSamplePosition + sampleIndex * binsPerSample;
+		if (Math.round(samplePosition) !== binIndex) continue;
+
+		const distanceToCenter = Math.abs(samplePosition - binIndex);
+		if (distanceToCenter >= (envelope.distanceToCenter[binIndex] ?? Infinity)) continue;
+
+		envelope.top[binIndex] = Math.abs(topSamples[sampleIndex] ?? 0);
+		if (bottomPeaks && bottomSamples) {
+			bottomPeaks[binIndex] = Math.abs(bottomSamples[sampleIndex] ?? 0);
+		}
+		envelope.distanceToCenter[binIndex] = distanceToCenter;
 	}
 }
 
@@ -115,38 +145,47 @@ async function populateWaveformEnvelope(
 	startTime: number,
 	endTime: number,
 	envelope: WaveformEnvelope,
-	abortController: AbortController,
-	listeners: Set<() => void>
+	abortController: AbortController
 ) {
-	const sink = new AudioBufferSink(audioTrack);
+	const sink = new AudioSampleSink(audioTrack);
 	const duration = endTime - startTime;
+	let topSamples = new Float32Array(0);
+	let bottomSamples = new Float32Array(0);
 
-	for await (const { buffer, timestamp } of sink.buffers(startTime, endTime, {
+	for await (const sample of sink.samples(startTime, endTime, {
 		skipLiveWait: true
 	})) {
-		if (abortController.signal.aborted) return;
+		try {
+			if (abortController.signal.aborted) return;
+			if (sample.numberOfFrames === 0) continue;
 
-		addChannelPeaks(
-			envelope.top,
-			buffer.getChannelData(0),
-			timestamp,
-			buffer.sampleRate,
-			startTime,
-			duration
-		);
-		if (buffer.numberOfChannels > 1) {
-			envelope.bottom ??= new Float32Array(WAVEFORM_ENVELOPE_SIZE);
-			addChannelPeaks(
-				envelope.bottom,
-				buffer.getChannelData(1),
-				timestamp,
-				buffer.sampleRate,
+			if (topSamples.length < sample.numberOfFrames) {
+				topSamples = new Float32Array(sample.numberOfFrames);
+			}
+			sample.copyTo(topSamples, { planeIndex: 0, format: 'f32-planar' });
+
+			let secondChannel: Float32Array | null = null;
+			if (sample.numberOfChannels > 1) {
+				if (bottomSamples.length < sample.numberOfFrames) {
+					bottomSamples = new Float32Array(sample.numberOfFrames);
+				}
+				sample.copyTo(bottomSamples, { planeIndex: 1, format: 'f32-planar' });
+				secondChannel = bottomSamples;
+			}
+
+			addSamplePeaks({
+				envelope,
+				topSamples,
+				bottomSamples: secondChannel,
+				frameCount: sample.numberOfFrames,
+				sampleTimestamp: sample.timestamp,
+				sampleRate: sample.sampleRate,
 				startTime,
 				duration
-			);
+			});
+		} finally {
+			sample.close();
 		}
-
-		for (const listener of listeners) listener();
 	}
 }
 
@@ -154,21 +193,16 @@ function getWaveformCacheEntry(audioTrack: InputAudioTrack, startTime: number, e
 	const cached = waveformCache.get(audioTrack);
 	if (cached) return cached;
 
+	const distanceToCenter = new Float32Array(WAVEFORM_ENVELOPE_SIZE);
+	distanceToCenter.fill(Infinity);
 	const envelope: WaveformEnvelope = {
 		top: new Float32Array(WAVEFORM_ENVELOPE_SIZE),
-		bottom: null
+		bottom: null,
+		distanceToCenter
 	};
 	const abortController = new AbortController();
-	const listeners = new Set<() => void>();
-	const ready = populateWaveformEnvelope(
-		audioTrack,
-		startTime,
-		endTime,
-		envelope,
-		abortController,
-		listeners
-	);
-	const entry = { envelope, abortController, listeners, ready } satisfies WaveformCacheEntry;
+	const ready = populateWaveformEnvelope(audioTrack, startTime, endTime, envelope, abortController);
+	const entry = { envelope, abortController, ready } satisfies WaveformCacheEntry;
 	waveformCache.set(audioTrack, entry);
 	void ready.catch(() => {
 		if (waveformCache.get(audioTrack) === entry) waveformCache.delete(audioTrack);
@@ -210,7 +244,6 @@ export function clearTimelineWaveformCache(audioTrack: InputAudioTrack | null) {
 	const entry = waveformCache.get(audioTrack);
 	if (!entry) return;
 	entry.abortController.abort();
-	entry.listeners.clear();
 	waveformCache.delete(audioTrack);
 }
 
@@ -294,11 +327,9 @@ async function drawAudioTrack({
 	const peakCount = Math.max(1, Math.floor(width * pixelRatio));
 	const top = new Float32Array(peakCount);
 	let bottom: Float32Array | null = null;
-	let animationFrameId: number | null = null;
 	const cacheEntry = getWaveformCacheEntry(audioTrack, player.startTime, player.endTime);
 
 	const render = () => {
-		animationFrameId = null;
 		if (signal.aborted) return;
 		reduceChannelPeaks(cacheEntry.envelope.top, top);
 		if (cacheEntry.envelope.bottom) {
@@ -307,20 +338,10 @@ async function drawAudioTrack({
 		}
 		drawWaveform(context, width, height, pixelRatio, { top, bottom: bottom ?? top });
 	};
-	const scheduleRender = () => {
-		if (animationFrameId === null) animationFrameId = requestAnimationFrame(render);
-	};
 
-	cacheEntry.listeners.add(scheduleRender);
-	render();
-	try {
-		await waitForWaveformCache(cacheEntry, signal);
-	} finally {
-		cacheEntry.listeners.delete(scheduleRender);
-		if (animationFrameId !== null) cancelAnimationFrame(animationFrameId);
-	}
+	await waitForWaveformCache(cacheEntry, signal);
 
-	if (!signal.aborted) render();
+	if (!signal.aborted && !cacheEntry.abortController.signal.aborted) render();
 	return true;
 }
 
