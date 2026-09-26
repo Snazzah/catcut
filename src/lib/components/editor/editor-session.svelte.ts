@@ -1,4 +1,4 @@
-import type { CropRectangle } from 'mediabunny';
+import type { CropRectangle, QualityLevel } from 'mediabunny';
 import {
 	createCropRectangle,
 	createEditState,
@@ -46,6 +46,20 @@ export class EditorSession {
 		return crop && videoSize ? !isFullFrameCrop(videoSize, crop) : false;
 	}
 
+	get qualityChanged() {
+		return this.state.status === 'ready'
+			? this.state.edits.videoQuality !== null || this.state.edits.audioQuality !== null
+			: false;
+	}
+
+	get videoQuality() {
+		return this.state.status === 'ready' ? this.state.edits.videoQuality : null;
+	}
+
+	get audioQuality() {
+		return this.state.status === 'ready' ? this.state.edits.audioQuality : null;
+	}
+
 	get timelineBounds(): TimelineRange {
 		return { start: this.player.startTime, end: this.player.endTime };
 	}
@@ -85,6 +99,22 @@ export class EditorSession {
 		};
 	}
 
+	updateVideoQuality(quality: QualityLevel | null) {
+		if (this.state.status !== 'ready' || !this.player.hasVideo) return;
+		this.state = {
+			status: 'ready',
+			edits: { ...this.state.edits, videoQuality: quality }
+		};
+	}
+
+	updateAudioQuality(quality: QualityLevel | null) {
+		if (this.state.status !== 'ready' || !this.player.hasAudio) return;
+		this.state = {
+			status: 'ready',
+			edits: { ...this.state.edits, audioQuality: quality }
+		};
+	}
+
 	resetTrim() {
 		this.updateTrim(this.timelineBounds);
 	}
@@ -92,5 +122,10 @@ export class EditorSession {
 	resetCrop() {
 		const videoSize = this.player.videoSize;
 		if (videoSize) this.updateCrop(createCropRectangle(videoSize));
+	}
+
+	resetQuality() {
+		this.updateVideoQuality(null);
+		this.updateAudioQuality(null);
 	}
 }

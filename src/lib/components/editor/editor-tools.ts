@@ -2,10 +2,12 @@ import type { Component } from 'svelte';
 import type { IconifyIcon } from '@iconify/svelte';
 import contentCutIcon from '@iconify-icons/mdi/content-cut';
 import cropIcon from '@iconify-icons/mdi/crop';
+import tuneVariantIcon from '@iconify-icons/mdi/tune-variant';
 import type { EditorSession } from './editor-session.svelte';
 import CropToolOverlay from './tools/CropToolOverlay.svelte';
 import CropControls from './tools/CropControls.svelte';
 import TrimControls from './tools/TrimControls.svelte';
+import QualityControls from './tools/QualityControls.svelte';
 
 export type EditorToolMedia = 'any' | 'audio' | 'video';
 
@@ -59,6 +61,15 @@ export const editorTools = [
 		overlay: CropToolOverlay,
 		isChanged: (session) => session.cropChanged,
 		reset: (session) => session.resetCrop()
+	},
+	{
+		id: 'quality',
+		label: 'Quality',
+		icon: tuneVariantIcon,
+		media: 'any',
+		controls: QualityControls,
+		isChanged: (session) => session.qualityChanged,
+		reset: (session) => session.resetQuality()
 	}
 ] satisfies readonly EditorToolDefinitionShape[];
 
