@@ -20,12 +20,12 @@
 		"@iconify-icons/simple-icons": "^2.0.4",
 		"@iconify/svelte": "^5.2.2",
 		"@macfja/svelte-persistent-store": "^2.4.2",
-		"@mediabunny/aac-encoder": "^1.59.1",
-		"@mediabunny/ac3": "^1.59.1",
-		"@mediabunny/dts": "^1.59.1",
-		"@mediabunny/flac-encoder": "^1.59.1",
-		"@mediabunny/mp3-encoder": "^1.59.1",
-		"@mediabunny/prores": "^1.59.1",
+		"@mediabunny/aac-encoder": "^1.60.0",
+		"@mediabunny/ac3": "^1.60.0",
+		"@mediabunny/dts": "^1.60.0",
+		"@mediabunny/flac-encoder": "^1.60.0",
+		"@mediabunny/mp3-encoder": "^1.60.0",
+		"@mediabunny/prores": "^1.60.0",
 		"@snazzah/mediabunny-hevc": "^0.1.0",
 		"@sveltejs/adapter-cloudflare": "7.2.9",
 		"@sveltejs/kit": "^2.70.3",
@@ -47,7 +47,7 @@
 		"typescript-eslint": "^8.70.1",
 		"vaul-svelte": "^0.3.2",
 		"vite": "^8.3.1",
-		"wrangler": "4.139.0"
+		"wrangler": "4.142.0"
 	},
 	"trustedDependencies": [
 		"@sveltejs/kit",
@@ -57,7 +57,7 @@
 	"dependencies": {
 		"@discord/embedded-app-sdk": "^2.5.0",
 		"@soundtouchjs/audio-worklet": "2.1.1",
-		"mediabunny": "^1.59.1",
+		"mediabunny": "^1.60.0",
 		"svelte-sonner": "^1.2.1"
 	}
 }

@@ -53,6 +53,7 @@
 			['Total Tracks', 'tracksTotal'],
 			['Disc Number', 'discNumber'],
 			['Total Discs', 'discsTotal'],
+			['BPM', 'beatsPerMinute'],
 			['Genre', 'genre'],
 			['Date', 'date'],
 			['Comment', 'comment']

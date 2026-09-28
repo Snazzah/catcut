@@ -17,7 +17,7 @@
 </script>
 
 <div
-	class="flex h-13 w-max min-w-full items-center gap-2 pr-1 sm:gap-3"
+	class="flex h-13 w-max min-w-full items-center justify-center gap-1.5 sm:justify-start sm:gap-3"
 	role="tabpanel"
 	aria-label="Quality settings"
 >
