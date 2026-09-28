@@ -7,6 +7,7 @@
 	import Icon from '@iconify/svelte';
 	import { BitsConfig } from 'bits-ui';
 	import { onMount } from 'svelte';
+	import { toast } from 'svelte-sonner';
 
 	let source = $state.raw<MediaSource | null>(null);
 	let draggingMedia = $state(false);
@@ -26,11 +27,37 @@
 	}
 
 	onMount(() => {
-		const mediaUrl = new URL(window.location.href).searchParams.get('url');
+		const location = new URL(window.location.href);
+		const mediaUrl = location.searchParams.get('url');
 		if (mediaUrl) source = createRemoteMediaSource(mediaUrl);
+		const sharedMediaId = location.searchParams.get('shared-media');
+		if (sharedMediaId) void openSharedMedia(sharedMediaId);
+		if (location.searchParams.has('share-error')) toast.error('Could not import the shared media.');
 
 		window.launchQueue?.setConsumer((launchParams) => void openLaunchFile(launchParams));
 	});
+
+	async function openSharedMedia(id: string) {
+		try {
+			if (!/^[0-9a-f-]{36}$/.test(id)) throw new Error('Invalid share ID');
+			const cache = await caches.open('catcut-shared-media');
+			const key = new URL(`/__shared-media/${id}`, window.location.origin);
+			const response = await cache.match(key);
+			if (!response) throw new Error('Shared media missing');
+			const name = decodeURIComponent(response.headers.get('X-File-Name') ?? 'shared-media');
+			const file = new File([await response.blob()], name, {
+				type: response.headers.get('Content-Type') ?? ''
+			});
+			await cache.delete(key);
+			source = createLocalMediaSource(file);
+		} catch {
+			toast.error('Could not import the shared media.');
+		} finally {
+			const url = new URL(window.location.href);
+			url.searchParams.delete('shared-media');
+			window.history.replaceState(window.history.state, '', url);
+		}
+	}
 
 	function isMediaDrag(dataTransfer: DataTransfer | null) {
 		if (!dataTransfer?.types.includes('Files')) return false;
