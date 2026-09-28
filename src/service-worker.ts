@@ -3,10 +3,15 @@
 import { build, files, prerendered, version } from '$service-worker';
 
 const cacheName = `catcut-${version}`;
-const assets = [...build, ...files, ...prerendered];
+const appShell = [...build, ...prerendered];
 
 self.addEventListener('install', (event) => {
-	event.waitUntil(caches.open(cacheName).then((cache) => cache.addAll(assets)));
+	event.waitUntil(
+		caches.open(cacheName).then(async (cache) => {
+			await cache.addAll(appShell);
+			await Promise.all(files.map((asset) => cache.add(asset).catch(() => undefined)));
+		})
+	);
 });
 
 self.addEventListener('activate', (event) => {
