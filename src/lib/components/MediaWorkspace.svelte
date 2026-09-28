@@ -13,6 +13,7 @@
 	const editor = new EditorSession(player);
 	let workspace: HTMLElement;
 	let editing = $state(false);
+	let playerControlsVisible = $state(true);
 
 	$effect(() => {
 		editor.initialize();
@@ -51,6 +52,7 @@
 		{player}
 		onclose={handleClose}
 		closeLabel={editing ? 'Close editor' : 'Close media'}
+		visible={editing || playerControlsVisible}
 	/>
 
 	<div
@@ -64,6 +66,7 @@
 			onclose={handleClose}
 			onedit={openEditor}
 			onfullscreen={toggleFullscreen}
+			bind:controlsVisible={playerControlsVisible}
 			showControls={!editing}
 		>
 			{#snippet overlay()}
