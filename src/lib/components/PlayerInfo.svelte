@@ -50,9 +50,7 @@
 			['Album', 'album'],
 			['Album Artist', 'albumArtist'],
 			['Track Number', 'trackNumber'],
-			['Total Tracks', 'tracksTotal'],
 			['Disc Number', 'discNumber'],
-			['Total Discs', 'discsTotal'],
 			['BPM', 'beatsPerMinute'],
 			['Genre', 'genre'],
 			['Date', 'date'],
@@ -189,6 +187,12 @@
 							>
 								{#if Array.isArray(player.loadState.metadata.tags[key])}
 									{player.loadState.metadata.tags[key].join(', ')}
+								{:else if key === 'trackNumber' || key === 'discNumber'}
+									{@const total =
+										player.loadState.metadata.tags[key === 'trackNumber' ? 'tracksTotal' : 'discsTotal']}
+									{player.loadState.metadata.tags[key]}{total !== null && total !== undefined
+										? ` of ${total}`
+										: ''}
 								{:else if key === 'date'}
 									{@const raw = player.loadState.metadata.tags.raw}
 									{#if raw && ('TYER' in raw || 'TYE' in raw)}
