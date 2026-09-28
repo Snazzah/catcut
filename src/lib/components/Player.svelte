@@ -19,11 +19,20 @@
 		onclose: () => void;
 		onedit?: () => void;
 		onfullscreen: () => void;
+		controlsVisible?: boolean;
 		showControls?: boolean;
 		overlay?: Snippet;
 	};
 
-	let { player, onclose, onedit, onfullscreen, showControls = true, overlay }: Props = $props();
+	let {
+		player,
+		onclose,
+		onedit,
+		onfullscreen,
+		controlsVisible = $bindable(true),
+		showControls = true,
+		overlay
+	}: Props = $props();
 	let canvas: HTMLCanvasElement;
 	let scrubTime = $state<number | null>(null);
 	let scrubbing = false;
@@ -37,12 +46,13 @@
 	let documentFocused = $state(true);
 	let mobileControlsVisible = $state(false);
 	let mobileControlsTimeout: ReturnType<typeof setTimeout> | undefined;
-	let controlsVisible = $derived(
-		showControls &&
+	$effect(() => {
+		controlsVisible =
+			showControls &&
 			(mobile.current
 				? mobileControlsVisible || surfaces.open
-				: documentFocused || playerHovered || player.paused || surfaces.open)
-	);
+				: documentFocused || playerHovered || player.paused || surfaces.open);
+	});
 
 	$effect(() => {
 		if (surfaces.open) clearMobileControlsTimeout();
