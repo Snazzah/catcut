@@ -25,7 +25,7 @@ import { registerProresDecoder } from '@mediabunny/prores';
 import { registerHevcDecoder, registerHevcEncoder } from '@snazzah/mediabunny-hevc';
 import soundTouchProcessorUrl from '@soundtouchjs/audio-worklet/processor?url';
 import type { SoundTouchNode } from '@soundtouchjs/audio-worklet';
-import type { VideoSize } from '$lib/editing';
+import type { TimelineRange, VideoSize } from '$lib/editing';
 import { clearTimelineWaveformCache } from '$lib/timeline';
 
 export type CodecRegistration = {
@@ -80,6 +80,7 @@ export class PlayerState {
 	playbackRate = $state(1);
 	muted = $state(false);
 	coverImageUrl = $state<string | null>(null);
+	playbackRange = $state.raw<TimelineRange | null>(null);
 	disposed = false;
 
 	input: Input | null = null;
@@ -138,6 +139,10 @@ export class PlayerState {
 
 	get progress() {
 		return this.duration > 0 ? (this.currentTime - this.#firstTimestamp) / this.duration : 0;
+	}
+
+	get ended() {
+		return this.currentTime >= (this.playbackRange?.end ?? this.#endTimestamp);
 	}
 
 	get hasAudio() {
@@ -314,9 +319,10 @@ export class PlayerState {
 		if (!audioContext || this.loadState.status !== 'ready' || !this.paused) return;
 
 		if (audioContext.state === 'suspended') await audioContext.resume();
-		if (this.#getPlaybackTime() >= this.#endTimestamp) {
-			this.#playbackTimeAtStart = this.#firstTimestamp;
-			this.currentTime = this.#firstTimestamp;
+		const playbackStart = this.playbackRange?.start ?? this.#firstTimestamp;
+		if (this.currentTime < playbackStart || this.ended) {
+			this.#playbackTimeAtStart = playbackStart;
+			this.currentTime = playbackStart;
 			await this.#restartVideoIterator();
 		}
 		if (this.disposed) return;
@@ -555,10 +561,11 @@ export class PlayerState {
 		if (this.loadState.status !== 'ready') return;
 
 		const playbackTime = this.#getPlaybackTime();
-		if (playbackTime >= this.#endTimestamp) {
+		const playbackEnd = this.playbackRange?.end ?? this.#endTimestamp;
+		if (playbackTime >= playbackEnd) {
 			this.pause();
-			this.#playbackTimeAtStart = this.#endTimestamp;
-			this.currentTime = this.#endTimestamp;
+			this.#playbackTimeAtStart = playbackEnd;
+			this.currentTime = playbackEnd;
 		} else {
 			this.currentTime = playbackTime;
 		}
