@@ -41,21 +41,9 @@
 	});
 
 	$effect(() => {
-		if (!playbackRange || player.paused || player.currentTime <= playbackRange.end) return;
-		player.pause();
-		void player.seek(playbackRange.end);
+		player.playbackRange = playbackRange;
+		return () => (player.playbackRange = null);
 	});
-
-	async function togglePlayback() {
-		if (
-			playbackRange &&
-			player.paused &&
-			(player.currentTime < playbackRange.start || player.currentTime >= playbackRange.end)
-		) {
-			await player.seek(playbackRange.start);
-		}
-		await player.togglePlayback();
-	}
 
 	function revertSettings() {
 		for (const tool of availableTools) tool.reset(session);
@@ -71,7 +59,7 @@
 		role="group"
 		aria-label="Playback controls"
 	>
-		<PlayerPlayButton {player} offset={32} onclick={() => void togglePlayback()} />
+		<PlayerPlayButton {player} offset={32} />
 		<PlayerVolumeControl {player} offset={32} />
 		<span class="text-neutral-300 tabular-nums">
 			<span class="font-medium text-neutral-100">{player.formatTimestamp(player.currentTime)}</span>

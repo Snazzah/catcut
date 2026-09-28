@@ -13,8 +13,8 @@
 </script>
 
 <PlayerButton
-	title={player.progress === 1 ? 'Replay' : player.paused ? 'Play' : 'Pause'}
-	icon={player.progress === 1 ? replayIcon : player.paused ? playIcon : pauseIcon}
+	title={player.ended ? 'Replay' : player.paused ? 'Play' : 'Pause'}
+	icon={player.ended ? replayIcon : player.paused ? playIcon : pauseIcon}
 	key="K"
 	{onclick}
 	{offset}
