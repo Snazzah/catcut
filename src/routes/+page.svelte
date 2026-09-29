@@ -32,26 +32,47 @@
 		if (mediaUrl) source = createRemoteMediaSource(mediaUrl);
 		const sharedMediaId = location.searchParams.get('shared-media');
 		if (sharedMediaId) void openSharedMedia(sharedMediaId);
-		if (location.searchParams.has('share-error')) toast.error('Could not import the shared media.');
+		const shareError = location.searchParams.get('share-error');
+		if (shareError) {
+			const messages: Record<string, string> = {
+				parse: 'Chrome could not read the shared file data.',
+				invalid: 'The share did not contain an accepted media file.',
+				missing: 'The share did not contain a media file.',
+				storage: 'Chrome could not store the shared file on this device.'
+			};
+			const mime = location.searchParams.get('mime');
+			toast.error(
+				shareError === 'type'
+					? `The shared file has an unsupported type: ${mime || '(empty)'}.`
+					: (messages[shareError] ?? 'Could not import the shared media.')
+			);
+			location.searchParams.delete('share-error');
+			location.searchParams.delete('mime');
+			window.history.replaceState(window.history.state, '', location);
+		}
 
 		window.launchQueue?.setConsumer((launchParams) => void openLaunchFile(launchParams));
 	});
 
 	async function openSharedMedia(id: string) {
+		let failure = 'The shared media link is invalid.';
 		try {
 			if (!/^[0-9a-f-]{36}$/.test(id)) throw new Error('Invalid share ID');
+			failure = 'Chrome could not open the shared file storage.';
 			const cache = await caches.open('catcut-shared-media');
+			failure = 'The shared file was not found in browser storage.';
 			const key = new URL(`/__shared-media/${id}`, window.location.origin);
 			const response = await cache.match(key);
 			if (!response) throw new Error('Shared media missing');
+			failure = 'Chrome could not read the saved shared file.';
 			const name = decodeURIComponent(response.headers.get('X-File-Name') ?? 'shared-media');
 			const file = new File([await response.blob()], name, {
 				type: response.headers.get('Content-Type') ?? ''
 			});
-			await cache.delete(key);
 			source = createLocalMediaSource(file);
+			await cache.delete(key).catch(() => undefined);
 		} catch {
-			toast.error('Could not import the shared media.');
+			toast.error(failure);
 		} finally {
 			const url = new URL(window.location.href);
 			url.searchParams.delete('shared-media');

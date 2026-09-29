@@ -38,15 +38,19 @@ self.addEventListener('message', (event) => {
 });
 
 async function receiveSharedMedia(request: Request): Promise<Response> {
-	const form = await request.formData();
-	const file = form
-		.getAll('media')
-		.find(
-			(value): value is File =>
-				value instanceof File &&
-				(value.type.startsWith('video/') || value.type.startsWith('audio/'))
-		);
-	if (!file) return Response.redirect(new URL('/?share-error=invalid', self.location.origin), 303);
+	let form: FormData;
+	try {
+		form = await request.formData();
+	} catch {
+		return Response.redirect(new URL('/?share-error=parse', self.location.origin), 303);
+	}
+	const file = form.getAll('media').find((value): value is File => value instanceof File);
+	if (!file) return Response.redirect(new URL('/?share-error=missing', self.location.origin), 303);
+	if (!file.type.startsWith('video/') && !file.type.startsWith('audio/')) {
+		const errorUrl = new URL('/?share-error=type', self.location.origin);
+		errorUrl.searchParams.set('mime', file.type);
+		return Response.redirect(errorUrl, 303);
+	}
 
 	const id = crypto.randomUUID();
 	try {
