@@ -5,6 +5,7 @@
 	import EditingShell from './editor/EditingShell.svelte';
 	import EditorOverlayHost from './editor/EditorOverlayHost.svelte';
 	import { EditorSession } from './editor/editor-session.svelte';
+	import { editorTools } from './editor/editor-tools';
 	import MediaHeader from './MediaHeader.svelte';
 	import Player from './Player.svelte';
 
@@ -14,6 +15,7 @@
 	let workspace: HTMLElement;
 	let editing = $state(false);
 	let playerControlsVisible = $state(true);
+	let editorLayout = $derived(editorTools.find((tool) => tool.id === editor.activeTool)?.layout);
 
 	$effect(() => {
 		editor.initialize();
@@ -45,6 +47,7 @@
 	id="catcut-player"
 	class="grid h-full w-full overflow-hidden bg-neutral-950 transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none"
 	class:bg-neutral-900={editing}
+	class:editor-expanded={editing && editorLayout === 'expanded'}
 	style:grid-template-rows={editing ? 'minmax(0, 1fr) var(--editor-height)' : 'minmax(0, 1fr) 0rem'}
 	bind:this={workspace}
 >
@@ -89,9 +92,17 @@
 		--editor-height: calc(12.5rem + var(--saib));
 	}
 
+	#catcut-player.editor-expanded {
+		--editor-height: calc(15.5rem + var(--saib));
+	}
+
 	@media (min-width: 640px) {
 		#catcut-player {
 			--editor-height: 16rem;
+		}
+
+		#catcut-player.editor-expanded {
+			--editor-height: 18.5rem;
 		}
 	}
 </style>
