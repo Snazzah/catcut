@@ -8,6 +8,7 @@ import CropToolOverlay from './tools/CropToolOverlay.svelte';
 import CropControls from './tools/CropControls.svelte';
 import TrimControls from './tools/TrimControls.svelte';
 import QualityControls from './tools/QualityControls.svelte';
+import VolumeControls from './tools/VolumeControls.svelte';
 
 export type EditorToolMedia = 'any' | 'audio' | 'video';
 
@@ -23,6 +24,7 @@ type EditorToolDefinitionShape = Readonly<{
 	overlay?: OverlayComponent;
 	isChanged: (session: EditorSession) => boolean;
 	reset: (session: EditorSession) => void;
+	layout?: 'expanded';
 }>;
 
 export function isEditorToolAvailable(tool: EditorToolDefinition, session: EditorSession) {
