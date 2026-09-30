@@ -1,29 +1,60 @@
 <script lang="ts">
-	import { untrack } from 'svelte';
+	import { onDestroy, untrack } from 'svelte';
+	import { toast } from 'svelte-sonner';
 	import type { MediaSource } from '$lib/media';
 	import { PlayerState } from '$lib/player-state.svelte';
 	import EditingShell from './editor/EditingShell.svelte';
 	import EditorOverlayHost from './editor/EditorOverlayHost.svelte';
 	import { EditorSession } from './editor/editor-session.svelte';
-	import { editorTools } from './editor/editor-tools';
+	import { editorTools, type EditorToolDefinition } from './editor/editor-tools';
 	import MediaHeader from './MediaHeader.svelte';
 	import Player from './Player.svelte';
 
 	let { source, onclose }: { source: MediaSource; onclose: () => void } = $props();
 	const player = new PlayerState(untrack(() => source));
 	const editor = new EditorSession(player);
+	let mounted = true;
+	onDestroy(() => {
+		mounted = false;
+		editor.cancelSave();
+	});
 	let workspace: HTMLElement;
 	let editing = $state(false);
 	let playerControlsVisible = $state(true);
-	let editorLayout = $derived(editorTools.find((tool) => tool.id === editor.activeTool)?.layout);
+	let editorLayout = $derived(
+		(editorTools as EditorToolDefinition[]).find((tool) => tool.id === editor.activeTool)?.layout
+	);
 
 	$effect(() => {
 		editor.initialize();
 	});
 
 	function handleClose() {
-		if (editing) editing = false;
-		else onclose();
+		if (editing) {
+			editing = false;
+		} else onclose();
+	}
+
+	async function save() {
+		const result = await editor.save();
+		if (!mounted) return;
+		if (!result) {
+			if (editor.saveState.status === 'error') toast.error(editor.saveState.message);
+			return;
+		}
+		if (result.kind === 'download') {
+			const file = result.file;
+			const url = URL.createObjectURL(file);
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = file.name;
+			link.click();
+			setTimeout(() => URL.revokeObjectURL(url), 300);
+		}
+		const seconds = result.durationMs / 1000;
+		const duration =
+			seconds < 1 ? `${Math.round(result.durationMs)} ms` : `${seconds.toFixed(1)} s`;
+		toast.success(`Saved! Converted in ${duration}.`);
 	}
 
 	function openEditor() {
@@ -47,7 +78,8 @@
 	id="catcut-player"
 	class="grid h-full w-full overflow-hidden bg-neutral-950 transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none"
 	class:bg-neutral-900={editing}
-	class:editor-expanded={editing && editorLayout === 'expanded'}
+	class:editor-expanded={editing && !editor.saving && editorLayout === 'expanded'}
+	class:editor-saving={editing && editor.saving}
 	style:grid-template-rows={editing ? 'minmax(0, 1fr) var(--editor-height)' : 'minmax(0, 1fr) 0rem'}
 	bind:this={workspace}
 >
@@ -73,7 +105,7 @@
 			showControls={!editing}
 		>
 			{#snippet overlay()}
-				{#if editing}
+				{#if editing && !editor.saving}
 					<EditorOverlayHost session={editor} />
 				{/if}
 			{/snippet}
@@ -82,7 +114,7 @@
 
 	<div class="min-h-0 overflow-hidden">
 		{#if editing}
-			<EditingShell session={editor} onfullscreen={toggleFullscreen} />
+			<EditingShell session={editor} onfullscreen={toggleFullscreen} onsave={() => void save()} />
 		{/if}
 	</div>
 </section>
@@ -96,6 +128,10 @@
 		--editor-height: calc(15.5rem + var(--saib));
 	}
 
+	#catcut-player.editor-saving {
+		--editor-height: calc(6rem + var(--saib));
+	}
+
 	@media (min-width: 640px) {
 		#catcut-player {
 			--editor-height: 16rem;
@@ -103,6 +139,10 @@
 
 		#catcut-player.editor-expanded {
 			--editor-height: 18.5rem;
+		}
+
+		#catcut-player.editor-saving {
+			--editor-height: 6rem;
 		}
 	}
 </style>

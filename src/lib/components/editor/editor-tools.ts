@@ -8,7 +8,6 @@ import CropToolOverlay from './tools/CropToolOverlay.svelte';
 import CropControls from './tools/CropControls.svelte';
 import TrimControls from './tools/TrimControls.svelte';
 import QualityControls from './tools/QualityControls.svelte';
-import VolumeControls from './tools/VolumeControls.svelte';
 
 export type EditorToolMedia = 'any' | 'audio' | 'video';
 

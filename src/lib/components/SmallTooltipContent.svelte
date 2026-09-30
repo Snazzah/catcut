@@ -14,7 +14,7 @@
 	<Tooltip.Content
 		sideOffset={offset}
 		collisionPadding={8}
-		class="origin-(--bits-tooltip-content-transform-origin)"
+		class="z-50 origin-(--bits-tooltip-content-transform-origin)"
 	>
 		<div
 			class={[
