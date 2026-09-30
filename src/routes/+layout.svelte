@@ -65,5 +65,5 @@
 	<Tooltip.Provider>
 		{@render children()}
 	</Tooltip.Provider>
-	<Toaster theme="dark" position="bottom-right" />
+	<Toaster richColors theme="dark" position="bottom-right" />
 </div>

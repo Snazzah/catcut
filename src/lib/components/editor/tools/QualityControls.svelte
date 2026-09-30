@@ -1,14 +1,13 @@
 <script lang="ts">
 	import musicIcon from '@iconify-icons/mdi/music';
 	import videoIcon from '@iconify-icons/mdi/video';
-	import type { QualityLevel } from 'mediabunny';
 	import SelectField, { type SelectOption } from '$lib/components/SelectField.svelte';
-	import { QUALITY_PRESETS } from '$lib/editing';
+	import { QUALITY_PRESETS, type AnyQuality } from '$lib/editing';
 	import type { EditorSession } from '../editor-session.svelte';
 
 	let { session }: { session: EditorSession } = $props();
 
-	type QualitySelection = QualityLevel | 'original';
+	type QualitySelection = AnyQuality | 'original';
 
 	const qualityOptions = [
 		{ value: 'original', label: 'Original' },

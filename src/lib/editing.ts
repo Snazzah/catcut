@@ -1,4 +1,10 @@
-import { Quality, type ConversionOptions, type CropRectangle, type QualityLevel } from 'mediabunny';
+import {
+	Quality,
+	type ConversionOptions,
+	type CropRectangle,
+	type QualityLevel,
+	type QualityOptions
+} from 'mediabunny';
 
 export type VideoSize = Readonly<{
 	width: number;
@@ -10,20 +16,31 @@ export type TimelineRange = Readonly<{
 	end: number;
 }>;
 
+export type AnyQuality = QualityLevel | 'terrible';
+
+const CUSTOM_QUALITIES = {
+	terrible: { quantizer: 51, bitrate: 1e4, bitrateMode: 'constant' }
+} satisfies Record<Exclude<AnyQuality, QualityLevel>, QualityOptions>;
+
 export type EditState = Readonly<{
 	trim: TimelineRange;
 	crop: CropRectangle | null;
-	videoQuality: QualityLevel | null;
-	audioQuality: QualityLevel | null;
+	videoQuality: AnyQuality | null;
+	audioQuality: AnyQuality | null;
 }>;
 
 export const QUALITY_PRESETS = [
+	{ value: 'terrible', label: 'Terrible' },
 	{ value: 'very-low', label: 'Very Low' },
 	{ value: 'low', label: 'Low' },
 	{ value: 'medium', label: 'Medium' },
 	{ value: 'high', label: 'High' },
 	{ value: 'very-high', label: 'Very High' }
-] satisfies readonly Readonly<{ value: QualityLevel; label: string }>[];
+] satisfies readonly Readonly<{ value: AnyQuality; label: string }>[];
+
+function createQuality(quality: AnyQuality): Quality {
+	return new Quality(CUSTOM_QUALITIES[quality as keyof typeof CUSTOM_QUALITIES] ?? quality);
+}
 
 export function createTrimRange(
 	bounds: TimelineRange,
@@ -103,8 +120,8 @@ export function editStateIntoConversionOptions({
 }): ConversionOptions {
 	const crop =
 		videoSize && state.crop && !isFullFrameCrop(videoSize, state.crop) ? state.crop : undefined;
-	const videoQuality = state.videoQuality ? new Quality(state.videoQuality) : undefined;
-	const audioQuality = state.audioQuality ? new Quality(state.audioQuality) : undefined;
+	const videoQuality = state.videoQuality ? createQuality(state.videoQuality) : undefined;
+	const audioQuality = state.audioQuality ? createQuality(state.audioQuality) : undefined;
 
 	return {
 		input,
