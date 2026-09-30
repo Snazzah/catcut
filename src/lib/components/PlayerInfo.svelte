@@ -24,7 +24,10 @@
 
 		return Promise.all([
 			videoTrack && videoSize
-				? videoTrack.getCodec().then((codec) => (codec === null ? null : { codec, ...videoSize }))
+				? Promise.all([videoTrack.getCodec(), videoTrack.computeFrameRateMetrics()]).then(
+						([codec, frameMetrics]) =>
+							codec === null ? null : { codec, frameMetrics, ...videoSize }
+					)
 				: null,
 			audioTrack
 				? Promise.all([
@@ -147,6 +150,11 @@
 								<dd class="m-0 text-right text-neutral-100 tabular-nums">
 									{formatAspectRatio(tracks.video.width, tracks.video.height)}
 								</dd>
+								<dt class="text-neutral-400">Frame rate</dt>
+								<dd class="m-0 text-right text-neutral-100 tabular-nums">
+									{!tracks.video.frameMetrics.frameRateIsConstant && '~'}{tracks.video.frameMetrics
+										.bestGuessFrameRate} fps
+								</dd>
 							</dl>
 						</section>
 					{/if}
@@ -189,7 +197,9 @@
 									{player.loadState.metadata.tags[key].join(', ')}
 								{:else if key === 'trackNumber' || key === 'discNumber'}
 									{@const total =
-										player.loadState.metadata.tags[key === 'trackNumber' ? 'tracksTotal' : 'discsTotal']}
+										player.loadState.metadata.tags[
+											key === 'trackNumber' ? 'tracksTotal' : 'discsTotal'
+										]}
 									{player.loadState.metadata.tags[key]}{total !== null && total !== undefined
 										? ` of ${total}`
 										: ''}
