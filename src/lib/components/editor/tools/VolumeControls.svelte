@@ -11,7 +11,11 @@
 	let volume = $derived(adjustment.volume);
 </script>
 
-<div class="flex h-13 items-center justify-center sm:justify-start gap-3" role="group" aria-label="Export volume">
+<div
+	class="flex h-13 items-center justify-center gap-3 sm:justify-start"
+	role="group"
+	aria-label="Export volume"
+>
 	<PlayerButton
 		title={volume === 0 ? 'Restore audio' : 'Remove audio'}
 		icon={volume === 0 ? volumeMutedIcon : volumeIcon}

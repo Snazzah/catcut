@@ -159,7 +159,7 @@
 			</div>
 
 			<div class="grid min-h-0 w-full min-w-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden">
-				<div class="w-full min-w-0 overflow-x-auto overscroll-x-contain overflow-y-hidden">
+				<div class="w-full min-w-0 overflow-x-auto overflow-y-hidden overscroll-x-contain">
 					{#if Controls}
 						<Controls {session} />
 					{/if}
