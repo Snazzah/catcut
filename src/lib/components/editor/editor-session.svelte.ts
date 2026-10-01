@@ -9,7 +9,6 @@ import {
 	Output,
 	StreamTarget,
 	UrlSource,
-	type ConversionOptions,
 	type CropRectangle
 } from 'mediabunny';
 import {
@@ -21,7 +20,8 @@ import {
 	isFullTrimRange,
 	type EditState,
 	type TimelineRange,
-	type AnyQuality
+	type AnyQuality,
+	type AudioAdjustment
 } from '$lib/editing';
 import type { PlayerState } from '$lib/player-state.svelte';
 import { getExportExtension, getMatchingOutputFormat } from '$lib/export-format';
@@ -64,7 +64,7 @@ export class EditorSession {
 	}
 
 	get hasChanges() {
-		return this.trimChanged || this.cropChanged || this.qualityChanged;
+		return this.trimChanged || this.cropChanged || this.audioChanged || this.qualityChanged;
 	}
 
 	async save(): Promise<SaveResult | null> {
@@ -202,6 +202,14 @@ export class EditorSession {
 		return this.state.status === 'ready' ? this.state.edits.audioQuality : null;
 	}
 
+	get audioAdjustment() {
+		return this.state.status === 'ready' ? this.state.edits.audioAdjustment : null;
+	}
+
+	get audioChanged() {
+		return this.audioAdjustment?.volume !== 1;
+	}
+
 	get timelineBounds(): TimelineRange {
 		return { start: this.player.startTime, end: this.player.endTime };
 	}
@@ -257,6 +265,14 @@ export class EditorSession {
 		};
 	}
 
+	updateAudioAdjustment(adjustment: AudioAdjustment) {
+		if (this.state.status !== 'ready' || !this.player.hasAudio) return;
+		this.state = {
+			status: 'ready',
+			edits: { ...this.state.edits, audioAdjustment: adjustment }
+		};
+	}
+
 	resetTrim() {
 		this.updateTrim(this.timelineBounds);
 	}
@@ -269,5 +285,9 @@ export class EditorSession {
 	resetQuality() {
 		this.updateVideoQuality(null);
 		this.updateAudioQuality(null);
+	}
+
+	resetAudio() {
+		this.updateAudioAdjustment({ volume: 1 });
 	}
 }

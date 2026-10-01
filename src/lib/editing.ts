@@ -1,9 +1,11 @@
 import {
+	AudioSample,
 	Quality,
 	type ConversionOptions,
 	type CropRectangle,
 	type QualityLevel,
-	type QualityOptions
+	type QualityOptions,
+	type VideoSample
 } from 'mediabunny';
 
 export type VideoSize = Readonly<{
@@ -22,12 +24,22 @@ const CUSTOM_QUALITIES = {
 	terrible: { quantizer: 51, bitrate: 1e4, bitrateMode: 'constant' }
 } satisfies Record<Exclude<AnyQuality, QualityLevel>, QualityOptions>;
 
+export type AudioAdjustment = Readonly<{ volume: number }>;
+
 export type EditState = Readonly<{
 	trim: TimelineRange;
 	crop: CropRectangle | null;
 	videoQuality: AnyQuality | null;
 	audioQuality: AnyQuality | null;
+	audioAdjustment: AudioAdjustment;
 }>;
+
+export type SampleProcess<Sample extends { close: () => void }> = (
+	sample: Sample
+) => Sample | Sample[] | null | Promise<Sample | Sample[] | null>;
+
+export type AudioProcess = SampleProcess<AudioSample>;
+export type VideoProcess = SampleProcess<VideoSample>;
 
 export const QUALITY_PRESETS = [
 	{ value: 'terrible', label: 'Terrible' },
@@ -101,7 +113,61 @@ export function createEditState({
 		trim: createTrimRange(bounds),
 		crop: videoSize ? createCropRectangle(videoSize) : null,
 		videoQuality: null,
-		audioQuality: null
+		audioQuality: null,
+		audioAdjustment: { volume: 1 }
+	};
+}
+
+function transformAudioSample(sample: AudioSample, gain: number): AudioSample {
+	const planeLength = sample.numberOfFrames;
+	const data = new Float32Array(planeLength * sample.numberOfChannels);
+
+	for (let channel = 0; channel < sample.numberOfChannels; channel++) {
+		const plane = data.subarray(channel * planeLength, (channel + 1) * planeLength);
+		sample.copyTo(plane, { planeIndex: channel, format: 'f32-planar' });
+		for (let index = 0; index < plane.length; index++) {
+			plane[index] = Math.max(-1, Math.min(1, plane[index] * gain));
+		}
+	}
+
+	return new AudioSample({
+		format: 'f32-planar',
+		sampleRate: sample.sampleRate,
+		numberOfChannels: sample.numberOfChannels,
+		timestamp: sample.timestamp,
+		data
+	});
+}
+
+export function composeSampleProcesses<Sample extends { close: () => void }>(
+	processes: readonly SampleProcess<Sample>[]
+): SampleProcess<Sample> | undefined {
+	if (processes.length === 0) return undefined;
+
+	return async (sample) => {
+		let samples: Sample[] = [sample];
+		for (const process of processes) {
+			const nextSamples: Sample[] = [];
+			for (const current of samples) {
+				let processed: Sample | Sample[] | null;
+				try {
+					processed = await process(current);
+				} catch (error) {
+					current.close();
+					throw error;
+				}
+				const processedSamples = processed
+					? Array.isArray(processed)
+						? processed
+						: [processed]
+					: [];
+				nextSamples.push(...processedSamples);
+				if (!processedSamples.includes(current)) current.close();
+			}
+			samples = nextSamples;
+			if (samples.length === 0) return null;
+		}
+		return samples.length === 1 ? samples[0] : samples;
 	};
 }
 
@@ -122,14 +188,33 @@ export function editStateIntoConversionOptions({
 		videoSize && state.crop && !isFullFrameCrop(videoSize, state.crop) ? state.crop : undefined;
 	const videoQuality = state.videoQuality ? createQuality(state.videoQuality) : undefined;
 	const audioQuality = state.audioQuality ? createQuality(state.audioQuality) : undefined;
+	const discardAudio = state.audioAdjustment.volume === 0;
+	const videoProcesses: VideoProcess[] = [];
+	const audioProcesses: AudioProcess[] = [];
+	if (state.audioAdjustment.volume !== 0 && state.audioAdjustment.volume !== 1) {
+		const volume = state.audioAdjustment.volume;
+		audioProcesses.push((sample) => transformAudioSample(sample, volume));
+	}
+	const videoProcess = composeSampleProcesses(videoProcesses);
+	const audioProcess = composeSampleProcesses(audioProcesses);
 
 	return {
 		input,
 		output,
 		...(!isFullTrimRange(bounds, state.trim) && { trim: state.trim }),
-		...((crop || videoQuality) && {
-			video: { ...(crop && { crop }), ...(videoQuality && { quality: videoQuality }) }
+		...((crop || videoQuality || videoProcess) && {
+			video: {
+				...(crop && { crop }),
+				...(videoQuality && { quality: videoQuality }),
+				...(videoProcess && { process: videoProcess })
+			}
 		}),
-		...(audioQuality && { audio: { quality: audioQuality } })
+		...((discardAudio || audioQuality || audioProcess) && {
+			audio: {
+				...(discardAudio && { discard: true }),
+				...(audioQuality && { quality: audioQuality }),
+				...(audioProcess && { process: audioProcess })
+			}
+		})
 	};
 }

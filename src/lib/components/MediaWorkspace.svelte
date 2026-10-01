@@ -7,7 +7,7 @@
 	import EditingShell from './editor/EditingShell.svelte';
 	import EditorOverlayHost from './editor/EditorOverlayHost.svelte';
 	import { EditorSession } from './editor/editor-session.svelte';
-	import { editorTools, type EditorToolDefinition } from './editor/editor-tools';
+	import { editorTools } from './editor/editor-tools';
 	import MediaHeader from './MediaHeader.svelte';
 	import Player from './Player.svelte';
 
@@ -22,9 +22,7 @@
 	let workspace: HTMLElement;
 	let editing = $state(false);
 	let playerControlsVisible = $state(true);
-	let editorLayout = $derived(
-		(editorTools as EditorToolDefinition[]).find((tool) => tool.id === editor.activeTool)?.layout
-	);
+	let editorLayout = $derived(editorTools.find((tool) => tool.id === editor.activeTool)?.layout);
 
 	$effect(() => {
 		editor.initialize();

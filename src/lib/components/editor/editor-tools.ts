@@ -3,24 +3,23 @@ import type { IconifyIcon } from '@iconify/svelte';
 import contentCutIcon from '@iconify-icons/mdi/content-cut';
 import cropIcon from '@iconify-icons/mdi/crop';
 import tuneVariantIcon from '@iconify-icons/mdi/tune-variant';
+import volumeHighIcon from '@iconify-icons/mdi/volume-high';
 import type { EditorSession } from './editor-session.svelte';
 import CropToolOverlay from './tools/CropToolOverlay.svelte';
 import CropControls from './tools/CropControls.svelte';
 import TrimControls from './tools/TrimControls.svelte';
 import QualityControls from './tools/QualityControls.svelte';
+import VolumeControls from './tools/VolumeControls.svelte';
 
-export type EditorToolMedia = 'any' | 'audio' | 'video';
+export type EditorToolId = 'trim' | 'crop' | 'volume' | 'quality';
 
-type ToolComponent = Component<{ session: EditorSession }>;
-type OverlayComponent = Component<{ session: EditorSession; active: boolean }>;
-
-type EditorToolDefinitionShape = Readonly<{
-	id: string;
+export type EditorToolDefinition = Readonly<{
+	id: EditorToolId;
 	label: string;
 	icon: IconifyIcon;
-	media: EditorToolMedia;
-	controls: ToolComponent;
-	overlay?: OverlayComponent;
+	media: 'any' | 'audio' | 'video';
+	controls: Component<{ session: EditorSession }>;
+	overlay?: Component<{ session: EditorSession; active: boolean }>;
 	isChanged: (session: EditorSession) => boolean;
 	reset: (session: EditorSession) => void;
 	layout?: 'expanded';
@@ -43,7 +42,7 @@ export function isEditorToolAvailable(tool: EditorToolDefinition, session: Edito
 	}
 }
 
-export const editorTools = [
+export const editorTools: readonly EditorToolDefinition[] = [
 	{
 		id: 'trim',
 		label: 'Trim',
@@ -64,6 +63,15 @@ export const editorTools = [
 		reset: (session) => session.resetCrop()
 	},
 	{
+		id: 'volume',
+		label: 'Volume',
+		icon: volumeHighIcon,
+		media: 'audio',
+		controls: VolumeControls,
+		isChanged: (session) => session.audioChanged,
+		reset: (session) => session.resetAudio()
+	},
+	{
 		id: 'quality',
 		label: 'Quality',
 		icon: tuneVariantIcon,
@@ -72,8 +80,4 @@ export const editorTools = [
 		isChanged: (session) => session.qualityChanged,
 		reset: (session) => session.resetQuality()
 	}
-] satisfies readonly EditorToolDefinitionShape[];
-
-export const EDITOR_TOOL_IDS = editorTools.map((tool) => tool.id);
-export type EditorToolId = (typeof editorTools)[number]['id'];
-export type EditorToolDefinition = EditorToolDefinitionShape & Readonly<{ id: EditorToolId }>;
+];
