@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { catcut } from '$lib/icons';
-	import SmallTooltipContent from '$lib/components/SmallTooltipContent.svelte';
+	import SmallTooltipContent from '$lib/components/common/SmallTooltipContent.svelte';
 	import { registerAllCodecs } from '$lib/player-state.svelte';
 	import arrowIcon from '@iconify-icons/mdi/arrow-left';
 	import checkIcon from '@iconify-icons/mdi/check-circle';
