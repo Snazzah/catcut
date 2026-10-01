@@ -101,6 +101,8 @@
 
 		return `${width / divisor}:${height / divisor}`;
 	}
+
+	const round2 = (n: number) => Math.round(n * 100) / 100;
 </script>
 
 <ResponsiveMenu title="Media information">
@@ -152,8 +154,8 @@
 								</dd>
 								<dt class="text-neutral-400">Frame rate</dt>
 								<dd class="m-0 text-right text-neutral-100 tabular-nums">
-									{!tracks.video.frameMetrics.frameRateIsConstant && '~'}{tracks.video.frameMetrics
-										.bestGuessFrameRate} fps
+									{!tracks.video.frameMetrics.frameRateIsConstant ? '~' : ''}{round2(tracks.video.frameMetrics
+										.bestGuessFrameRate)} fps
 								</dd>
 							</dl>
 						</section>

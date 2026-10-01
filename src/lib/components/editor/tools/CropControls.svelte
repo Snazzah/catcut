@@ -50,7 +50,7 @@
 
 {#if bounds && crop}
 	<div
-		class="flex h-13 w-max min-w-full items-center gap-1.5 pr-1 sm:gap-2"
+		class="flex h-full w-max min-w-full items-center gap-1.5 pr-1 sm:gap-2"
 		role="tabpanel"
 		aria-label="Crop settings"
 	>
