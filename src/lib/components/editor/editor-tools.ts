@@ -2,16 +2,18 @@ import type { Component } from 'svelte';
 import type { IconifyIcon } from '@iconify/svelte';
 import contentCutIcon from '@iconify-icons/mdi/content-cut';
 import cropIcon from '@iconify-icons/mdi/crop';
+import resizeIcon from '@iconify-icons/mdi/aspect-ratio';
 import tuneVariantIcon from '@iconify-icons/mdi/tune-variant';
 import volumeHighIcon from '@iconify-icons/mdi/volume-high';
 import type { EditorSession } from './editor-session.svelte';
 import CropToolOverlay from './tools/CropToolOverlay.svelte';
 import CropControls from './tools/CropControls.svelte';
+import ResizeControls from './tools/ResizeControls.svelte';
 import TrimControls from './tools/TrimControls.svelte';
 import QualityControls from './tools/QualityControls.svelte';
 import VolumeControls from './tools/VolumeControls.svelte';
 
-export type EditorToolId = 'trim' | 'crop' | 'volume' | 'quality';
+export type EditorToolId = 'trim' | 'crop' | 'resize' | 'volume' | 'quality';
 
 export type EditorToolDefinition = Readonly<{
 	id: EditorToolId;
@@ -61,6 +63,15 @@ export const editorTools: readonly EditorToolDefinition[] = [
 		overlay: CropToolOverlay,
 		isChanged: (session) => session.cropChanged,
 		reset: (session) => session.resetCrop()
+	},
+	{
+		id: 'resize',
+		label: 'Resize',
+		icon: resizeIcon,
+		media: 'video',
+		controls: ResizeControls,
+		isChanged: (session) => session.resizeChanged,
+		reset: (session) => session.resetResize()
 	},
 	{
 		id: 'volume',

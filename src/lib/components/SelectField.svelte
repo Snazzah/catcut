@@ -18,9 +18,11 @@
 		icon,
 		value,
 		options,
+		disabled = false,
 		onchange
 	}: {
 		label: string;
+		disabled?: boolean;
 		icon?: IconifyIcon;
 		value: Value;
 		options: readonly SelectOption<Value>[];
@@ -35,13 +37,14 @@
 
 <Select.Root
 	type="single"
+	{disabled}
 	{value}
 	items={options.map((option) => ({ ...option }))}
 	onValueChange={handleValueChange}
 >
 	<Select.Trigger
 		aria-label={label}
-		class="flex h-9 min-w-36 shrink-0 cursor-pointer items-center gap-2 rounded-md bg-neutral-900 px-3 text-sm text-neutral-100 ring-white/8 outline-none hover:bg-neutral-800 focus-visible:ring-2 focus-visible:ring-violet-200 data-[state=open]:bg-neutral-800"
+		class="flex h-9 min-w-36 shrink-0 cursor-pointer items-center gap-2 rounded-md bg-neutral-900 px-3 text-sm text-neutral-100 ring-white/8 outline-none hover:bg-neutral-800 focus-visible:ring-2 focus-visible:ring-violet-200 disabled:cursor-default disabled:opacity-50 disabled:hover:bg-neutral-900 data-[state=open]:bg-neutral-800"
 	>
 		{#if icon}
 			<Icon {icon} class="size-4 shrink-0 text-neutral-300" aria-hidden="true" />

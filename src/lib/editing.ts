@@ -2,6 +2,7 @@ import {
 	AudioSample,
 	Quality,
 	type ConversionOptions,
+	type ConversionVideoOptions,
 	type CropRectangle,
 	type QualityLevel,
 	type QualityOptions,
@@ -26,9 +27,13 @@ const CUSTOM_QUALITIES = {
 
 export type AudioAdjustment = Readonly<{ volume: number }>;
 
+export type ResizeFit = NonNullable<ConversionVideoOptions['fit']>;
+export type ResizeAdjustment = Readonly<{ width: number; height: number; fit: ResizeFit }>;
+
 export type EditState = Readonly<{
 	trim: TimelineRange;
 	crop: CropRectangle | null;
+	resize: ResizeAdjustment;
 	videoQuality: AnyQuality | null;
 	audioQuality: AnyQuality | null;
 	audioAdjustment: AudioAdjustment;
@@ -112,6 +117,7 @@ export function createEditState({
 	return {
 		trim: createTrimRange(bounds),
 		crop: videoSize ? createCropRectangle(videoSize) : null,
+		resize: { width: 0, height: 0, fit: 'fill' },
 		videoQuality: null,
 		audioQuality: null,
 		audioAdjustment: { volume: 1 }
@@ -187,6 +193,8 @@ export function editStateIntoConversionOptions({
 	const crop =
 		videoSize && state.crop && !isFullFrameCrop(videoSize, state.crop) ? state.crop : undefined;
 	const videoQuality = state.videoQuality ? createQuality(state.videoQuality) : undefined;
+	const resize =
+		videoSize && (state.resize.width > 0 || state.resize.height > 0) ? state.resize : null;
 	const audioQuality = state.audioQuality ? createQuality(state.audioQuality) : undefined;
 	const discardAudio = state.audioAdjustment.volume === 0;
 	const videoProcesses: VideoProcess[] = [];
@@ -202,9 +210,14 @@ export function editStateIntoConversionOptions({
 		input,
 		output,
 		...(!isFullTrimRange(bounds, state.trim) && { trim: state.trim }),
-		...((crop || videoQuality || videoProcess) && {
+		...((crop || resize || videoQuality || videoProcess) && {
 			video: {
 				...(crop && { crop }),
+				...(resize && {
+					...(resize.width > 0 && { width: resize.width }),
+					...(resize.height > 0 && { height: resize.height }),
+					...(resize.width > 0 && resize.height > 0 && { fit: resize.fit })
+				}),
 				...(videoQuality && { quality: videoQuality }),
 				...(videoProcess && { process: videoProcess })
 			}
