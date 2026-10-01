@@ -154,8 +154,9 @@
 								</dd>
 								<dt class="text-neutral-400">Frame rate</dt>
 								<dd class="m-0 text-right text-neutral-100 tabular-nums">
-									{!tracks.video.frameMetrics.frameRateIsConstant ? '~' : ''}{round2(tracks.video.frameMetrics
-										.bestGuessFrameRate)} fps
+									{!tracks.video.frameMetrics.frameRateIsConstant ? '~' : ''}{round2(
+										tracks.video.frameMetrics.bestGuessFrameRate
+									)} fps
 								</dd>
 							</dl>
 						</section>
