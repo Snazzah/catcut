@@ -1,5 +1,5 @@
 <script lang="ts">
-	import SelectField, { type SelectOption } from '$lib/components/SelectField.svelte';
+	import SelectField, { type SelectOption } from '$lib/components/common/SelectField.svelte';
 	import type { ResizeFit } from '$lib/editing';
 	import type { EditorSession } from '../editor-session.svelte';
 

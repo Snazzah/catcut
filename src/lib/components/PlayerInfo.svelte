@@ -1,8 +1,8 @@
 <script lang="ts">
 	import informationOutlineIcon from '@iconify-icons/mdi/information-outline';
 	import type { PlayerState } from '$lib/player-state.svelte';
-	import PlayerButton from './PlayerButton.svelte';
-	import ResponsiveMenu from './ResponsiveMenu.svelte';
+	import PlayerButton from '$lib/components/common/PlayerButton.svelte';
+	import ResponsiveMenu from '$lib/components/common/ResponsiveMenu.svelte';
 	import type { MetadataTags } from 'mediabunny';
 
 	let { player }: { player: PlayerState } = $props();
