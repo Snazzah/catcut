@@ -21,7 +21,8 @@ import {
 	type EditState,
 	type TimelineRange,
 	type AnyQuality,
-	type AudioAdjustment
+	type AudioAdjustment,
+	type ResizeAdjustment
 } from '$lib/editing';
 import type { PlayerState } from '$lib/player-state.svelte';
 import { getExportExtension, getMatchingOutputFormat } from '$lib/export-format';
@@ -64,7 +65,13 @@ export class EditorSession {
 	}
 
 	get hasChanges() {
-		return this.trimChanged || this.cropChanged || this.audioChanged || this.qualityChanged;
+		return (
+			this.trimChanged ||
+			this.cropChanged ||
+			this.resizeChanged ||
+			this.audioChanged ||
+			this.qualityChanged
+		);
 	}
 
 	async save(): Promise<SaveResult | null> {
@@ -192,6 +199,27 @@ export class EditorSession {
 		return this.state.status === 'ready'
 			? this.state.edits.videoQuality !== null || this.state.edits.audioQuality !== null
 			: false;
+	}
+
+	get resize() {
+		return this.state.status === 'ready' ? this.state.edits.resize : null;
+	}
+
+	get resizeChanged() {
+		const resize = this.resize;
+		return resize ? resize.width > 0 || resize.height > 0 : false;
+	}
+
+	updateResize(resize: ResizeAdjustment) {
+		if (this.state.status !== 'ready' || !this.player.hasVideo) return;
+		this.state = {
+			status: 'ready',
+			edits: { ...this.state.edits, resize }
+		};
+	}
+
+	resetResize() {
+		this.updateResize({ width: 0, height: 0, fit: 'fill' });
 	}
 
 	get videoQuality() {
