@@ -4,9 +4,9 @@
 	import cogIcon from '@iconify-icons/mdi/cog';
 	import speedometerIcon from '@iconify-icons/mdi/speedometer';
 	import Icon from '@iconify/svelte';
-	import PlayerButton from './PlayerButton.svelte';
+	import PlayerButton from './common/PlayerButton.svelte';
 	import PlayerSlider from './PlayerSlider.svelte';
-	import ResponsiveMenu from './ResponsiveMenu.svelte';
+	import ResponsiveMenu from '$lib/components/common/ResponsiveMenu.svelte';
 
 	let {
 		playbackRate,

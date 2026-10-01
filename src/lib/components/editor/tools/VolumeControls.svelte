@@ -1,7 +1,7 @@
 <script lang="ts">
 	import volumeIcon from '@iconify-icons/mdi/volume-high';
 	import volumeMutedIcon from '@iconify-icons/mdi/volume-off';
-	import PlayerButton from '$lib/components/PlayerButton.svelte';
+	import PlayerButton from '$lib/components/common/PlayerButton.svelte';
 	import PlayerSlider from '$lib/components/PlayerSlider.svelte';
 	import type { EditorSession } from '../editor-session.svelte';
 

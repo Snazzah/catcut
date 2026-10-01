@@ -4,7 +4,7 @@
 	import fullscreenIcon from '@iconify-icons/mdi/fullscreen';
 	import loadingIcon from '@iconify-icons/mdi/loading';
 	import editIcon from '@iconify-icons/mdi/movie-edit-outline';
-	import PlayerButton from './PlayerButton.svelte';
+	import PlayerButton from '$lib/components/common/PlayerButton.svelte';
 	import PlayerPlayButton from './PlayerPlayButton.svelte';
 	import PlayerSlider from './PlayerSlider.svelte';
 	import PlayerSettings from './PlayerSettings.svelte';

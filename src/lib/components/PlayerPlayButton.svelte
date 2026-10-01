@@ -3,7 +3,7 @@
 	import playIcon from '@iconify-icons/mdi/play-arrow';
 	import replayIcon from '@iconify-icons/mdi/replay';
 	import type { PlayerState } from '$lib/player-state.svelte';
-	import PlayerButton from './PlayerButton.svelte';
+	import PlayerButton from '$lib/components/common/PlayerButton.svelte';
 
 	let {
 		player,
