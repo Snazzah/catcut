@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onDestroy, untrack } from 'svelte';
 	import { toast } from 'svelte-sonner';
+	import prettyMilliseconds from 'pretty-ms';
 	import type { MediaSource } from '$lib/media';
 	import { PlayerState } from '$lib/player-state.svelte';
 	import EditingShell from './editor/EditingShell.svelte';
@@ -51,10 +52,8 @@
 			link.click();
 			setTimeout(() => URL.revokeObjectURL(url), 300);
 		}
-		const seconds = result.durationMs / 1000;
-		const duration =
-			seconds < 1 ? `${Math.round(result.durationMs)} ms` : `${seconds.toFixed(1)} s`;
-		toast.success(`Saved! Converted in ${duration}.`);
+
+		toast.success(`Saved your file! This took ${prettyMilliseconds(result.durationMs)}.`);
 	}
 
 	function openEditor() {

@@ -32,7 +32,7 @@
 
 {#if trim}
 	<div
-		class="flex h-13 w-max min-w-full items-center justify-center gap-1.5 sm:justify-start sm:gap-3"
+		class="flex h-full w-max min-w-full items-center justify-center gap-1.5 sm:justify-start sm:gap-3"
 		role="tabpanel"
 	>
 		<TimeInput
