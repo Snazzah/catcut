@@ -12,7 +12,8 @@ import {
 	type MediaCodec,
 	type MetadataTags,
 	type WrappedAudioBuffer,
-	type WrappedCanvas
+	type WrappedCanvas,
+	VideoSampleSink
 } from 'mediabunny';
 import type { MediaSource } from '$lib/media';
 
@@ -268,6 +269,13 @@ export class PlayerState {
 		this.#audioContext = audioContext;
 		this.#gainNode = gainNode;
 		this.#updateGain();
+
+		if (videoTrack) {
+			const sink = new VideoSampleSink(videoTrack);
+			const sample = await sink.getSample(2);
+			console.log('Video color space:', sample?.colorSpace);
+			sample?.close();
+		}
 
 		this.#videoSink = videoTrack
 			? new CanvasSink(videoTrack, {

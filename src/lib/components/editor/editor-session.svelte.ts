@@ -89,7 +89,6 @@ export class EditorSession {
 		this.player.pause();
 
 		try {
-			// Playback has already detected the format, so this keeps the save picker within user activation.
 			const matchingFormat = getMatchingOutputFormat(await this.player.input.getFormat());
 			const format =
 				matchingFormat ?? (this.player.hasVideo ? new Mp4OutputFormat() : new Mp3OutputFormat());
@@ -126,7 +125,7 @@ export class EditorSession {
 			}
 			if (!conversion.isValid || conversion.discardedTracks.length > 0) {
 				throw new Error(
-					'This media could not be converted without losing an audio or video track.'
+					'This media could not be converted without losing a track.'
 				);
 			}
 			conversion.onProgress = (progress) => {
