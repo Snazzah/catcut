@@ -4,6 +4,7 @@ import {
 	BufferTarget,
 	Conversion,
 	Input,
+	MPEG_TS,
 	Mp3OutputFormat,
 	Mp4OutputFormat,
 	Output,
@@ -27,6 +28,7 @@ import {
 import type { PlayerState } from '$lib/player-state.svelte';
 import { getExportExtension, getMatchingOutputFormat } from '$lib/export-format';
 import type { EditorToolId } from './editor-tools';
+import { MetadataChangeSet } from './metadata-changeset.svelte';
 
 type EditorSessionState =
 	Readonly<{ status: 'loading' }> | Readonly<{ status: 'ready'; edits: EditState }>;
@@ -51,6 +53,8 @@ export class EditorSession {
 	state = $state.raw<EditorSessionState>({ status: 'loading' });
 	saveState = $state.raw<SaveState>({ status: 'idle' });
 	#job: ConversionJob | null = null;
+	#metadataAvailable = $state(false);
+	metadata = $state<MetadataChangeSet | null>(null);
 
 	constructor(player: PlayerState) {
 		this.player = player;
@@ -60,8 +64,16 @@ export class EditorSession {
 		return this.state.status === 'ready';
 	}
 
+	get metadataAvailable() {
+		return this.ready && this.#metadataAvailable;
+	}
+
 	get saving() {
 		return this.saveState.status === 'converting';
+	}
+
+	get metadataChanged() {
+		return this.metadata?.hasChanges ?? false;
 	}
 
 	get hasChanges() {
@@ -70,7 +82,8 @@ export class EditorSession {
 			this.cropChanged ||
 			this.resizeChanged ||
 			this.audioChanged ||
-			this.qualityChanged
+			this.qualityChanged ||
+			this.metadataChanged
 		);
 	}
 
@@ -78,6 +91,7 @@ export class EditorSession {
 		if (this.state.status !== 'ready' || !this.hasChanges || this.saving || !this.player.input)
 			return null;
 		const edits = this.state.edits;
+		const tags = this.metadataChanged ? this.metadata?.toMetadataTags() : undefined;
 		const source = this.player.source;
 		const input = new Input({
 			formats: ALL_FORMATS,
@@ -116,6 +130,7 @@ export class EditorSession {
 					output
 				}),
 				tracks: 'primary',
+				tags,
 				showWarnings: false
 			});
 			job.conversion = conversion;
@@ -124,9 +139,7 @@ export class EditorSession {
 				return null;
 			}
 			if (!conversion.isValid || conversion.discardedTracks.length > 0) {
-				throw new Error(
-					'This media could not be converted without losing a track.'
-				);
+				throw new Error('This media could not be converted without losing a track.');
 			}
 			conversion.onProgress = (progress) => {
 				if (this.#job === job) this.saveState = { status: 'converting', progress };
@@ -243,6 +256,11 @@ export class EditorSession {
 
 	initialize() {
 		if (this.state.status === 'ready' || this.player.loadState.status !== 'ready') return;
+		this.metadata = new MetadataChangeSet(this.player.loadState.metadata.tags);
+		this.player.input?.getFormat().then(
+			(format) => (this.#metadataAvailable = format !== MPEG_TS),
+			() => (this.#metadataAvailable = false)
+		);
 		this.state = {
 			status: 'ready',
 			edits: createEditState({

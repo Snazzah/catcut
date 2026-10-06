@@ -166,6 +166,8 @@
 				</div>
 				<EditorTabs
 					{tabs}
+					{session}
+					{player}
 					active={session.activeTool}
 					onselect={(tool) => (session.activeTool = tool)}
 				/>
