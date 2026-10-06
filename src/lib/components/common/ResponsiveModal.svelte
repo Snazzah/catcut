@@ -53,7 +53,7 @@
 		<Dialog.Portal>
 			<Dialog.Overlay class="fixed inset-0 z-40 bg-black/60" />
 			<Dialog.Content
-				class="fixed left-1/2 top-1/2 z-50 flex max-h-[min(90dvh,48rem)] w-[min(90vw,32rem)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-white/10 bg-neutral-900 p-6 text-neutral-100 shadow-2xl outline-none"
+				class="fixed top-1/2 left-1/2 z-50 flex max-h-[min(90dvh,48rem)] w-[min(90vw,32rem)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-white/10 bg-neutral-900 p-6 text-neutral-100 shadow-2xl outline-none"
 			>
 				<Dialog.Title class="shrink-0 text-lg font-bold text-white">{title}</Dialog.Title>
 				{#if description}

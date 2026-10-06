@@ -142,7 +142,8 @@
 								href={src}
 								download="cover"
 								class="flex items-center justify-center rounded-md bg-neutral-800 p-2 text-neutral-300 transition-colors hover:bg-neutral-700 hover:text-white focus-visible:ring-2 focus-visible:ring-violet-200 focus-visible:outline-none"
-								{...props}>
+								{...props}
+							>
 								<Icon icon={downloadIcon} class="size-5" aria-hidden="true" />
 							</a>
 							<!-- eslint-enable svelte/no-navigation-without-resolve -->
