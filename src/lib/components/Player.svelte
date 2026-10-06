@@ -4,6 +4,7 @@
 	import fullscreenIcon from '@iconify-icons/mdi/fullscreen';
 	import loadingIcon from '@iconify-icons/mdi/loading';
 	import editIcon from '@iconify-icons/mdi/movie-edit-outline';
+	import cameraIcon from '@iconify-icons/mdi/camera-outline';
 	import PlayerButton from '$lib/components/common/PlayerButton.svelte';
 	import PlayerPlayButton from './PlayerPlayButton.svelte';
 	import PlayerSlider from './PlayerSlider.svelte';
@@ -136,6 +137,20 @@
 		void player.endScrub(time, shouldResume);
 	}
 
+	function downloadFrame() {
+		const filename = player.filename.replace(/\.[^.]+$/, '');
+		const timestamp = player.currentTime.toFixed(3);
+		canvas.toBlob((blob) => {
+			if (!blob) return;
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = `${filename}-${timestamp}s.png`;
+			link.click();
+			setTimeout(() => URL.revokeObjectURL(url), 300);
+		}, 'image/png');
+	}
+
 	function handleKeydown(event: KeyboardEvent) {
 		if (event.defaultPrevented) return;
 
@@ -157,6 +172,8 @@
 			void player.stepFrame(event.code === 'Comma' ? -1 : 1);
 		} else if (event.code === 'KeyM') {
 			player.toggleMuted();
+		} else if (event.code === 'KeyP') {
+			void downloadFrame();
 		} else if (event.code === 'KeyF') {
 			void onfullscreen();
 		} else if (event.code === 'KeyE') {
@@ -287,6 +304,16 @@
 
 					{#if onedit}
 						<PlayerButton title="Edit media" key="E" icon={editIcon} onclick={onedit} offset={36} />
+					{/if}
+
+					{#if player.hasVideo}
+						<PlayerButton
+							title="Screenshot frame"
+							key="P"
+							icon={cameraIcon}
+							onclick={downloadFrame}
+							offset={36}
+						/>
 					{/if}
 
 					<PlayerSettings
