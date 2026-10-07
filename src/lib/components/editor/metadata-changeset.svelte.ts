@@ -6,7 +6,9 @@ export const metadataFields = [
 	{ type: 'text', key: 'album', label: 'Album' },
 	{ type: 'text', key: 'albumArtist', label: 'Album Artist' },
 	{ type: 'number-total', key: 'trackNumber', total: 'tracksTotal', label: 'Track' },
-	{ type: 'number-total', key: 'discNumber', total: 'discsTotal', label: 'Disc' }
+	{ type: 'number-total', key: 'discNumber', total: 'discsTotal', label: 'Disc' },
+	{ type: 'text', key: 'genre', label: 'Genre' },
+	{ type: 'text', key: 'comment', label: 'Comment' },
 ] as const;
 
 type MetadataFieldDefinition = (typeof metadataFields)[number];
