@@ -17,9 +17,35 @@
 		const data = new Uint8Array(await file.arrayBuffer());
 		if (metadata === changes) changes.cover = [{ data, mimeType: file.type, kind: 'coverFront' }];
 	}
+
+	function revertMetadata() {
+		if (!metadata) return;
+		for (const field of metadataFields) {
+			metadata.resetField(field.key);
+			if (field.type === 'number-total') metadata.resetField(field.total);
+		}
+		metadata.cover = metadata.original.images;
+	}
 </script>
 
 <ResponsiveModal bind:open title="Edit metadata">
+	{#snippet buttons()}
+		<button
+			type="button"
+			class="cursor-pointer rounded-lg border border-white/10 px-4 py-2 text-sm font-medium hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+			disabled={!metadata?.hasChanges}
+			onclick={revertMetadata}
+		>
+			Revert
+		</button>
+		<button
+			type="button"
+			class="cursor-pointer rounded-lg bg-white px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-200"
+			onclick={() => (open = false)}
+		>
+			Done
+		</button>
+	{/snippet}
 	{#if metadata}
 		<div class="flex flex-col items-center gap-4">
 			<CoverImageDropper
