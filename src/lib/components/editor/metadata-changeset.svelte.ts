@@ -31,7 +31,9 @@ export class MetadataChangeSet {
 			trackNumber: original.trackNumber,
 			tracksTotal: original.tracksTotal,
 			discNumber: original.discNumber,
-			discsTotal: original.discsTotal
+			discsTotal: original.discsTotal,
+			genre: original.genre,
+			comment: original.comment
 		};
 		this.cover = original.images;
 	}
