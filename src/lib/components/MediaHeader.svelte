@@ -3,6 +3,9 @@
 	import type { PlayerState } from '$lib/player-state.svelte';
 	import PlayerButton from '$lib/components/common/PlayerButton.svelte';
 	import PlayerInfo from './PlayerInfo.svelte';
+	import Icon from '@iconify/svelte';
+	import videoIcon from '@iconify-icons/mdi/movie';
+	import audioIcon from '@iconify-icons/mdi/music-note';
 
 	let {
 		player,
@@ -19,12 +22,13 @@
 
 <header
 	class={[
-		'absolute inset-x-0 top-0 z-40 flex min-h-[calc(3rem+var(--sait))] items-center justify-between gap-3 bg-linear-to-t from-black/0 via-black/70 to-black px-3 pt-(--sait) text-white transition-opacity duration-200',
+		'absolute inset-x-0 top-0 z-40 flex min-h-[calc(3rem+var(--sait))] items-center justify-between gap-2 bg-linear-to-t from-black/0 via-black/70 to-black px-3 pt-(--sait) text-white transition-opacity duration-200',
 		visible ? 'opacity-100' : 'pointer-events-none opacity-0'
 	]}
 	aria-hidden={!visible}
 	inert={!visible}
 >
+	<Icon icon={player.hasVideo ? videoIcon : audioIcon} class="size-6" aria-hidden="true" />
 	<div class="min-w-0 flex-1 py-2 font-medium">
 		<span class="block truncate">{player.filename}</span>
 		{#if player.loadState.status === 'ready' && player.loadState.warning}
