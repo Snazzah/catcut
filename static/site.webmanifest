@@ -49,22 +49,46 @@
 	],
   "screenshots": [
     {
-      "src": "/images/screenshots/desktop-main.png",
-      "sizes": "1293x826",
-      "type": "image/png",
+      "src": "/images/screenshots/desktop-video.jpg",
+      "sizes": "1920x1080",
+      "type": "image/jpeg",
       "form_factor": "wide"
     },
     {
-      "src": "/images/screenshots/desktop-video.png",
-      "sizes": "1293x826",
-      "type": "image/png",
+      "src": "/images/screenshots/desktop-video-editing.png",
+      "sizes": "1920x1080",
+      "type": "image/jpeg",
       "form_factor": "wide"
     },
     {
       "src": "/images/screenshots/desktop-audio.png",
-      "sizes": "1293x826",
+      "sizes": "1920x1080",
       "type": "image/png",
       "form_factor": "wide"
+    },
+    {
+      "src": "/images/screenshots/desktop-audio-metadata.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/images/screenshots/mobile-audio.jpeg",
+      "sizes": "1080x2101",
+      "type": "image/jpeg",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/images/screenshots/mobile-audio-editing.jpeg",
+      "sizes": "1080x2101",
+      "type": "image/jpeg",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/images/screenshots/mobile-audio-metadata.jpeg",
+      "sizes": "1080x2101",
+      "type": "image/jpeg",
+      "form_factor": "narrow"
     }
 	],
 	"icons": [
