@@ -10,6 +10,7 @@
 	import { toast } from 'svelte-sonner';
 
 	let source = $state.raw<MediaSource | null>(null);
+	let editing = $state(false);
 	let draggingMedia = $state(false);
 
 	function isMediaType(type: string) {
@@ -130,7 +131,14 @@
 	{#if source}
 		{#key source}
 			<BitsConfig defaultPortalTo="#catcut-player">
-				<MediaWorkspace {source} onclose={() => (source = null)} />
+				<MediaWorkspace
+					{source}
+					bind:editing
+					onclose={() => {
+						source = null;
+						editing = false;
+					}}
+				/>
 			</BitsConfig>
 		{/key}
 	{:else}

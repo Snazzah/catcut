@@ -11,7 +11,11 @@
 	import MediaHeader from './MediaHeader.svelte';
 	import Player from './Player.svelte';
 
-	let { source, onclose }: { source: MediaSource; onclose: () => void } = $props();
+	let {
+		source,
+		onclose,
+		editing = $bindable(false)
+	}: { source: MediaSource; onclose: () => void; editing?: boolean } = $props();
 	const player = new PlayerState(untrack(() => source));
 	const editor = new EditorSession(player);
 	let mounted = true;
@@ -20,7 +24,6 @@
 		editor.cancelSave();
 	});
 	let workspace: HTMLElement;
-	let editing = $state(false);
 	let playerControlsVisible = $state(true);
 	let editorLayout = $derived(editorTools.find((tool) => tool.id === editor.activeTool)?.layout);
 
