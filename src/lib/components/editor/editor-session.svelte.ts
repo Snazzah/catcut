@@ -96,8 +96,8 @@ export class EditorSession {
 	}
 
 	get availableFormats() {
-		return exportFormats.filter(({ create }) => {
-			const format = create();
+		return exportFormats.filter(({ format: Format }) => {
+			const format = new Format();
 			return (
 				format.fileExtension !== this.#sourceFormatExtension &&
 				(this.player.hasVideo || format.getSupportedVideoCodecs().length === 0) &&
@@ -142,7 +142,7 @@ export class EditorSession {
 		try {
 			const matchingFormat = getMatchingOutputFormat(await this.player.input.getFormat());
 			const format =
-				selectedFormat?.create() ??
+				(selectedFormat ? new selectedFormat.format() : null) ??
 				matchingFormat ??
 				(this.player.hasVideo ? new Mp4OutputFormat() : new Mp3OutputFormat());
 			const name = this.player.filename.replace(/\.[^.]+$/, '');

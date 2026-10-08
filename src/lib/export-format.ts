@@ -24,16 +24,16 @@ import {
 } from 'mediabunny';
 
 export const exportFormats = [
-	{ id: 'mp4', label: 'MP4', create: () => new Mp4OutputFormat() },
-	{ id: 'mov', label: 'MOV', create: () => new MovOutputFormat() },
-	{ id: 'webm', label: 'WebM', create: () => new WebMOutputFormat() },
-	{ id: 'mkv', label: 'MKV', create: () => new MkvOutputFormat() },
-	{ id: 'mp3', label: 'MP3', create: () => new Mp3OutputFormat() },
-	{ id: 'wav', label: 'WAV', create: () => new WavOutputFormat() },
-	{ id: 'ogg', label: 'OGG', create: () => new OggOutputFormat() },
-	{ id: 'flac', label: 'FLAC', create: () => new FlacOutputFormat() },
-	{ id: 'aac', label: 'AAC', create: () => new AdtsOutputFormat() },
-	{ id: 'ts', label: 'MPEG-TS', create: () => new MpegTsOutputFormat() }
+	{ id: 'mp4', label: 'MP4', format: Mp4OutputFormat },
+	{ id: 'mov', label: 'MOV', format: MovOutputFormat },
+	{ id: 'webm', label: 'WebM', format: WebMOutputFormat },
+	{ id: 'mkv', label: 'MKV', format: MkvOutputFormat },
+	{ id: 'mp3', label: 'MP3', format: Mp3OutputFormat },
+	{ id: 'wav', label: 'WAV', format: WavOutputFormat },
+	{ id: 'ogg', label: 'OGG', format: OggOutputFormat },
+	{ id: 'flac', label: 'FLAC', format: FlacOutputFormat },
+	{ id: 'aac', label: 'AAC', format: AdtsOutputFormat },
+	{ id: 'ts', label: 'MPEG-TS', format: MpegTsOutputFormat }
 ] as const;
 
 export type ExportFormatId = (typeof exportFormats)[number]['id'];

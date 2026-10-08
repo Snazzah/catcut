@@ -11,7 +11,7 @@
 		...session.availableFormats.map((format) => ({
 			id: format.id,
 			label: format.label,
-			icon: format.create().getSupportedVideoCodecs().length > 0 ? fileVideoIcon : fileMusicIcon
+			icon: new format.format().getSupportedVideoCodecs().length > 0 ? fileVideoIcon : fileMusicIcon
 		}))
 	]);
 </script>
