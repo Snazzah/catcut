@@ -100,7 +100,10 @@ export class EditorSession {
 			const format = create();
 			return (
 				format.fileExtension !== this.#sourceFormatExtension &&
-				(!this.player.hasVideo || format.getSupportedVideoCodecs().length > 0) &&
+				(this.player.hasVideo || format.getSupportedVideoCodecs().length === 0) &&
+				(!this.player.hasVideo ||
+					format.getSupportedVideoCodecs().length > 0 ||
+					(this.player.hasAudio && format.getSupportedAudioCodecs().length > 0)) &&
 				(!this.player.hasAudio || format.getSupportedAudioCodecs().length > 0)
 			);
 		});
@@ -157,6 +160,7 @@ export class EditorSession {
 				target = new BufferTarget();
 			}
 			const output = new Output({ format, target });
+			const audioOnly = this.player.hasVideo && format.getSupportedVideoCodecs().length === 0;
 			const conversion = await Conversion.init({
 				...editStateIntoConversionOptions({
 					state: edits,
@@ -165,6 +169,7 @@ export class EditorSession {
 					input,
 					output
 				}),
+				...(audioOnly && { video: { discard: true } }),
 				tracks: 'primary',
 				tags,
 				showWarnings: false
@@ -174,7 +179,13 @@ export class EditorSession {
 				await conversion.cancel();
 				return null;
 			}
-			if (!conversion.isValid || conversion.discardedTracks.length > 0) {
+			if (
+				!conversion.isValid ||
+				conversion.discardedTracks.some(
+					({ track, reason }) =>
+						!(audioOnly && track.type === 'video' && reason === 'discarded_by_user')
+				)
+			) {
 				throw new Error('This media could not be converted without losing a track.');
 			}
 			conversion.onProgress = (progress) => {
@@ -297,7 +308,8 @@ export class EditorSession {
 			(format) => {
 				this.#metadataAvailable = format !== MPEG_TS;
 				this.#sourceFormatExtension = getMatchingOutputFormat(format)?.fileExtension ?? null;
-				if (!this.availableFormats.some(({ id }) => id === this.outputFormat)) this.outputFormat = null;
+				if (!this.availableFormats.some(({ id }) => id === this.outputFormat))
+					this.outputFormat = null;
 			},
 			() => (this.#metadataAvailable = false)
 		);
