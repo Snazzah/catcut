@@ -23,6 +23,21 @@ import {
 	type OutputFormat
 } from 'mediabunny';
 
+export const exportFormats = [
+	{ id: 'mp4', label: 'MP4', create: () => new Mp4OutputFormat() },
+	{ id: 'mov', label: 'MOV', create: () => new MovOutputFormat() },
+	{ id: 'webm', label: 'WebM', create: () => new WebMOutputFormat() },
+	{ id: 'mkv', label: 'MKV', create: () => new MkvOutputFormat() },
+	{ id: 'mp3', label: 'MP3', create: () => new Mp3OutputFormat() },
+	{ id: 'wav', label: 'WAV', create: () => new WavOutputFormat() },
+	{ id: 'ogg', label: 'OGG', create: () => new OggOutputFormat() },
+	{ id: 'flac', label: 'FLAC', create: () => new FlacOutputFormat() },
+	{ id: 'aac', label: 'AAC', create: () => new AdtsOutputFormat() },
+	{ id: 'ts', label: 'MPEG-TS', create: () => new MpegTsOutputFormat() }
+] as const;
+
+export type ExportFormatId = (typeof exportFormats)[number]['id'];
+
 export function getMatchingOutputFormat(inputFormat: InputFormat): OutputFormat | null {
 	switch (inputFormat) {
 		case MP4:

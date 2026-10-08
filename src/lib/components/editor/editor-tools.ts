@@ -5,6 +5,8 @@ import cropIcon from '@iconify-icons/mdi/crop';
 import resizeIcon from '@iconify-icons/mdi/aspect-ratio';
 import tuneVariantIcon from '@iconify-icons/mdi/tune-variant';
 import volumeHighIcon from '@iconify-icons/mdi/volume-high';
+import fileReplaceIcon from '@iconify-icons/mdi/file-replace';
+import FormatControls from './tools/FormatControls.svelte';
 import type { EditorSession } from './editor-session.svelte';
 import CropToolOverlay from './tools/CropToolOverlay.svelte';
 import CropControls from './tools/CropControls.svelte';
@@ -13,7 +15,7 @@ import TrimControls from './tools/TrimControls.svelte';
 import QualityControls from './tools/QualityControls.svelte';
 import VolumeControls from './tools/VolumeControls.svelte';
 
-export type EditorToolId = 'trim' | 'crop' | 'resize' | 'volume' | 'quality';
+export type EditorToolId = 'trim' | 'crop' | 'resize' | 'volume' | 'quality' | 'convert';
 
 export type EditorToolDefinition = Readonly<{
 	id: EditorToolId;
@@ -53,6 +55,15 @@ export const editorTools: readonly EditorToolDefinition[] = [
 		controls: TrimControls,
 		isChanged: (session) => session.trimChanged,
 		reset: (session) => session.resetTrim()
+	},
+	{
+		id: 'convert',
+		label: 'Convert',
+		icon: fileReplaceIcon,
+		media: 'any',
+		controls: FormatControls,
+		isChanged: (session) => session.formatChanged,
+		reset: (session) => session.resetFormat()
 	},
 	{
 		id: 'crop',

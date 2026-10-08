@@ -26,7 +26,12 @@ import {
 	type ResizeAdjustment
 } from '$lib/editing';
 import type { PlayerState } from '$lib/player-state.svelte';
-import { getExportExtension, getMatchingOutputFormat } from '$lib/export-format';
+import {
+	exportFormats,
+	getExportExtension,
+	getMatchingOutputFormat,
+	type ExportFormatId
+} from '$lib/export-format';
 import type { EditorToolId } from './editor-tools';
 import { MetadataChangeSet } from './metadata-changeset.svelte';
 
@@ -50,10 +55,12 @@ type SaveResult =
 export class EditorSession {
 	readonly player: PlayerState;
 	activeTool = $state<EditorToolId>('trim');
+	outputFormat = $state<ExportFormatId | null>(null);
 	state = $state.raw<EditorSessionState>({ status: 'loading' });
 	saveState = $state.raw<SaveState>({ status: 'idle' });
 	#job: ConversionJob | null = null;
 	#metadataAvailable = $state(false);
+	#sourceFormatExtension = $state<string | null>(null);
 	metadata = $state<MetadataChangeSet | null>(null);
 
 	constructor(player: PlayerState) {
@@ -83,14 +90,41 @@ export class EditorSession {
 			this.resizeChanged ||
 			this.audioChanged ||
 			this.qualityChanged ||
-			this.metadataChanged
+			this.metadataChanged ||
+			this.formatChanged
 		);
+	}
+
+	get availableFormats() {
+		return exportFormats.filter(({ create }) => {
+			const format = create();
+			return (
+				format.fileExtension !== this.#sourceFormatExtension &&
+				(!this.player.hasVideo || format.getSupportedVideoCodecs().length > 0) &&
+				(!this.player.hasAudio || format.getSupportedAudioCodecs().length > 0)
+			);
+		});
+	}
+
+	get formatChanged() {
+		return this.outputFormat !== null;
+	}
+
+	updateFormat(format: ExportFormatId | null) {
+		if (!this.ready || this.saving) return;
+		if (format !== null && !this.availableFormats.some(({ id }) => id === format)) return;
+		this.outputFormat = format;
+	}
+
+	resetFormat() {
+		this.updateFormat(null);
 	}
 
 	async save(): Promise<SaveResult | null> {
 		if (this.state.status !== 'ready' || !this.hasChanges || this.saving || !this.player.input)
 			return null;
 		const edits = this.state.edits;
+		const selectedFormat = exportFormats.find(({ id }) => id === this.outputFormat);
 		const tags = this.metadataChanged ? this.metadata?.toMetadataTags() : undefined;
 		const source = this.player.source;
 		const input = new Input({
@@ -105,9 +139,11 @@ export class EditorSession {
 		try {
 			const matchingFormat = getMatchingOutputFormat(await this.player.input.getFormat());
 			const format =
-				matchingFormat ?? (this.player.hasVideo ? new Mp4OutputFormat() : new Mp3OutputFormat());
+				selectedFormat?.create() ??
+				matchingFormat ??
+				(this.player.hasVideo ? new Mp4OutputFormat() : new Mp3OutputFormat());
 			const name = this.player.filename.replace(/\.[^.]+$/, '');
-			const extension = getExportExtension(format, this.player.filename);
+			const extension = getExportExtension(format, selectedFormat ? '' : this.player.filename);
 			const suggestedName = `catcut_${name}${extension}`;
 			let target: BufferTarget | StreamTarget;
 			if (window.showSaveFilePicker) {
@@ -258,7 +294,11 @@ export class EditorSession {
 		if (this.state.status === 'ready' || this.player.loadState.status !== 'ready') return;
 		this.metadata = new MetadataChangeSet(this.player.loadState.metadata.tags);
 		this.player.input?.getFormat().then(
-			(format) => (this.#metadataAvailable = format !== MPEG_TS),
+			(format) => {
+				this.#metadataAvailable = format !== MPEG_TS;
+				this.#sourceFormatExtension = getMatchingOutputFormat(format)?.fileExtension ?? null;
+				if (!this.availableFormats.some(({ id }) => id === this.outputFormat)) this.outputFormat = null;
+			},
 			() => (this.#metadataAvailable = false)
 		);
 		this.state = {
