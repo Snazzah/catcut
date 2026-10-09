@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onDestroy, untrack } from 'svelte';
 	import fullscreenIcon from '@iconify-icons/mdi/fullscreen';
 	import restartIcon from '@iconify-icons/mdi/restart';
 	import saveIcon from '@iconify-icons/mdi/content-save';
@@ -55,6 +56,13 @@
 		player.playbackRange = playbackRange;
 		return () => (player.playbackRange = null);
 	});
+
+	$effect(() => {
+		const adjustment = session.speedAdjustment;
+		if (adjustment) untrack(() => player.setSpeedAdjustment(adjustment));
+	});
+
+	onDestroy(() => player.setSpeedAdjustment({ speed: 1, pitchSemitones: 0 }));
 
 	function revertSettings() {
 		for (const tool of availableTools) tool.reset(session);

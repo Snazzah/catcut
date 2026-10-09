@@ -12,7 +12,7 @@
 </script>
 
 <div
-	class="flex h-13 items-center justify-center gap-3 sm:justify-start"
+	class="flex h-full items-center justify-center gap-3 sm:justify-start"
 	role="group"
 	aria-label="Export volume"
 >

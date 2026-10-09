@@ -6,6 +6,7 @@ import resizeIcon from '@iconify-icons/mdi/aspect-ratio';
 import tuneVariantIcon from '@iconify-icons/mdi/tune-variant';
 import volumeHighIcon from '@iconify-icons/mdi/volume-high';
 import fileReplaceIcon from '@iconify-icons/mdi/file-replace';
+import speedometerIcon from '@iconify-icons/mdi/speedometer';
 import FormatControls from './tools/FormatControls.svelte';
 import type { EditorSession } from './editor-session.svelte';
 import CropToolOverlay from './tools/CropToolOverlay.svelte';
@@ -14,8 +15,9 @@ import ResizeControls from './tools/ResizeControls.svelte';
 import TrimControls from './tools/TrimControls.svelte';
 import QualityControls from './tools/QualityControls.svelte';
 import VolumeControls from './tools/VolumeControls.svelte';
+import SpeedControls from './tools/SpeedControls.svelte';
 
-export type EditorToolId = 'trim' | 'crop' | 'resize' | 'volume' | 'quality' | 'convert';
+export type EditorToolId = 'trim' | 'crop' | 'resize' | 'volume' | 'speed' | 'quality' | 'convert';
 
 export type EditorToolDefinition = Readonly<{
 	id: EditorToolId;
@@ -26,7 +28,7 @@ export type EditorToolDefinition = Readonly<{
 	overlay?: Component<{ session: EditorSession; active: boolean }>;
 	isChanged: (session: EditorSession) => boolean;
 	reset: (session: EditorSession) => void;
-	layout?: 'expanded';
+	layout?: 'expanded' | 'mobile-expanded';
 }>;
 
 export function isEditorToolAvailable(tool: EditorToolDefinition, session: EditorSession) {
@@ -92,6 +94,16 @@ export const editorTools: readonly EditorToolDefinition[] = [
 		controls: VolumeControls,
 		isChanged: (session) => session.audioChanged,
 		reset: (session) => session.resetAudio()
+	},
+	{
+		id: 'speed',
+		label: 'Speed',
+		icon: speedometerIcon,
+		media: 'any',
+		controls: SpeedControls,
+		layout: 'mobile-expanded',
+		isChanged: (session) => session.speedChanged,
+		reset: (session) => session.resetSpeed()
 	},
 	{
 		id: 'quality',

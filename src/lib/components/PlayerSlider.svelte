@@ -69,15 +69,29 @@
 	onpointerdown={handlePointerDown}
 	onkeydowncapture={handleKeydown}
 	aria-label={label}
-	class={['relative flex h-5 w-full touch-none items-center select-none', className]}
+	class={[
+		'relative flex h-5 w-full touch-none items-center select-none',
+		disabled && 'opacity-40 grayscale',
+		className
+	]}
 >
-	<span class="relative h-1 w-full grow cursor-pointer overflow-hidden bg-neutral-300/25">
+	<span
+		class={[
+			'relative h-1 w-full grow overflow-hidden bg-neutral-300/25',
+			disabled ? 'cursor-not-allowed' : 'cursor-pointer'
+		]}
+	>
 		<Slider.Range class="{white ? 'bg-white' : 'bg-accent'} absolute h-full" />
 	</span>
 	<Slider.Thumb
 		index={0}
-		class="{white
-			? 'bg-white'
-			: 'bg-accent'} block size-4 cursor-grab rounded-full shadow-sm transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-violet-200 focus-visible:outline-none active:cursor-grabbing data-active:scale-110"
+		aria-label={label}
+		class={[
+			white ? 'bg-white' : 'bg-accent',
+			'block size-4 rounded-full shadow-sm transition-transform focus-visible:ring-2 focus-visible:ring-violet-200 focus-visible:outline-none',
+			disabled
+				? 'cursor-not-allowed'
+				: 'cursor-grab hover:scale-110 active:cursor-grabbing data-active:scale-110'
+		]}
 	/>
 </Slider.Root>

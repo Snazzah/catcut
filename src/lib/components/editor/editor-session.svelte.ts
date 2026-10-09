@@ -2,7 +2,6 @@ import {
 	ALL_FORMATS,
 	BlobSource,
 	BufferTarget,
-	Conversion,
 	Input,
 	MPEG_TS,
 	Mp3OutputFormat,
@@ -16,15 +15,18 @@ import {
 	createCropRectangle,
 	createEditState,
 	createTrimRange,
-	editStateIntoConversionOptions,
+	editStateIntoAudioOptions,
+	editStateIntoVideoOptions,
 	isFullFrameCrop,
 	isFullTrimRange,
 	type EditState,
 	type TimelineRange,
 	type AnyQuality,
 	type AudioAdjustment,
-	type ResizeAdjustment
+	type ResizeAdjustment,
+	type SpeedAdjustment
 } from '$lib/editing';
+import { ExportTask } from '$lib/export';
 import type { PlayerState } from '$lib/player-state.svelte';
 import {
 	exportFormats,
@@ -44,9 +46,9 @@ type SaveState =
 	| { status: 'converting'; progress: number }
 	| { status: 'error'; message: string };
 
-type ConversionJob = {
+type SaveJob = {
 	input: Input;
-	conversion: Conversion | null;
+	task: ExportTask | null;
 };
 
 type SaveResult =
@@ -55,10 +57,11 @@ type SaveResult =
 export class EditorSession {
 	readonly player: PlayerState;
 	activeTool = $state<EditorToolId>('trim');
+	speedPitchSynced = $state(false);
 	outputFormat = $state<ExportFormatId | null>(null);
 	state = $state.raw<EditorSessionState>({ status: 'loading' });
 	saveState = $state.raw<SaveState>({ status: 'idle' });
-	#job: ConversionJob | null = null;
+	#job: SaveJob | null = null;
 	#metadataAvailable = $state(false);
 	#sourceFormatExtension = $state<string | null>(null);
 	metadata = $state<MetadataChangeSet | null>(null);
@@ -89,6 +92,7 @@ export class EditorSession {
 			this.cropChanged ||
 			this.resizeChanged ||
 			this.audioChanged ||
+			this.speedChanged ||
 			this.qualityChanged ||
 			this.metadataChanged ||
 			this.formatChanged
@@ -134,13 +138,14 @@ export class EditorSession {
 			formats: ALL_FORMATS,
 			source: source.origin === 'local' ? new BlobSource(source.file) : new UrlSource(source.url)
 		});
-		const job: ConversionJob = { input, conversion: null };
+		const job: SaveJob = { input, task: null };
 		this.#job = job;
 		this.saveState = { status: 'converting', progress: 0 };
 		this.player.pause();
 
 		try {
 			const matchingFormat = getMatchingOutputFormat(await this.player.input.getFormat());
+			if (this.#job !== job) return null;
 			const format =
 				(selectedFormat ? new selectedFormat.format() : null) ??
 				matchingFormat ??
@@ -155,44 +160,33 @@ export class EditorSession {
 					suggestedName,
 					types: [{ description: 'Media file', accept: { [format.mimeType]: [extension] } }]
 				});
-				target = new StreamTarget(await handle.createWritable());
+				if (this.#job !== job) return null;
+				const writable = await handle.createWritable();
+				if (this.#job !== job) {
+					await writable.abort();
+					return null;
+				}
+				target = new StreamTarget(writable);
 			} else {
 				target = new BufferTarget();
 			}
 			const output = new Output({ format, target });
-			const audioOnly = this.player.hasVideo && format.getSupportedVideoCodecs().length === 0;
-			const conversion = await Conversion.init({
-				...editStateIntoConversionOptions({
-					state: edits,
-					bounds: this.timelineBounds,
-					videoSize: this.player.videoSize,
-					input,
-					output
-				}),
-				...(audioOnly && { video: { discard: true } }),
-				tracks: 'primary',
+			const task = new ExportTask({
+				input,
+				output,
+				video: editStateIntoVideoOptions({ state: edits, videoSize: this.player.videoSize }),
+				audio: editStateIntoAudioOptions(edits),
+				trim: edits.trim,
+				adjustment: edits.speedAdjustment,
 				tags,
-				showWarnings: false
+				onProgress: (progress) => {
+					if (this.#job === job) this.saveState = { status: 'converting', progress };
+				}
 			});
-			job.conversion = conversion;
-			if (this.#job !== job) {
-				await conversion.cancel();
-				return null;
-			}
-			if (
-				!conversion.isValid ||
-				conversion.discardedTracks.some(
-					({ track, reason }) =>
-						!(audioOnly && track.type === 'video' && reason === 'discarded_by_user')
-				)
-			) {
-				throw new Error('This media could not be converted without losing a track.');
-			}
-			conversion.onProgress = (progress) => {
-				if (this.#job === job) this.saveState = { status: 'converting', progress };
-			};
+			job.task = task;
 			const conversionStartedAt = performance.now();
-			await conversion.execute();
+			await task.execute();
+			if (this.#job !== job) return null;
 			const durationMs = performance.now() - conversionStartedAt;
 			if (!(target instanceof BufferTarget)) {
 				this.saveState = { status: 'complete' };
@@ -216,10 +210,8 @@ export class EditorSession {
 			}
 			return null;
 		} finally {
-			if (job.conversion?.state === 'idle' || job.conversion?.state === 'executing') {
-				await job.conversion.cancel().catch(() => undefined);
-			}
-			input.dispose();
+			if (job.task) await job.task.cancel();
+			else input.dispose();
 			if (this.#job === job) this.#job = null;
 		}
 	}
@@ -229,10 +221,8 @@ export class EditorSession {
 		if (!job) return;
 		this.#job = null;
 		this.saveState = { status: 'idle' };
-		if (job.conversion) {
-			void job.conversion.cancel().catch(() => undefined);
-		}
-		job.input.dispose();
+		if (job.task) void job.task.cancel();
+		else job.input.dispose();
 	}
 
 	get trim() {
@@ -295,6 +285,38 @@ export class EditorSession {
 
 	get audioChanged() {
 		return this.audioAdjustment?.volume !== 1;
+	}
+
+	get speedAdjustment() {
+		return this.state.status === 'ready' ? this.state.edits.speedAdjustment : null;
+	}
+
+	get speedChanged() {
+		const adjustment = this.speedAdjustment;
+		return adjustment ? adjustment.speed !== 1 || adjustment.pitchSemitones !== 0 : false;
+	}
+
+	updateSpeedAdjustment(adjustment: SpeedAdjustment) {
+		if (this.state.status !== 'ready' || this.saving) return;
+		this.state = {
+			status: 'ready',
+			edits: {
+				...this.state.edits,
+				speedAdjustment: this.speedPitchSynced
+					? { ...adjustment, pitchSemitones: 12 * Math.log2(adjustment.speed) }
+					: adjustment
+			}
+		};
+	}
+
+	toggleSpeedPitchSync() {
+		if (this.state.status !== 'ready' || this.saving || !this.player.hasAudio) return;
+		this.speedPitchSynced = !this.speedPitchSynced;
+		if (this.speedPitchSynced) this.updateSpeedAdjustment(this.state.edits.speedAdjustment);
+	}
+
+	resetSpeed() {
+		this.updateSpeedAdjustment({ speed: 1, pitchSemitones: 0 });
 	}
 
 	get timelineBounds(): TimelineRange {

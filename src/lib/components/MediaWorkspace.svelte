@@ -79,6 +79,7 @@
 	class="grid h-full w-full overflow-hidden bg-neutral-950 transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none"
 	class:bg-neutral-900={editing}
 	class:editor-expanded={editing && !editor.saving && editorLayout === 'expanded'}
+	class:editor-mobile-expanded={editing && !editor.saving && editorLayout === 'mobile-expanded'}
 	class:editor-saving={editing && editor.saving}
 	style:grid-template-rows={editing ? 'minmax(0, 1fr) var(--editor-height)' : 'minmax(0, 1fr) 0rem'}
 	bind:this={workspace}
@@ -130,6 +131,12 @@
 
 	#catcut-player.editor-saving {
 		--editor-height: calc(6rem + var(--saib));
+	}
+
+	@media (width < 640px) {
+		#catcut-player.editor-mobile-expanded {
+			--editor-height: calc(15.5rem + var(--saib));
+		}
 	}
 
 	@media (min-width: 640px) {

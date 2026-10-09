@@ -26,7 +26,7 @@ import { registerProresDecoder } from '@mediabunny/prores';
 import { registerHevcDecoder, registerHevcEncoder } from '@snazzah/mediabunny-hevc';
 import soundTouchProcessorUrl from '@soundtouchjs/audio-worklet/processor?url';
 import type { SoundTouchNode } from '@soundtouchjs/audio-worklet';
-import type { TimelineRange, VideoSize } from '$lib/editing';
+import type { SpeedAdjustment, TimelineRange, VideoSize } from '$lib/editing';
 import { clearTimelineWaveformCache } from '$lib/timeline';
 
 export type CodecRegistration = {
@@ -79,6 +79,7 @@ export class PlayerState {
 	paused = $state(true);
 	volume = $state(1);
 	playbackRate = $state(1);
+	pitchSemitones = $state(0);
 	muted = $state(false);
 	coverImageUrl = $state<string | null>(null);
 	playbackRange = $state.raw<TimelineRange | null>(null);
@@ -451,8 +452,11 @@ export class PlayerState {
 	}
 
 	setPlaybackRate(playbackRate: number) {
-		const nextPlaybackRate = Math.max(0.25, Math.min(playbackRate, 2));
-		if (nextPlaybackRate === this.playbackRate) return;
+		this.setSpeedAdjustment({ speed: playbackRate, pitchSemitones: this.pitchSemitones });
+	}
+
+	setSpeedAdjustment({ speed, pitchSemitones }: SpeedAdjustment) {
+		if (speed === this.playbackRate && pitchSemitones === this.pitchSemitones) return;
 
 		if (!this.paused) {
 			this.#playbackTimeAtStart = Math.min(this.#getPlaybackTime(), this.#endTimestamp);
@@ -460,7 +464,8 @@ export class PlayerState {
 			this.#audioContextStartTime = this.#audioContext?.currentTime ?? null;
 		}
 
-		this.playbackRate = nextPlaybackRate;
+		this.playbackRate = speed;
+		this.pitchSemitones = pitchSemitones;
 		this.#disconnectSoundTouchNode();
 		if (!this.paused) this.#ensureSoundTouchNode();
 		this.#updateMediaSessionPosition();
@@ -693,7 +698,7 @@ export class PlayerState {
 	}
 
 	#ensureSoundTouchNode() {
-		if (this.playbackRate === 1 || this.#soundTouchNode) return;
+		if ((this.playbackRate === 1 && this.pitchSemitones === 0) || this.#soundTouchNode) return;
 
 		const createSoundTouchNode = this.#soundTouchNodeFactory;
 		const gainNode = this.#gainNode;
@@ -701,6 +706,7 @@ export class PlayerState {
 
 		const soundTouchNode = createSoundTouchNode();
 		soundTouchNode.playbackRate.value = this.playbackRate;
+		soundTouchNode.pitchSemitones.value = this.pitchSemitones;
 		soundTouchNode.connect(gainNode);
 		this.#soundTouchNode = soundTouchNode;
 	}
