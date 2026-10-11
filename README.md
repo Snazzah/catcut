@@ -16,4 +16,4 @@ Prerequisites for you: working knowledge of Svelte, Vite, and SvelteKit (which d
 Duplicate `.env.example` into `.env`. (optional)
 
 Afterwards, run `bun install` (preferred) or `pnpm i`.
-To run the development server, run `npm run dev`.
+To run the development server, run `pnpm dev`.
