@@ -4,23 +4,23 @@
 	import MediaWorkspace from '$lib/components/MediaWorkspace.svelte';
 	import ResponsiveModal from '$lib/components/common/ResponsiveModal.svelte';
 	import { catcut } from '$lib/icons';
-	import {
-		createLocalMediaSource,
-		createRemoteMediaSource,
-		type MediaSource
-	} from '$lib/util/media';
+	import { playlist, createRemoteMediaSource, createLocalMediaSource } from '$lib/store.svelte';
 	import Icon from '@iconify/svelte';
 	import { BitsConfig } from 'bits-ui';
 	import { onMount, tick } from 'svelte';
 
-	let source = $state.raw<MediaSource | null>(null);
+	let source = $derived(playlist.source);
 	let editing = $state(false);
 	let draggingMedia = $state(false);
 	let loadError = $state<string | null>(null);
 
-	async function showLoadError(message: string) {
-		source = null;
+	function closeMedia() {
+		playlist.clear();
 		editing = false;
+	}
+
+	async function showLoadError(message: string) {
+		closeMedia();
 		await tick();
 		loadError = message;
 	}
@@ -37,7 +37,7 @@
 
 		try {
 			const file = await handle.getFile();
-			if (isMediaType(file.type)) source = createLocalMediaSource(file);
+			if (isMediaType(file.type)) playlist.replace(createLocalMediaSource(file));
 		} catch (error) {
 			void showLoadError(error instanceof Error ? error.message : String(error));
 		}
@@ -46,7 +46,7 @@
 	onMount(() => {
 		const location = new URL(window.location.href);
 		const mediaUrl = location.searchParams.get('url');
-		if (mediaUrl) source = createRemoteMediaSource(mediaUrl);
+		if (mediaUrl) playlist.replace(createRemoteMediaSource(mediaUrl));
 		const sharedMediaId = location.searchParams.get('shared-media');
 		if (sharedMediaId) void openSharedMedia(sharedMediaId);
 		const shareError = location.searchParams.get('share-error');
@@ -86,7 +86,7 @@
 			const file = new File([await response.blob()], name, {
 				type: response.headers.get('Content-Type') ?? ''
 			});
-			source = createLocalMediaSource(file);
+			playlist.replace(createLocalMediaSource(file));
 			await cache.delete(key).catch(() => undefined);
 		} catch {
 			void showLoadError(failure);
@@ -123,7 +123,7 @@
 		draggingMedia = false;
 
 		const file = [...(event.dataTransfer?.files ?? [])].find((item) => isMediaType(item.type));
-		if (file) source = createLocalMediaSource(file);
+		if (file) playlist.replace(createLocalMediaSource(file));
 	}
 </script>
 
@@ -151,10 +151,7 @@
 					{source}
 					bind:editing
 					onloaderror={(message) => void showLoadError(message)}
-					onclose={() => {
-						source = null;
-						editing = false;
-					}}
+					onclose={closeMedia}
 				/>
 			</BitsConfig>
 		{/key}
@@ -163,7 +160,10 @@
 			<Icon icon={catcut} class="size-6" />
 			<h1>catcut</h1>
 		</div>
-		<FileDrop dragging={draggingMedia} onselect={(selectedSource) => (source = selectedSource)} />
+		<FileDrop
+			dragging={draggingMedia}
+			onselect={(selectedSource) => playlist.replace(selectedSource)}
+		/>
 
 		<div class="fixed bottom-0 flex flex-wrap gap-2 p-2 font-medium">
 			<a href={resolve('/codecs')} class="hover:text-white hover:underline">Codecs</a>

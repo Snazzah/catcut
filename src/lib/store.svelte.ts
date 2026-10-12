@@ -36,3 +36,45 @@ export function createRemoteMediaSource(value: string): RemoteMediaSource | null
 
 	return { origin: 'remote', url: url.href, name };
 }
+
+export type PlaylistEntry = {
+	id: number;
+	source: MediaSource;
+};
+
+export class Playlist {
+	entries = $state.raw<readonly PlaylistEntry[]>([]);
+	#nextId = 0;
+
+	get activeEntry() {
+		return this.entries[0] ?? null;
+	}
+
+	get source() {
+		return this.activeEntry?.source ?? null;
+	}
+
+	add(...sources: MediaSource[]) {
+		this.entries = [...this.entries, ...sources.map((source) => ({ id: this.#nextId++, source }))];
+	}
+
+	remove(id: number) {
+		this.entries = this.entries.filter((e) => e.id !== id);
+	}
+
+
+	replace(source: MediaSource | null) {
+		if (source === null) {
+			this.clear();
+			return;
+		}
+
+		this.entries = [{ id: this.#nextId++, source }];
+	}
+
+	clear() {
+		this.entries = [];
+	}
+}
+
+export const playlist = new Playlist();

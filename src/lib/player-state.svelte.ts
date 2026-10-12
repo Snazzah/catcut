@@ -15,7 +15,7 @@ import {
 	type WrappedCanvas,
 	VideoSampleSink
 } from 'mediabunny';
-import type { MediaSource } from '$lib/util/media';
+import type { MediaSource } from '$lib/store.svelte';
 
 import { registerAacEncoder } from '@mediabunny/aac-encoder';
 import { registerAc3Decoder, registerAc3Encoder } from '@mediabunny/ac3';
