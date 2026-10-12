@@ -4,7 +4,11 @@
 	import MediaWorkspace from '$lib/components/MediaWorkspace.svelte';
 	import ResponsiveModal from '$lib/components/common/ResponsiveModal.svelte';
 	import { catcut } from '$lib/icons';
-	import { createLocalMediaSource, createRemoteMediaSource, type MediaSource } from '$lib/media';
+	import {
+		createLocalMediaSource,
+		createRemoteMediaSource,
+		type MediaSource
+	} from '$lib/util/media';
 	import Icon from '@iconify/svelte';
 	import { BitsConfig } from 'bits-ui';
 	import { onMount, tick } from 'svelte';

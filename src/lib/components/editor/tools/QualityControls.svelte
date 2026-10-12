@@ -2,7 +2,7 @@
 	import musicIcon from '@iconify-icons/mdi/music';
 	import videoIcon from '@iconify-icons/mdi/video';
 	import SelectField, { type SelectOption } from '$lib/components/common/SelectField.svelte';
-	import { QUALITY_PRESETS, type AnyQuality } from '$lib/editing';
+	import { QUALITY_PRESETS, type AnyQuality } from '$lib/util/editing';
 	import type { EditorSession } from '../editor-session.svelte';
 
 	let { session }: { session: EditorSession } = $props();

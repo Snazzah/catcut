@@ -25,15 +25,15 @@ import {
 	type AudioAdjustment,
 	type ResizeAdjustment,
 	type SpeedAdjustment
-} from '$lib/editing';
-import { ExportTask } from '$lib/export';
+} from '$lib/util/editing';
 import type { PlayerState } from '$lib/player-state.svelte';
 import {
+	ExportTask,
 	exportFormats,
 	getExportExtension,
 	getMatchingOutputFormat,
 	type ExportFormatId
-} from '$lib/export-format';
+} from '$lib/util/export';
 import type { EditorToolId } from './editor-tools';
 import { MetadataChangeSet } from './metadata-changeset.svelte';
 

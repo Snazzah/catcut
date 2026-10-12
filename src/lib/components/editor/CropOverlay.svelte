@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { CropRectangle } from 'mediabunny';
-	import { createCropRectangle, type VideoSize } from '$lib/editing';
+	import { createCropRectangle, type VideoSize } from '$lib/util/editing';
 
 	type CropHandle = 'move' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw';
 	type DragState = Readonly<{

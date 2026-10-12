@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { PlayerState } from '$lib/player-state.svelte';
-	import { renderTimelinePreview } from '$lib/timeline';
+	import { renderTimelinePreview } from '$lib/util/timeline';
 
 	let { player }: { player: PlayerState } = $props();
 	let container: HTMLDivElement;

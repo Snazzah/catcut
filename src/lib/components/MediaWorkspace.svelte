@@ -2,7 +2,7 @@
 	import { onDestroy, untrack } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import prettyMilliseconds from 'pretty-ms';
-	import type { MediaSource } from '$lib/media';
+	import type { MediaSource } from '$lib/util/media';
 	import { PlayerState } from '$lib/player-state.svelte';
 	import EditingShell from './editor/EditingShell.svelte';
 	import EditorOverlayHost from './editor/EditorOverlayHost.svelte';

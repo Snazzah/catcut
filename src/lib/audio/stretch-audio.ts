@@ -4,7 +4,7 @@ import {
 	type AudioProcess,
 	type SpeedAdjustment,
 	type TimelineRange
-} from '../editing';
+} from '../util/editing';
 import { TimeStretcher } from './time-stretcher';
 
 export class StretchAudio {

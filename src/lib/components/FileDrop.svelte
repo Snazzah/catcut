@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
 	import uploadIcon from '@iconify-icons/mdi/file-upload-outline';
-	import { createLocalMediaSource, type LocalMediaSource } from '$lib/media';
+	import { createLocalMediaSource, type LocalMediaSource } from '$lib/util/media';
 
 	let {
 		dragging = false,
