@@ -1,23 +1,16 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { catcut } from '$lib/icons';
-	import SmallTooltipContent from '$lib/components/common/SmallTooltipContent.svelte';
 	import { registerAllCodecs } from '$lib/player-state.svelte';
 	import arrowIcon from '@iconify-icons/mdi/arrow-left';
 	import checkIcon from '@iconify-icons/mdi/check-circle';
 	import closeIcon from '@iconify-icons/mdi/close-circle';
-	import asteriskIcon from '@iconify-icons/mdi/asterisk';
 	import loadingIcon from '@iconify-icons/mdi/loading';
 	import Icon from '@iconify/svelte';
-	import { Tooltip } from 'bits-ui';
 	import { getDecodableCodecs, getEncodableCodecs, type MediaCodec } from 'mediabunny';
 	import { onMount } from 'svelte';
 
-	type PackageAttribution =
-		| { package: string; decoderPackage?: never; encoderPackage?: never }
-		| { package?: never; decoderPackage?: string; encoderPackage?: string };
-
-	type CodecRow = PackageAttribution & {
+	type CodecRow = {
 		name: string;
 		codecs: readonly MediaCodec[];
 	};
@@ -32,24 +25,24 @@
 			title: 'Video',
 			rows: [
 				{ name: 'AVC (H.264)', codecs: ['avc'] },
-				{ name: 'HEVC (H.265)', codecs: ['hevc'], package: '@snazzah/mediabunny-hevc' },
+				{ name: 'HEVC (H.265)', codecs: ['hevc'] },
 				{ name: 'VP8', codecs: ['vp8'] },
 				{ name: 'VP9', codecs: ['vp9'] },
 				{ name: 'AV1', codecs: ['av1'] },
-				{ name: 'ProRes', codecs: ['prores'], decoderPackage: '@mediabunny/prores' }
+				{ name: 'ProRes', codecs: ['prores'] }
 			]
 		},
 		{
 			title: 'Audio',
 			rows: [
-				{ name: 'AAC', codecs: ['aac'], encoderPackage: '@mediabunny/aac-encoder' },
+				{ name: 'AAC', codecs: ['aac'] },
 				{ name: 'Opus', codecs: ['opus'] },
-				{ name: 'MP3', codecs: ['mp3'], encoderPackage: '@mediabunny/mp3-encoder' },
+				{ name: 'MP3', codecs: ['mp3'] },
 				{ name: 'Vorbis', codecs: ['vorbis'] },
-				{ name: 'FLAC', codecs: ['flac'], encoderPackage: '@mediabunny/flac-encoder' },
-				{ name: 'AC-3', codecs: ['ac3'], package: '@mediabunny/ac3' },
-				{ name: 'E-AC-3', codecs: ['eac3'], package: '@mediabunny/ac3' },
-				{ name: 'DTS', codecs: ['dts'], package: '@mediabunny/dts' },
+				{ name: 'FLAC', codecs: ['flac'] },
+				{ name: 'AC-3', codecs: ['ac3'] },
+				{ name: 'E-AC-3', codecs: ['eac3'] },
+				{ name: 'DTS', codecs: ['dts'] },
 				{
 					name: 'Linear PCM',
 					codecs: [
@@ -104,7 +97,7 @@
 	<link href="https://catcut.snaz.in/codecs" rel="canonical" />
 </svelte:head>
 
-<main class="mx-auto min-h-svh w-full max-w-3xl p-4 pt-[calc(var(--sait,0)+var(--spacing)*4)]">
+<main class="mx-auto min-h-svh w-full max-w-xl p-4 pt-[calc(var(--sait,0)+var(--spacing)*4)]">
 	<header>
 		<a
 			href={resolve('/')}
@@ -117,127 +110,52 @@
 	</header>
 
 	<section class="mt-6 mb-4">
-		<h1 class="text-3xl font-bold text-white">Codec compatibility</h1>
+		<h1 class="text-2xl font-bold text-white">Codec compatibility</h1>
 		<p class="mt-2 text-sm text-neutral-400">
 			Check your browser's supported codecs using <a
 				href="https://mediabunny.dev/codec-registry/overview"
 				target="_blank"
 				class="text-accent hover:underline">Mediabunny's codec registry</a
-			>
+			>.
 		</p>
 	</section>
 
+	<ul class="flex flex-wrap gap-x-4 gap-y-2 text-xs text-neutral-400" aria-label="Support legend">
+		<li class="flex items-center gap-1.5">
+			<Icon icon={checkIcon} class="size-4 text-emerald-400" aria-hidden="true" />
+			Native support
+		</li>
+		<li class="flex items-center gap-1.5">
+			<Icon icon={checkIcon} class="size-4 text-amber-400" aria-hidden="true" />
+			External support
+		</li>
+		<li class="flex items-center gap-1.5">
+			<Icon icon={closeIcon} class="size-4 text-neutral-600" aria-hidden="true" />
+			Not supported
+		</li>
+	</ul>
+
 	{#each codecTables as table (table.title)}
-		<section class="mt-8">
-			<h2 class="mb-3 text-2xl font-bold text-white">{table.title}</h2>
-			<div class="overflow-hidden rounded-xl border border-neutral-800">
-				<table class="w-full border-collapse text-left">
+		<section class="mt-5">
+			<h2 class="mb-2 text-lg font-bold text-white">{table.title}</h2>
+			<div class="overflow-hidden rounded-lg border border-neutral-800">
+				<table class="w-full table-fixed border-collapse text-left text-sm">
 					<thead class="bg-neutral-900 text-xs font-bold tracking-wide text-neutral-400 uppercase">
 						<tr>
-							<th class="px-4 py-3" scope="col">Format</th>
-							<th class="w-32 px-4 py-3 text-center" scope="col">Decode</th>
-							<th class="w-32 px-4 py-3 text-center" scope="col">Encode</th>
+							<th class="w-1/2 px-3 py-2" scope="col">Format</th>
+							<th class="w-1/4 px-2 py-2 text-center" scope="col">Decode</th>
+							<th class="w-1/4 px-2 py-2 text-center" scope="col">Encode</th>
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-neutral-800 bg-neutral-950">
 						{#each table.rows as row (row.name)}
 							<tr>
-								<th class="px-4 py-3 font-medium text-neutral-200" scope="row">
-									{row.name}
-									{#if 'package' in row && row.package && (!supportsEvery(row.codecs, nativelyDecodableCodecs) || !supportsEvery(row.codecs, nativelyEncodableCodecs))}
-										<span class="block text-xs font-medium text-neutral-400">via {row.package}</span
-										>
-									{/if}
-								</th>
-								<td class="px-4 py-3">
-									<div class="flex items-center justify-center">
-										{#if loading}
-											<Icon
-												icon={loadingIcon}
-												class="size-5 animate-spin text-neutral-500"
-												aria-label="Checking"
-											/>
-										{:else if supportsEvery(row.codecs, decodableCodecs)}
-											<span class="relative inline-flex">
-												<Icon
-													icon={checkIcon}
-													class="size-5 text-emerald-400"
-													aria-label="Supported"
-												/>
-												{#if 'decoderPackage' in row && row.decoderPackage && !supportsEvery(row.codecs, nativelyDecodableCodecs)}
-													<span class="absolute top-1/2 left-full ml-1 -translate-y-1/2">
-														<Tooltip.Root delayDuration={200} disableHoverableContent>
-															<Tooltip.Trigger
-																aria-label={`Decoder provided by ${row.decoderPackage}`}
-															>
-																{#snippet child({ props })}
-																	<button
-																		class="block text-neutral-500 hover:text-neutral-300"
-																		{...props}
-																	>
-																		<Icon icon={asteriskIcon} class="size-3.5" />
-																	</button>
-																{/snippet}
-															</Tooltip.Trigger>
-															<SmallTooltipContent offset={8}
-																>via {row.decoderPackage}</SmallTooltipContent
-															>
-														</Tooltip.Root>
-													</span>
-												{/if}
-											</span>
-										{:else}
-											<Icon
-												icon={closeIcon}
-												class="size-5 text-neutral-600"
-												aria-label="Not supported"
-											/>
-										{/if}
-									</div>
+								<th class="px-3 py-2 font-medium text-neutral-200" scope="row">{row.name}</th>
+								<td class="px-2 py-2 text-center">
+									{@render supportIndicator(row.codecs, decodableCodecs, nativelyDecodableCodecs)}
 								</td>
-								<td class="px-4 py-3 text-center">
-									{#if loading}
-										<Icon
-											icon={loadingIcon}
-											class="mx-auto size-5 animate-spin text-neutral-500"
-											aria-label="Checking"
-										/>
-									{:else if supportsEvery(row.codecs, encodableCodecs)}
-										<span class="relative mx-auto inline-flex">
-											<Icon
-												icon={checkIcon}
-												class="size-5 text-emerald-400"
-												aria-label="Supported"
-											/>
-											{#if 'encoderPackage' in row && row.encoderPackage && !supportsEvery(row.codecs, nativelyEncodableCodecs)}
-												<span class="absolute top-1/2 left-full ml-1 -translate-y-1/2">
-													<Tooltip.Root delayDuration={200} disableHoverableContent>
-														<Tooltip.Trigger
-															aria-label={`Encoder provided by ${row.encoderPackage}`}
-														>
-															{#snippet child({ props })}
-																<button
-																	class="block text-neutral-500 hover:text-neutral-300"
-																	{...props}
-																>
-																	<Icon icon={asteriskIcon} class="size-3.5" />
-																</button>
-															{/snippet}
-														</Tooltip.Trigger>
-														<SmallTooltipContent offset={8}
-															>via {row.encoderPackage}</SmallTooltipContent
-														>
-													</Tooltip.Root>
-												</span>
-											{/if}
-										</span>
-									{:else}
-										<Icon
-											icon={closeIcon}
-											class="mx-auto size-5 text-neutral-600"
-											aria-label="Not supported"
-										/>
-									{/if}
+								<td class="px-2 py-2 text-center">
+									{@render supportIndicator(row.codecs, encodableCodecs, nativelyEncodableCodecs)}
 								</td>
 							</tr>
 						{/each}
@@ -247,3 +165,26 @@
 		</section>
 	{/each}
 </main>
+
+{#snippet supportIndicator(
+	codecs: readonly MediaCodec[],
+	supportedCodecs: Set<MediaCodec>,
+	nativeCodecs: Set<MediaCodec>
+)}
+	{#if loading}
+		<Icon
+			icon={loadingIcon}
+			class="mx-auto size-4 animate-spin text-neutral-500"
+			aria-label="Checking"
+		/>
+	{:else if supportsEvery(codecs, supportedCodecs)}
+		{@const native = supportsEvery(codecs, nativeCodecs)}
+		<Icon
+			icon={checkIcon}
+			class={['mx-auto size-4', native ? 'text-emerald-400' : 'text-amber-400']}
+			aria-label={native ? 'Native support' : 'External support'}
+		/>
+	{:else}
+		<Icon icon={closeIcon} class="mx-auto size-4 text-neutral-600" aria-label="Not supported" />
+	{/if}
+{/snippet}
