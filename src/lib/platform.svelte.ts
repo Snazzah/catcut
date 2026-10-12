@@ -1,6 +1,29 @@
 import { MediaQuery } from 'svelte/reactivity';
 
-export const mobile = new MediaQuery('max-width: 639px', false);
+// NOTE fine pointer = precise mouse control, coarse = tapping usually
+// "hover: hover" means if it supports hovering over things
+const narrowViewport = new MediaQuery('max-width: 639px', false);
+const coarsePointer = new MediaQuery('pointer: coarse', false);
+const finePointer = new MediaQuery('pointer: fine', false);
+const hover = new MediaQuery('hover: hover', false);
+
+/** Are we on mobile? */
+export const mobile = {
+	get current() {
+		if (coarsePointer.current) return true;
+		if (finePointer.current) return !hover.current;
+		return narrowViewport.current;
+	}
+};
+
+const standalone = new MediaQuery('display-mode: standalone', false);
+
+/** Mainly for iOS webapps, whether to show the option to fullscreen */
+export const naturallyFullscreen = {
+	get current() {
+		return mobile.current && standalone.current && navigator.userAgent.includes('AppleWebKit/');
+	}
+};
 
 type SurfaceSubscriber = () => boolean;
 

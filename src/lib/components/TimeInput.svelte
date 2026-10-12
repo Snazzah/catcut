@@ -173,7 +173,7 @@
 			type="button"
 			title="Use playhead"
 			aria-label={`Use playhead for ${label.toLowerCase()}`}
-			class="hidden size-7 shrink-0 cursor-pointer place-items-center rounded-sm text-neutral-300 hover:bg-white/10 hover:text-violet-300 focus-visible:ring-2 focus-visible:ring-violet-200 focus-visible:outline-none sm:grid"
+			class="size-7 shrink-0 cursor-pointer place-items-center rounded-sm text-neutral-300 hover:bg-white/10 hover:text-violet-300 focus-visible:ring-2 focus-visible:ring-violet-200 focus-visible:outline-none"
 			onclick={onUseCurrentTime}
 		>
 			<Icon icon={pinIcon} class="size-4" aria-hidden="true" />

@@ -762,7 +762,10 @@ export class PlayerState {
 			data.set(embeddedImage.data);
 			blob = new Blob([data], { type: embeddedImage.mimeType });
 		} else if (artworkSink && Number.isFinite(this.duration) && this.duration > 0) {
-			const midpoint = this.source.origin === 'remote' ? this.#firstTimestamp : this.#firstTimestamp + this.duration / 2;
+			const midpoint =
+				this.source.origin === 'remote'
+					? this.#firstTimestamp
+					: this.#firstTimestamp + this.duration / 2;
 			const frame = await artworkSink.getCanvas(midpoint);
 			if (frame) blob = await this.#canvasToBlob(frame.canvas);
 		}

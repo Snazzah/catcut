@@ -35,7 +35,7 @@
 
 <div class="w-full max-w-full min-w-0 overflow-x-auto">
 	<div
-		class="flex min-h-10 w-max min-w-full items-center justify-center gap-1 px-1 sm:gap-3 md:min-h-12 md:justify-start md:gap-1 md:px-0"
+		class="flex min-h-10 w-max min-w-full items-center justify-center gap-1 px-1 md:min-h-12 md:justify-start md:px-0"
 	>
 		<div class="contents" role="tablist" aria-label="Editing tools">
 			{#each tabs as tab (tab.id)}

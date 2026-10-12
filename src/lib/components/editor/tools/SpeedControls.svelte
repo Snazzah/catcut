@@ -43,7 +43,7 @@
 				onValueChange={(speed) =>
 					adjustment && session.updateSpeedAdjustment({ ...adjustment, speed })}
 			/>
-			<span class="sm:w-12 text-right tabular-nums">{adjustment.speed.toFixed(2)}×</span>
+			<span class="text-right tabular-nums sm:w-12">{adjustment.speed.toFixed(2)}×</span>
 		</div>
 		{#if session.player.hasAudio}
 			<div

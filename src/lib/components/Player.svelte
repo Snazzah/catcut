@@ -11,7 +11,7 @@
 	import PlayerSettings from './PlayerSettings.svelte';
 	import PlayerVolumeControl from './PlayerVolumeControl.svelte';
 	import Icon from '@iconify/svelte';
-	import { mobile, surfaces } from '$lib/platform.svelte';
+	import { mobile, naturallyFullscreen, surfaces } from '$lib/platform.svelte';
 
 	const SEEK_STEP_COUNT = 10_000;
 	const MOBILE_CONTROLS_TIMEOUT_MS = 3_000;
@@ -322,13 +322,15 @@
 						onPlaybackRateChange={(playbackRate) => player.setPlaybackRate(playbackRate)}
 					/>
 
-					<PlayerButton
-						title="Fullscreen"
-						icon={fullscreenIcon}
-						onclick={() => void onfullscreen()}
-						key="F"
-						offset={36}
-					/>
+					{#if !naturallyFullscreen.current}
+						<PlayerButton
+							title="Fullscreen"
+							icon={fullscreenIcon}
+							onclick={() => void onfullscreen()}
+							key="F"
+							offset={36}
+						/>
+					{/if}
 				</div>
 			</div>
 		{/if}

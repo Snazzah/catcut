@@ -62,7 +62,6 @@ export class Playlist {
 		this.entries = this.entries.filter((e) => e.id !== id);
 	}
 
-
 	replace(source: MediaSource | null) {
 		if (source === null) {
 			this.clear();

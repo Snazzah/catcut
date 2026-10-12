@@ -44,7 +44,10 @@
 			onchange={setStart}
 			onUseCurrentTime={() => setStart(player.currentTime - player.startTime)}
 		/>
-		<span class="shrink-0 text-xs text-neutral-500">—</span>
+		<span class="hidden shrink-0 text-xs text-neutral-500 sm:inline">—</span>
+		<span class="shrink-0 text-xs text-neutral-400 tabular-nums sm:hidden">
+			— {player.formatDuration(trim.end - trim.start)} —
+		</span>
 		<TimeInput
 			value={relativeEnd}
 			min={relativeStart}
@@ -54,7 +57,7 @@
 			onchange={setEnd}
 			onUseCurrentTime={() => setEnd(player.currentTime - player.startTime)}
 		/>
-		<span class="hidden shrink-0 text-sm text-neutral-400 tabular-nums md:inline">
+		<span class="hidden shrink-0 text-sm text-neutral-400 tabular-nums sm:inline">
 			({player.formatDuration(trim.end - trim.start)})
 		</span>
 	</div>

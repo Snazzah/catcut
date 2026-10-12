@@ -12,6 +12,7 @@
 	import type { EditorSession } from './editor-session.svelte';
 	import { editorTools, isEditorToolAvailable } from './editor-tools';
 	import Icon from '@iconify/svelte';
+	import { naturallyFullscreen } from '$lib/platform.svelte';
 
 	let {
 		session,
@@ -119,14 +120,16 @@
 				/ {player.formatTimestamp(player.endTime)}
 			</span>
 			<span class="mx-auto"></span>
-			<PlayerButton
-				title="Fullscreen"
-				icon={fullscreenIcon}
-				onclick={onfullscreen}
-				key="F"
-				offset={32}
-			/>
-			<span class="h-5 w-px shrink-0 bg-white/20" aria-hidden="true"></span>
+			{#if !naturallyFullscreen.current}
+				<PlayerButton
+					title="Fullscreen"
+					icon={fullscreenIcon}
+					onclick={onfullscreen}
+					key="F"
+					offset={32}
+				/>
+				<span class="h-5 w-px shrink-0 bg-white/20" aria-hidden="true"></span>
+			{/if}
 			<PlayerButton
 				title="Revert all changes"
 				icon={restartIcon}
