@@ -61,6 +61,11 @@
 	}
 
 	function handleKeydown(event: KeyboardEvent) {
+		if (event.key === 'Enter') {
+			event.preventDefault();
+			input.blur();
+			return;
+		}
 		if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
 		event.preventDefault();
 		step(event.key === 'ArrowUp' ? 1 : -1);
@@ -83,7 +88,7 @@
 		value={inputValue}
 		aria-label={label}
 		class="h-7 appearance-none bg-transparent text-right text-sm text-neutral-100 tabular-nums transition-colors outline-none hover:bg-violet-500/10 focus:bg-violet-500/20"
-		oninput={() => setValue(input.valueAsNumber)}
+		onblur={() => setValue(input.valueAsNumber)}
 		onpaste={handlePaste}
 		onkeydown={handleKeydown}
 	/>
