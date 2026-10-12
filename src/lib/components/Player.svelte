@@ -18,6 +18,7 @@
 	type Props = {
 		player: PlayerState;
 		onclose: () => void;
+		onloaderror: (message: string) => void;
 		onedit?: () => void;
 		onfullscreen: () => void;
 		controlsVisible?: boolean;
@@ -28,6 +29,7 @@
 	let {
 		player,
 		onclose,
+		onloaderror,
 		onedit,
 		onfullscreen,
 		controlsVisible = $bindable(true),
@@ -73,8 +75,7 @@
 		void player.load().catch((error: unknown) => {
 			if (player.disposed) return;
 
-			alert(error instanceof Error ? error.message : String(error));
-			void onclose();
+			onloaderror(error instanceof Error ? error.message : String(error));
 		});
 
 		return () => {

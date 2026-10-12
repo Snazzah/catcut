@@ -14,8 +14,14 @@
 	let {
 		source,
 		onclose,
+		onloaderror,
 		editing = $bindable(false)
-	}: { source: MediaSource; onclose: () => void; editing?: boolean } = $props();
+	}: {
+		source: MediaSource;
+		onclose: () => void;
+		onloaderror: (message: string) => void;
+		editing?: boolean;
+	} = $props();
 	const player = new PlayerState(untrack(() => source));
 	const editor = new EditorSession(player);
 	let mounted = true;
@@ -100,6 +106,7 @@
 		<Player
 			{player}
 			onclose={handleClose}
+			{onloaderror}
 			onedit={openEditor}
 			onfullscreen={toggleFullscreen}
 			bind:controlsVisible={playerControlsVisible}

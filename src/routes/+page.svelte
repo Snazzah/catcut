@@ -2,16 +2,24 @@
 	import { resolve } from '$app/paths';
 	import FileDrop from '$lib/components/FileDrop.svelte';
 	import MediaWorkspace from '$lib/components/MediaWorkspace.svelte';
+	import ResponsiveModal from '$lib/components/common/ResponsiveModal.svelte';
 	import { catcut } from '$lib/icons';
 	import { createLocalMediaSource, createRemoteMediaSource, type MediaSource } from '$lib/media';
 	import Icon from '@iconify/svelte';
 	import { BitsConfig } from 'bits-ui';
-	import { onMount } from 'svelte';
-	import { toast } from 'svelte-sonner';
+	import { onMount, tick } from 'svelte';
 
 	let source = $state.raw<MediaSource | null>(null);
 	let editing = $state(false);
 	let draggingMedia = $state(false);
+	let loadError = $state<string | null>(null);
+
+	async function showLoadError(message: string) {
+		source = null;
+		editing = false;
+		await tick();
+		loadError = message;
+	}
 
 	function isMediaType(type: string) {
 		return type === '' || type.startsWith('audio/') || type.startsWith('video/');
@@ -23,8 +31,12 @@
 		);
 		if (!handle) return;
 
-		const file = await handle.getFile();
-		if (isMediaType(file.type)) source = createLocalMediaSource(file);
+		try {
+			const file = await handle.getFile();
+			if (isMediaType(file.type)) source = createLocalMediaSource(file);
+		} catch (error) {
+			void showLoadError(error instanceof Error ? error.message : String(error));
+		}
 	}
 
 	onMount(() => {
@@ -42,7 +54,7 @@
 				storage: 'Chrome could not store the shared file on this device.'
 			};
 			const mime = location.searchParams.get('mime');
-			toast.error(
+			void showLoadError(
 				shareError === 'type'
 					? `The shared file has an unsupported type: ${mime || '(empty)'}.`
 					: (messages[shareError] ?? 'Could not import the shared media.')
@@ -73,7 +85,7 @@
 			source = createLocalMediaSource(file);
 			await cache.delete(key).catch(() => undefined);
 		} catch {
-			toast.error(failure);
+			void showLoadError(failure);
 		} finally {
 			const url = new URL(window.location.href);
 			url.searchParams.delete('shared-media');
@@ -134,6 +146,7 @@
 				<MediaWorkspace
 					{source}
 					bind:editing
+					onloaderror={(message) => void showLoadError(message)}
 					onclose={() => {
 						source = null;
 						editing = false;
@@ -153,3 +166,21 @@
 		</div>
 	{/if}
 </main>
+
+<ResponsiveModal
+	open={loadError !== null}
+	title="Could not load file"
+	onOpenChange={(open) => {
+		if (!open) loadError = null;
+	}}
+>
+	<p class="text-sm wrap-break-word whitespace-pre-wrap text-neutral-300">{loadError}</p>
+	{#snippet buttons()}
+		<button
+			class="cursor-pointer rounded-lg bg-neutral-700 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-600"
+			onclick={() => (loadError = null)}
+		>
+			Okay
+		</button>
+	{/snippet}
+</ResponsiveModal>

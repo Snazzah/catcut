@@ -31,11 +31,6 @@
 	<Icon icon={player.hasVideo ? videoIcon : audioIcon} class="size-6" aria-hidden="true" />
 	<div class="min-w-0 flex-1 py-2 font-medium">
 		<span class="block truncate">{player.filename}</span>
-		{#if player.loadState.status === 'ready' && player.loadState.warning}
-			<p class="m-0 truncate text-xs text-amber-300" title={player.loadState.warning}>
-				{player.loadState.warning}
-			</p>
-		{/if}
 	</div>
 
 	<div class="flex shrink-0 items-center gap-3 text-neutral-50">
