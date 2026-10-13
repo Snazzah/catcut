@@ -63,6 +63,7 @@ async function registerCodecs(): Promise<CodecRegistration> {
 
 const SCRUB_PREVIEW_DEBOUNCE_MS = 100;
 const FRAME_STEP_EPSILON_SECONDS = 0.00001;
+const AUDIO_RESUME_TIMEOUT_MS = 3000;
 
 type PlayerMetadata = {
 	tags: MetadataTags;
@@ -109,6 +110,7 @@ export class PlayerState {
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity
 	#queuedAudioNodes = new Set<AudioBufferSourceNode>();
 	#asyncId = 0;
+	#playRequestId = 0;
 	#animationFrameId: number | null = null;
 	#backgroundRenderId: number | null = null;
 	#scrubPreviewTime: number | null = null;
@@ -268,6 +270,7 @@ export class PlayerState {
 		}
 		gainNode.connect(audioContext.destination);
 		this.#audioContext = audioContext;
+		audioContext.addEventListener('statechange', this.#handleAudioContextStateChange);
 		this.#gainNode = gainNode;
 		this.#updateGain();
 
@@ -325,16 +328,23 @@ export class PlayerState {
 
 	async play() {
 		const audioContext = this.#audioContext;
-		if (!audioContext || this.loadState.status !== 'ready' || !this.paused) return;
+		if (!audioContext || this.disposed || this.loadState.status !== 'ready' || !this.paused) return;
+		const requestId = ++this.#playRequestId;
 
-		if (audioContext.state === 'suspended') await audioContext.resume();
+		// https://developer.mozilla.org/en-US/docs/Web/API/Navigator/audioSession
+		if (this.#audioSink && 'audioSession' in navigator)
+			(navigator.audioSession as any).type = 'playback';
+
+		if (!(await this.#resumeAudioContext(audioContext))) return;
+		if (requestId !== this.#playRequestId || this.disposed) return;
 		const playbackStart = this.playbackRange?.start ?? this.#firstTimestamp;
 		if (this.currentTime < playbackStart || this.ended) {
 			this.#playbackTimeAtStart = playbackStart;
 			this.currentTime = playbackStart;
-			await this.#restartVideoIterator();
+			if (!(await this.#restartVideoIterator())) return;
 		}
-		if (this.disposed) return;
+		if (requestId !== this.#playRequestId || this.disposed || audioContext.state !== 'running')
+			return;
 
 		this.#audioContextStartTime = audioContext.currentTime;
 		this.paused = false;
@@ -350,6 +360,7 @@ export class PlayerState {
 	}
 
 	pause() {
+		this.#playRequestId += 1;
 		if (this.paused) return;
 
 		this.#playbackTimeAtStart = Math.min(this.#getPlaybackTime(), this.#endTimestamp);
@@ -367,7 +378,7 @@ export class PlayerState {
 
 		const target = Math.max(this.#firstTimestamp, Math.min(seconds, this.#endTimestamp));
 		const wasPlaying = !this.paused;
-		if (wasPlaying) this.pause();
+		this.pause();
 
 		this.#playbackTimeAtStart = target;
 		this.currentTime = target;
@@ -413,7 +424,7 @@ export class PlayerState {
 
 	beginScrub() {
 		const resumeAfterScrub = !this.paused;
-		if (resumeAfterScrub) this.pause();
+		this.pause();
 		this.#suspendVideoIterator();
 		return resumeAfterScrub;
 	}
@@ -526,6 +537,7 @@ export class PlayerState {
 
 		this.#disconnectSoundTouchNode();
 		this.#gainNode?.disconnect();
+		this.#audioContext?.removeEventListener('statechange', this.#handleAudioContextStateChange);
 		void this.#audioContext?.close();
 		this.#soundTouchNodeFactory = null;
 		this.#gainNode = null;
@@ -535,6 +547,30 @@ export class PlayerState {
 		this.#disposeMediaSession();
 		this.#canvas = null;
 		this.#context = null;
+	}
+
+	#handleAudioContextStateChange = () => {
+		if (this.#audioContext?.state !== 'running' && !this.paused) this.pause();
+	};
+
+	async #resumeAudioContext(audioContext: AudioContext) {
+		if (audioContext.state === 'running') return true;
+		if (audioContext.state === 'closed') return false;
+
+		let timeout: ReturnType<typeof setTimeout> | undefined;
+		try {
+			await Promise.race([
+				audioContext.resume(),
+				new Promise<void>((resolve) => {
+					timeout = setTimeout(resolve, AUDIO_RESUME_TIMEOUT_MS);
+				})
+			]);
+			return this.#audioContext?.state === 'running';
+		} catch {
+			return false;
+		} finally {
+			clearTimeout(timeout);
+		}
 	}
 
 	#getPlaybackTime() {
@@ -656,32 +692,38 @@ export class PlayerState {
 		const playbackTimeAtStart = this.#playbackTimeAtStart;
 		if (!audioContext || !destinationNode || audioContextStartTime === null) return;
 
-		for await (const { buffer, timestamp } of iterator) {
-			if (iterator !== this.#audioBufferIterator || this.disposed) return;
-
-			const node = audioContext.createBufferSource();
-			node.buffer = buffer;
-			node.playbackRate.value = this.playbackRate;
-			node.connect(destinationNode);
-			let startTimestamp =
-				audioContextStartTime + (timestamp - playbackTimeAtStart) / this.playbackRate;
-			startTimestamp =
-				Math.round(audioContext.sampleRate * startTimestamp) / audioContext.sampleRate;
-
-			if (startTimestamp >= audioContext.currentTime) node.start(startTimestamp);
-			else
-				node.start(
-					audioContext.currentTime,
-					(audioContext.currentTime - startTimestamp) * this.playbackRate
-				);
-
-			this.#queuedAudioNodes.add(node);
-			node.onended = () => this.#queuedAudioNodes.delete(node);
-
-			while (timestamp - this.#getPlaybackTime() >= 1) {
-				await new Promise((resolve) => window.setTimeout(resolve, 100));
+		try {
+			for await (const { buffer, timestamp } of iterator) {
 				if (iterator !== this.#audioBufferIterator || this.disposed) return;
+
+				const node = audioContext.createBufferSource();
+				node.buffer = buffer;
+				node.playbackRate.value = this.playbackRate;
+				node.connect(destinationNode);
+				let startTimestamp =
+					audioContextStartTime + (timestamp - playbackTimeAtStart) / this.playbackRate;
+				startTimestamp =
+					Math.round(audioContext.sampleRate * startTimestamp) / audioContext.sampleRate;
+
+				if (startTimestamp >= audioContext.currentTime) node.start(startTimestamp);
+				else
+					node.start(
+						audioContext.currentTime,
+						(audioContext.currentTime - startTimestamp) * this.playbackRate
+					);
+
+				this.#queuedAudioNodes.add(node);
+				node.onended = () => this.#queuedAudioNodes.delete(node);
+
+				while (timestamp - this.#getPlaybackTime() >= 1) {
+					await new Promise((resolve) => window.setTimeout(resolve, 100));
+					if (iterator !== this.#audioBufferIterator || this.disposed) return;
+				}
 			}
+		} catch (error) {
+			if (iterator !== this.#audioBufferIterator || this.disposed) return;
+			this.pause();
+			console.error('Audio playback failed:', error);
 		}
 	}
 
