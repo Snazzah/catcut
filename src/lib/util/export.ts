@@ -1,10 +1,13 @@
 import {
 	AudioSampleSink,
 	AudioSampleSource,
+	BufferTarget,
 	Conversion,
 	ConversionCanceledError,
 	NON_PCM_AUDIO_CODECS,
 	Quality,
+	StreamTarget,
+	type StreamTargetChunk,
 	getEncodableAudioCodecs,
 	type AudioCodec,
 	type AudioEncodingConfig,
@@ -38,6 +41,90 @@ import {
 } from 'mediabunny';
 import { StretchAudio } from '../audio/stretch-audio';
 import type { SpeedAdjustment, TimelineRange } from './editing';
+
+type ExportDestination = { dispose: () => Promise<void> } & (
+	| { kind: 'saved'; target: StreamTarget }
+	| { kind: 'download'; target: StreamTarget | BufferTarget; getFile: () => Promise<File> }
+);
+
+export async function createExportDestination({
+	format,
+	suggestedName,
+	extension
+}: {
+	format: OutputFormat;
+	suggestedName: string;
+	extension: `.${string}`;
+}): Promise<ExportDestination> {
+	let temporaryFile: {
+		directory: FileSystemDirectoryHandle;
+		name: string;
+		file: FileSystemFileHandle;
+	} | null = null;
+	let writable: FileSystemWritableFileStream;
+	if (window.showSaveFilePicker) {
+		const handle = await window.showSaveFilePicker({
+			startIn: 'downloads',
+			suggestedName,
+			id: 'catcut',
+			types: [{ description: 'Media file', accept: { [format.mimeType]: [extension] } }]
+		});
+		writable = await handle.createWritable();
+	} else {
+		try {
+			const root = await navigator.storage.getDirectory();
+			const directory = await root.getDirectoryHandle('catcut-exports', { create: true });
+			const name = crypto.randomUUID();
+			const file = await directory.getFileHandle(name, { create: true });
+			temporaryFile = { directory, name, file };
+			writable = await file.createWritable();
+		} catch {
+			if (temporaryFile)
+				await temporaryFile.directory.removeEntry(temporaryFile.name).catch(() => {});
+			// Incognito prevents storage API things
+			const target = new BufferTarget();
+			return {
+				kind: 'download',
+				target,
+				async getFile() {
+					if (!target.buffer) throw new Error('The conversion did not produce a file.');
+					return new File([target.buffer], suggestedName, { type: format.mimeType });
+				},
+				dispose: async () => {}
+			};
+		}
+	}
+
+	const writer = writable.getWriter();
+	let closing: Promise<void> | null = null;
+	const close = () => (closing ??= writer.close());
+	let disposing: Promise<void> | null = null;
+	const dispose = () =>
+		(disposing ??= (async () => {
+			try {
+				await writer.abort();
+			} finally {
+				if (temporaryFile) await temporaryFile.directory.removeEntry(temporaryFile.name);
+			}
+		})());
+	const stream = new WritableStream<StreamTargetChunk>({
+		write: (chunk) => writer.write(chunk),
+		close,
+		abort: () => writer.abort()
+	});
+	const target = new StreamTarget(stream, { chunked: true, chunkSize: 1024 * 1024 });
+	if (!temporaryFile) return { kind: 'saved', target, dispose };
+	const file = temporaryFile.file;
+	return {
+		kind: 'download',
+		target,
+		async getFile() {
+			await close();
+			return new File([await file.getFile()], suggestedName, { type: format.mimeType });
+		},
+		dispose
+	};
+}
 
 export const exportFormats = [
 	{ id: 'mp4', label: 'MP4', format: Mp4OutputFormat },

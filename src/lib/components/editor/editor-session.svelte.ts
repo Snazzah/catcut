@@ -1,13 +1,11 @@
 import {
 	ALL_FORMATS,
 	BlobSource,
-	BufferTarget,
 	Input,
 	MPEG_TS,
 	Mp3OutputFormat,
 	Mp4OutputFormat,
 	Output,
-	StreamTarget,
 	UrlSource,
 	type CropRectangle
 } from 'mediabunny';
@@ -29,6 +27,7 @@ import {
 import type { PlayerState } from '$lib/player-state.svelte';
 import {
 	ExportTask,
+	createExportDestination,
 	exportFormats,
 	getExportExtension,
 	getMatchingOutputFormat,
@@ -52,7 +51,8 @@ type SaveJob = {
 };
 
 type SaveResult =
-	{ kind: 'saved'; durationMs: number } | { kind: 'download'; file: File; durationMs: number };
+	| { kind: 'saved'; durationMs: number }
+	| { kind: 'download'; file: File; durationMs: number; dispose: () => Promise<void> };
 
 export class EditorSession {
 	readonly player: PlayerState;
@@ -142,6 +142,8 @@ export class EditorSession {
 		this.#job = job;
 		this.saveState = { status: 'converting', progress: 0 };
 		this.player.pause();
+		let destination: Awaited<ReturnType<typeof createExportDestination>> | null = null;
+		let downloadReady = false;
 
 		try {
 			const matchingFormat = getMatchingOutputFormat(await this.player.input.getFormat());
@@ -153,24 +155,9 @@ export class EditorSession {
 			const name = this.player.filename.replace(/\.[^.]+$/, '');
 			const extension = getExportExtension(format, selectedFormat ? '' : this.player.filename);
 			const suggestedName = `catcut_${name}${extension}`;
-			let target: BufferTarget | StreamTarget;
-			if (window.showSaveFilePicker) {
-				const handle = await window.showSaveFilePicker({
-					startIn: 'downloads',
-					suggestedName,
-					types: [{ description: 'Media file', accept: { [format.mimeType]: [extension] } }]
-				});
-				if (this.#job !== job) return null;
-				const writable = await handle.createWritable();
-				if (this.#job !== job) {
-					await writable.abort();
-					return null;
-				}
-				target = new StreamTarget(writable);
-			} else {
-				target = new BufferTarget();
-			}
-			const output = new Output({ format, target });
+			destination = await createExportDestination({ format, suggestedName, extension });
+			if (this.#job !== job) return null;
+			const output = new Output({ format, target: destination.target });
 			const task = new ExportTask({
 				input,
 				output,
@@ -188,16 +175,15 @@ export class EditorSession {
 			await task.execute();
 			if (this.#job !== job) return null;
 			const durationMs = performance.now() - conversionStartedAt;
-			if (!(target instanceof BufferTarget)) {
+			if (destination.kind === 'saved') {
 				this.saveState = { status: 'complete' };
 				return { kind: 'saved', durationMs };
 			}
-			if (!target.buffer) throw new Error('The conversion did not produce a file.');
-			const file = new File([target.buffer], suggestedName, {
-				type: format.mimeType
-			});
+			const file = await destination.getFile();
+			if (this.#job !== job) return null;
+			downloadReady = true;
 			this.saveState = { status: 'complete' };
-			return { kind: 'download', file, durationMs };
+			return { kind: 'download', file, durationMs, dispose: destination.dispose };
 		} catch (error) {
 			if (this.#job === job) {
 				this.saveState =
@@ -212,6 +198,7 @@ export class EditorSession {
 		} finally {
 			if (job.task) await job.task.cancel();
 			else input.dispose();
+			if (destination && !downloadReady) await destination.dispose().catch(() => {});
 			if (this.#job === job) this.#job = null;
 		}
 	}

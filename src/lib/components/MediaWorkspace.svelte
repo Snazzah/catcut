@@ -45,7 +45,10 @@
 
 	async function save() {
 		const result = await editor.save();
-		if (!mounted) return;
+		if (!mounted) {
+			if (result?.kind === 'download') await result.dispose().catch(() => {});
+			return;
+		}
 		if (!result) {
 			if (editor.saveState.status === 'error') toast.error(editor.saveState.message);
 			return;
@@ -57,7 +60,10 @@
 			link.href = url;
 			link.download = file.name;
 			link.click();
-			setTimeout(() => URL.revokeObjectURL(url), 300);
+			setTimeout(() => {
+				URL.revokeObjectURL(url);
+				void result.dispose().catch(() => {});
+			}, 5 * 60_000);
 		}
 
 		toast.success(`Saved your file! This took ${prettyMilliseconds(result.durationMs)}.`);
