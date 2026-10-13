@@ -5,6 +5,7 @@
 	import { Dialog } from 'bits-ui';
 	import { onDestroy, type Snippet } from 'svelte';
 	import { Drawer } from 'vaul-svelte';
+	import { verticalScrollbars } from '$lib/util/attachments';
 	import DrawerContentScope, { getDrawerDepth } from './DrawerContentScope.svelte';
 
 	let {
@@ -88,7 +89,11 @@
 							{description}
 						</Dialog.Description>
 					{/if}
-					<div class="min-h-0 flex-1 overflow-y-auto overscroll-contain py-4">
+					<div
+						class="relative min-h-0 flex-1 overflow-y-auto overscroll-contain py-4"
+						data-overlayscrollbars-initialize
+						{@attach verticalScrollbars}
+					>
 						{@render children()}
 					</div>
 					{#if buttons}

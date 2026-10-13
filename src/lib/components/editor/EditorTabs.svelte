@@ -15,6 +15,7 @@
 	import MetadataEditorModal from './MetadataEditorModal.svelte';
 	import type { EditorSession } from './editor-session.svelte';
 	import type { PlayerState } from '$lib/player-state.svelte';
+	import { horizontalScrollbars } from '$lib/util/attachments';
 
 	let {
 		tabs,
@@ -33,7 +34,11 @@
 	let metadataAvailable = $derived(session.metadataAvailable);
 </script>
 
-<div class="w-full max-w-full min-w-0 overflow-x-auto">
+<div
+	class="relative w-full max-w-full min-w-0 overflow-x-auto"
+	data-overlayscrollbars-initialize
+	{@attach horizontalScrollbars}
+>
 	<div
 		class="flex min-h-10 w-max min-w-full items-center justify-center gap-1 px-1 md:min-h-12 md:justify-start md:px-0"
 	>

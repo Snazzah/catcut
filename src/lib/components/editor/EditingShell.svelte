@@ -13,6 +13,7 @@
 	import { editorTools, isEditorToolAvailable } from './editor-tools';
 	import Icon from '@iconify/svelte';
 	import { naturallyFullscreen } from '$lib/platform.svelte';
+	import { horizontalScrollbars } from '$lib/util/attachments';
 
 	let {
 		session,
@@ -170,7 +171,11 @@
 			</div>
 
 			<div class="grid min-h-0 w-full min-w-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden">
-				<div class="w-full min-w-0 overflow-x-auto overflow-y-hidden overscroll-x-contain">
+				<div
+					class="relative w-full min-w-0 overflow-x-auto overflow-y-hidden overscroll-x-contain"
+					data-overlayscrollbars-initialize
+					{@attach horizontalScrollbars}
+				>
 					{#if Controls}
 						<Controls {session} />
 					{/if}
