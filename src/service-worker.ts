@@ -82,6 +82,9 @@ self.addEventListener('fetch', (event) => {
 
 	if (url.origin !== self.location.origin) return;
 
+	// Don't cache this to let svelte version-check itself
+	if (url.pathname === '/_app/version.json') return;
+
 	event.respondWith(
 		caches.open(CACHE_NAME).then(async (cache) => {
 			if (event.request.mode === 'navigate') {

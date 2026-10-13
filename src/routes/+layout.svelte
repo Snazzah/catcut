@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { updated } from '$app/state';
 	import { env } from '$env/dynamic/public';
 	import '../app.css';
 	import { onMount, type Snippet } from 'svelte';
@@ -8,7 +9,18 @@
 
 	let { children }: { children: Snippet } = $props();
 
+	$effect(() => {
+		if (!updated.current || !('serviceWorker' in navigator)) return;
+
+		navigator.serviceWorker.ready
+			.then((registration) => registration.update())
+			.catch((err) => console.warn('Service worker update check failed', err));
+	});
+
 	onMount(() => {
+		let disposed = false;
+		updated.check();
+
 		function showUpdateToast(registration: ServiceWorkerRegistration) {
 			if (!registration.waiting || !navigator.serviceWorker.controller) return;
 
@@ -23,8 +35,8 @@
 		}
 
 		async function watchForServiceWorkerUpdate() {
-			const registration = await navigator.serviceWorker.getRegistration();
-			if (!registration) return;
+			const registration = await navigator.serviceWorker.ready;
+			if (disposed) return;
 
 			showUpdateToast(registration);
 			registration.addEventListener('updatefound', () => {
@@ -36,16 +48,16 @@
 		}
 
 		if ('serviceWorker' in navigator) {
-			if (document.readyState === 'complete') {
-				void watchForServiceWorkerUpdate();
-			} else {
-				window.addEventListener('load', () => void watchForServiceWorkerUpdate(), { once: true });
-			}
+			void watchForServiceWorkerUpdate();
 		}
 
 		if (isDiscordActivity()) {
 			initDiscordActivity().catch((err) => console.error('Discord activity init failed', err));
 		}
+
+		return () => {
+			disposed = true;
+		};
 	});
 </script>
 
