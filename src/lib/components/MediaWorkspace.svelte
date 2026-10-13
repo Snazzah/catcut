@@ -47,7 +47,6 @@
 		untrack(async () => {
 			const autoplay = autoplayNext ? true : undefined;
 			autoplayNext = false;
-			editing = false;
 			editor.cancelSave();
 			editor = new EditorSession(player);
 			try {
