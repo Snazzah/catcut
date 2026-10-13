@@ -8,11 +8,13 @@
 		title,
 		trigger,
 		children,
+		headerActions,
 		onOpenChange
 	}: {
-		title: string;
+		title: string | Snippet;
 		trigger: Snippet<[{ props: Record<string, unknown> }]>;
 		children: Snippet;
+		headerActions?: Snippet;
 		onOpenChange?: (open: boolean) => void;
 	} = $props();
 
@@ -25,17 +27,13 @@
 		onOpenChange?.(nextOpen);
 	}
 
-	function toggleOpen() {
-		handleOpenChange(!open);
-	}
-
 	onDestroy(unsubscribeSurface);
 </script>
 
 <span class="inline-flex" bind:this={triggerAnchor}>
 	{@render trigger({
 		props: {
-			onclick: toggleOpen,
+			onclick: () => handleOpenChange(!open),
 			'aria-expanded': open,
 			'aria-haspopup': mobile.current ? 'dialog' : 'menu',
 			'data-state': open ? 'open' : 'closed'
@@ -51,9 +49,12 @@
 				class="fixed inset-x-0 bottom-0 z-50 flex max-h-[85dvh] flex-col rounded-t-2xl border border-white/10 bg-neutral-900 p-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] text-neutral-100 shadow-2xl outline-none"
 			>
 				<div class="mx-auto my-2 h-1 w-10 shrink-0 rounded-full bg-neutral-600"></div>
-				<Drawer.Title class="shrink-0 px-3 pb-2 text-base font-bold text-white"
-					>{title}</Drawer.Title
-				>
+				<div class="flex shrink-0 items-center justify-between gap-3 px-3 pb-2">
+					<Drawer.Title class="text-base font-bold text-white">
+						{#if typeof title === 'string'}{title}{:else}{@render title()}{/if}
+					</Drawer.Title>
+					{@render headerActions?.()}
+				</div>
 				<div class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-1">
 					{@render children()}
 				</div>

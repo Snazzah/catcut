@@ -74,6 +74,7 @@ export type PlayerLoadState =
 	{ status: 'loading' } | { status: 'ready'; metadata: PlayerMetadata; warning: string | null };
 
 export class PlayerState {
+	onended?: () => void;
 	source = $state.raw<MediaSource>()!;
 	loadState = $state.raw<PlayerLoadState>({ status: 'loading' });
 	currentTime = $state(0);
@@ -180,8 +181,8 @@ export class PlayerState {
 		this.#backgroundRenderId = window.setInterval(() => this.#renderFrame(), 500);
 	}
 
-	async open(source: MediaSource) {
-		const resume = this.#resumeAfterLoad || !this.paused;
+	async open(source: MediaSource, options: { autoplay?: boolean } = {}) {
+		const resume = options.autoplay ?? (this.#resumeAfterLoad || !this.paused);
 		this.#clearMedia();
 		this.source = source;
 		this.#resumeAfterLoad = resume;
@@ -653,6 +654,7 @@ export class PlayerState {
 
 		const playbackTime = this.#getPlaybackTime();
 		const playbackEnd = this.playbackRange?.end ?? this.#endTimestamp;
+		const finished = !this.paused && playbackTime >= playbackEnd;
 		if (playbackTime >= playbackEnd) {
 			this.pause();
 			this.#playbackTimeAtStart = playbackEnd;
@@ -666,6 +668,7 @@ export class PlayerState {
 			this.#nextFrame = null;
 			void this.#updateNextFrame();
 		}
+		if (finished) this.onended?.();
 	}
 
 	async #updateNextFrame() {

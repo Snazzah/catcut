@@ -2,7 +2,7 @@ import { MediaQuery } from 'svelte/reactivity';
 
 // NOTE fine pointer = precise mouse control, coarse = tapping usually
 // "hover: hover" means if it supports hovering over things
-const narrowViewport = new MediaQuery('max-width: 639px', false);
+export const narrowViewport = new MediaQuery('max-width: 639px', false);
 const coarsePointer = new MediaQuery('pointer: coarse', false);
 const finePointer = new MediaQuery('pointer: fine', false);
 const hover = new MediaQuery('hover: hover', false);

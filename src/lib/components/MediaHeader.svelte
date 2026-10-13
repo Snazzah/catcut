@@ -3,6 +3,7 @@
 	import type { PlayerState } from '$lib/player-state.svelte';
 	import PlayerButton from '$lib/components/common/PlayerButton.svelte';
 	import PlayerInfo from './PlayerInfo.svelte';
+	import PlayerQueue from './PlayerQueue.svelte';
 	import Icon from '@iconify/svelte';
 	import videoIcon from '@iconify-icons/mdi/movie';
 	import audioIcon from '@iconify-icons/mdi/music-note';
@@ -28,13 +29,18 @@
 	aria-hidden={!visible}
 	inert={!visible}
 >
-	<Icon icon={player.hasVideo ? videoIcon : audioIcon} class="size-6" aria-hidden="true" />
+	<Icon
+		icon={player.hasVideo || !!player.videoTrack ? videoIcon : audioIcon}
+		class="size-6"
+		aria-hidden="true"
+	/>
 	<div class="min-w-0 flex-1 py-2 font-medium">
 		<span class="block truncate">{player.filename}</span>
 	</div>
 
 	<div class="flex shrink-0 items-center gap-3 text-neutral-50">
 		<PlayerInfo {player} />
+		<PlayerQueue />
 		<PlayerButton title={closeLabel} icon={closeIcon} onclick={onclose} key="Esc" />
 	</div>
 </header>

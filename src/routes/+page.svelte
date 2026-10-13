@@ -12,6 +12,7 @@
 	let source = $derived(queue.source);
 	let editing = $state(false);
 	let draggingMedia = $state(false);
+	let addingToQueue = $state(false);
 	let loadError = $state<string | null>(null);
 
 	function closeMedia() {
@@ -20,9 +21,14 @@
 	}
 
 	async function showLoadError(message: string) {
-		closeMedia();
 		await tick();
 		loadError = message;
+	}
+
+	function handleLoadError(message: string) {
+		if (queue.activeEntry) queue.remove(queue.activeEntry.id);
+		editing = false;
+		void showLoadError(message);
 	}
 
 	function isMediaType(type: string) {
@@ -30,14 +36,16 @@
 	}
 
 	async function openLaunchFile(launchParams: LaunchParams) {
-		const handle = launchParams.files.find(
+		const handles = launchParams.files.filter(
 			(h: FileSystemHandle): h is FileSystemFileHandle => h.kind === 'file'
 		);
-		if (!handle) return;
+		if (!handles.length) return;
 
 		try {
-			const file = await handle.getFile();
-			if (isMediaType(file.type)) queue.replace(createLocalMediaSource(file));
+			const files = (await Promise.all(handles.map((handle) => handle.getFile()))).filter((file) =>
+				isMediaType(file.type)
+			);
+			if (files.length) queue.add(...files.map(createLocalMediaSource));
 		} catch (error) {
 			void showLoadError(error instanceof Error ? error.message : String(error));
 		}
@@ -109,29 +117,39 @@
 
 		event.preventDefault();
 		draggingMedia = true;
+		addingToQueue = event.shiftKey;
 		if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
 	}
 
-	function handleDragLeave(event: DragEvent) {
-		if (event.relatedTarget === null) draggingMedia = false;
-	}
-
 	function handleDrop(event: DragEvent) {
+		draggingMedia = false;
 		if (!isMediaDrag(event.dataTransfer)) return;
 
 		event.preventDefault();
-		draggingMedia = false;
-
-		const file = [...(event.dataTransfer?.files ?? [])].find((item) => isMediaType(item.type));
-		if (file) queue.replace(createLocalMediaSource(file));
+		const sources = [...(event.dataTransfer?.files ?? [])]
+			.filter((file) => isMediaType(file.type))
+			.map(createLocalMediaSource);
+		if (!sources.length) return;
+		if (event.shiftKey) queue.add(...sources);
+		else queue.replace(...sources);
 	}
 </script>
 
 <svelte:window
 	ondragenter={handleDrag}
 	ondragover={handleDrag}
-	ondragleave={handleDragLeave}
+	ondragleave={(event) => {
+		if (event.relatedTarget === null) draggingMedia = false;
+	}}
 	ondrop={handleDrop}
+	ondragend={() => (draggingMedia = false)}
+	onblur={() => (draggingMedia = false)}
+	onkeydown={(event) => {
+		if (draggingMedia) addingToQueue = event.shiftKey;
+	}}
+	onkeyup={(event) => {
+		if (draggingMedia) addingToQueue = event.shiftKey;
+	}}
 />
 
 <svelte:head>
@@ -149,7 +167,9 @@
 			<MediaWorkspace
 				{source}
 				bind:editing
-				onloaderror={(message) => void showLoadError(message)}
+				{draggingMedia}
+				{addingToQueue}
+				onloaderror={handleLoadError}
 				onclose={closeMedia}
 			/>
 		</BitsConfig>
@@ -158,10 +178,7 @@
 			<Icon icon={catcut} class="size-6" />
 			<h1>catcut</h1>
 		</div>
-		<FileDrop
-			dragging={draggingMedia}
-			onselect={(selectedSource) => queue.replace(selectedSource)}
-		/>
+		<FileDrop dragging={draggingMedia} onselect={(sources) => queue.replace(...sources)} />
 
 		<div class="fixed bottom-0 flex flex-wrap gap-2 p-2 font-medium">
 			<a href={resolve('/codecs')} class="hover:text-white hover:underline">Codecs</a>

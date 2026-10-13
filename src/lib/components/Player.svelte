@@ -5,13 +5,16 @@
 	import loadingIcon from '@iconify-icons/mdi/loading';
 	import editIcon from '@iconify-icons/mdi/movie-edit-outline';
 	import cameraIcon from '@iconify-icons/mdi/camera-outline';
+	import previousIcon from '@iconify-icons/mdi/skip-previous';
+	import nextIcon from '@iconify-icons/mdi/skip-next';
+	import { queue } from '$lib/store.svelte';
 	import PlayerButton from '$lib/components/common/PlayerButton.svelte';
 	import PlayerPlayButton from './PlayerPlayButton.svelte';
 	import PlayerSlider from './PlayerSlider.svelte';
 	import PlayerSettings from './PlayerSettings.svelte';
 	import PlayerVolumeControl from './PlayerVolumeControl.svelte';
 	import Icon from '@iconify/svelte';
-	import { mobile, naturallyFullscreen, surfaces } from '$lib/platform.svelte';
+	import { mobile, narrowViewport, naturallyFullscreen, surfaces } from '$lib/platform.svelte';
 
 	const SEEK_STEP_COUNT = 10_000;
 	const MOBILE_CONTROLS_TIMEOUT_MS = 3_000;
@@ -287,6 +290,28 @@
 					aria-label="Playback controls"
 				>
 					<PlayerPlayButton {player} offset={36} />
+					{#if queue.entries.length > 1 && !mobile.current && !narrowViewport.current}
+						<PlayerButton
+							title="Previous"
+							icon={previousIcon}
+							onclick={() => {
+								const entry = queue.previousEntry;
+								if (entry) queue.select(entry.id);
+							}}
+							disabled={!queue.previousEntry}
+							offset={36}
+						/>
+						<PlayerButton
+							title="Next"
+							icon={nextIcon}
+							onclick={() => {
+								const entry = queue.nextEntry;
+								if (entry) queue.select(entry.id);
+							}}
+							disabled={!queue.nextEntry}
+							offset={36}
+						/>
+					{/if}
 					<PlayerVolumeControl {player} offset={36} />
 
 					<button

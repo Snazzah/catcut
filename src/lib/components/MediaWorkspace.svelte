@@ -2,7 +2,7 @@
 	import { onDestroy, untrack } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import prettyMilliseconds from 'pretty-ms';
-	import type { MediaSource } from '$lib/store.svelte';
+	import { queue, type MediaSource } from '$lib/store.svelte';
 	import { PlayerState } from '$lib/player-state.svelte';
 	import EditingShell from './editor/EditingShell.svelte';
 	import EditorOverlayHost from './editor/EditorOverlayHost.svelte';
@@ -10,19 +10,28 @@
 	import { editorTools } from './editor/editor-tools';
 	import MediaHeader from './MediaHeader.svelte';
 	import Player from './Player.svelte';
+	import Icon from '@iconify/svelte';
+	import uploadIcon from '@iconify-icons/mdi/file-upload-outline';
+	import addFileIcon from '@iconify-icons/mdi/file-plus-outline';
 
 	let {
 		source,
 		onclose,
 		onloaderror,
-		editing = $bindable(false)
+		editing = $bindable(false),
+		draggingMedia = false,
+		addingToQueue = false
 	}: {
 		source: MediaSource;
 		onclose: () => void;
 		onloaderror: (message: string) => void;
 		editing?: boolean;
+		draggingMedia?: boolean;
+		addingToQueue?: boolean;
 	} = $props();
 	const player = new PlayerState(untrack(() => source));
+	player.onended = handleEnded;
+	let autoplayNext = false;
 	let editor = $state.raw(new EditorSession(player));
 	let mounted = true;
 	onDestroy(() => {
@@ -36,11 +45,13 @@
 	$effect(() => {
 		const nextSource = source;
 		untrack(async () => {
+			const autoplay = autoplayNext ? true : undefined;
+			autoplayNext = false;
 			editing = false;
 			editor.cancelSave();
 			editor = new EditorSession(player);
 			try {
-				await player.open(nextSource)
+				await player.open(nextSource, { autoplay });
 			} catch (error: unknown) {
 				onloaderror(error instanceof Error ? error.message : String(error));
 			}
@@ -57,9 +68,17 @@
 		} else onclose();
 	}
 
+	function handleEnded() {
+		const next = queue.nextEntry;
+		if (editing || editor.saving || !next) return;
+		autoplayNext = true;
+		queue.select(next.id);
+	}
+
 	async function save() {
-		const result = await editor.save();
-		if (!mounted) {
+		const session = editor;
+		const result = await session.save();
+		if (!mounted || session !== editor) {
 			if (result?.kind === 'download') await result.dispose().catch(() => {});
 			return;
 		}
@@ -116,6 +135,31 @@
 		closeLabel={editing ? 'Close editor' : 'Close media'}
 		visible={editing || playerControlsVisible}
 	/>
+
+	{#if draggingMedia}
+		<div
+			class="pointer-events-none fixed inset-0 z-60 flex items-center justify-center bg-black/60 p-6"
+			role="status"
+		>
+			<div
+				class="flex w-full max-w-96 flex-col items-center gap-1 rounded-xl border-2 border-dashed border-neutral-600 bg-neutral-900 p-6 text-center text-neutral-100 shadow-2xl"
+			>
+				<Icon
+					icon={addingToQueue ? addFileIcon : uploadIcon}
+					class="mb-2 size-8 text-violet-400"
+					aria-hidden="true"
+				/>
+				<p class="text-lg font-bold text-white">
+					{addingToQueue ? 'drop to add' : 'drop to replace'}
+				</p>
+				<p class="text-sm text-neutral-400">
+					{addingToQueue
+						? 'these files will be added into the queue.'
+						: 'hold shift to add files to the queue.'}
+				</p>
+			</div>
+		</div>
+	{/if}
 
 	<div
 		class={[

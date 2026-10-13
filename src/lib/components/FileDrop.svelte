@@ -6,16 +6,12 @@
 	let {
 		dragging = false,
 		onselect
-	}: { dragging?: boolean; onselect: (source: LocalMediaSource) => void } = $props();
-
-	function select(file: File | null) {
-		if (!file) return;
-		onselect(createLocalMediaSource(file));
-	}
+	}: { dragging?: boolean; onselect: (sources: LocalMediaSource[]) => void } = $props();
 
 	function handleChange(event: Event) {
 		if (!(event.currentTarget instanceof HTMLInputElement)) return;
-		select(event.currentTarget.files?.item(0) ?? null);
+		const files = [...(event.currentTarget.files ?? [])];
+		if (files.length) onselect(files.map(createLocalMediaSource));
 	}
 </script>
 
@@ -30,6 +26,7 @@
 	<input
 		class="absolute size-px overflow-hidden whitespace-nowrap [clip-path:inset(50%)]"
 		type="file"
+		multiple
 		accept="audio/*,video/*"
 		onchange={handleChange}
 	/>
@@ -40,7 +37,7 @@
 		]}
 	>
 		<Icon class="size-7 text-violet-400" icon={uploadIcon} aria-hidden="true" />
-		<span class="text-white">{dragging ? 'drop it here!' : 'drag or select a file'}</span>
+		<span class="text-white">{dragging ? 'drop them here!' : 'drag or select files'}</span>
 		<small class="max-w-80 text-xs"> supports video & audio files </small>
 	</span>
 </label>

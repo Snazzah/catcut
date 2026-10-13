@@ -45,13 +45,29 @@ export type QueueEntry = {
 export class Queue {
 	entries = $state.raw<readonly QueueEntry[]>([]);
 	#nextId = 0;
+	#activeId = $state<number | null>(null);
 
 	get activeEntry() {
-		return this.entries[0] ?? null;
+		return this.entries[this.#activeIndex] ?? null;
 	}
 
 	get source() {
 		return this.activeEntry?.source ?? null;
+	}
+
+	get #activeIndex() {
+		return Math.max(
+			0,
+			this.entries.findIndex((entry) => entry.id === this.#activeId)
+		);
+	}
+
+	get previousEntry() {
+		return this.entries[this.#activeIndex - 1] ?? null;
+	}
+
+	get nextEntry() {
+		return this.entries[this.#activeIndex + 1] ?? null;
 	}
 
 	add(...sources: MediaSource[]) {
@@ -62,17 +78,18 @@ export class Queue {
 		this.entries = this.entries.filter((e) => e.id !== id);
 	}
 
-	replace(source: MediaSource | null) {
-		if (source === null) {
-			this.clear();
-			return;
-		}
+	select(id: number) {
+		if (this.entries.some((entry) => entry.id === id)) this.#activeId = id;
+	}
 
-		this.entries = [{ id: this.#nextId++, source }];
+	replace(...sources: (MediaSource | null)[]) {
+		this.clear();
+		this.add(...sources.filter((source) => source !== null));
 	}
 
 	clear() {
 		this.entries = [];
+		this.#activeId = null;
 	}
 }
 
