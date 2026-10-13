@@ -74,7 +74,7 @@ export type PlayerLoadState =
 	{ status: 'loading' } | { status: 'ready'; metadata: PlayerMetadata; warning: string | null };
 
 export class PlayerState {
-	readonly source: MediaSource;
+	source = $state.raw<MediaSource>()!;
 	loadState = $state.raw<PlayerLoadState>({ status: 'loading' });
 	currentTime = $state(0);
 	paused = $state(true);
@@ -86,7 +86,7 @@ export class PlayerState {
 	playbackRange = $state.raw<TimelineRange | null>(null);
 	disposed = false;
 
-	input: Input | null = null;
+	input = $state.raw<Input | null>(null);
 	#canvas: HTMLCanvasElement | null = null;
 	#context: CanvasRenderingContext2D | null = null;
 	#videoSink: CanvasSink | null = null;
@@ -111,6 +111,7 @@ export class PlayerState {
 	#queuedAudioNodes = new Set<AudioBufferSourceNode>();
 	#asyncId = 0;
 	#playRequestId = 0;
+	#resumeAfterLoad = false;
 	#animationFrameId: number | null = null;
 	#backgroundRenderId: number | null = null;
 	#scrubPreviewTime: number | null = null;
@@ -179,18 +180,30 @@ export class PlayerState {
 		this.#backgroundRenderId = window.setInterval(() => this.#renderFrame(), 500);
 	}
 
-	async load() {
-		await registerAllCodecs();
-		this.loadState = { status: 'loading' };
-
+	async open(source: MediaSource) {
+		const resume = this.#resumeAfterLoad || !this.paused;
+		this.#clearMedia();
+		this.source = source;
+		this.#resumeAfterLoad = resume;
 		const input = new Input({
 			formats: ALL_FORMATS,
-			source:
-				this.source.origin === 'local'
-					? new BlobSource(this.source.file)
-					: new UrlSource(this.source.url)
+			source: source.origin === 'local' ? new BlobSource(source.file) : new UrlSource(source.url)
 		});
 		this.input = input;
+		try {
+			await this.#load(input);
+			if (this.#isCurrent(input) && this.#resumeAfterLoad) {
+				this.#resumeAfterLoad = false;
+				await this.play();
+			}
+		} catch (error) {
+			if (this.#isCurrent(input)) throw error;
+		}
+	}
+
+	async #load(input: Input) {
+		await registerAllCodecs();
+		if (!this.#isCurrent(input)) return;
 
 		// Get tracks
 		const [primaryVideoTrack, primaryAudioTrack, tags] = await Promise.all([
@@ -259,19 +272,16 @@ export class PlayerState {
 		// Create the A/V sinks
 		const audioContext = new AudioContext(audio ? { sampleRate: audio.sampleRate } : {});
 		const gainNode = audioContext.createGain();
+		this.#audioContext = audioContext;
+		this.#gainNode = gainNode;
 		if (audio) {
 			const { SoundTouchNode } = await import('@soundtouchjs/audio-worklet');
 			await SoundTouchNode.register(audioContext, soundTouchProcessorUrl);
-			if (!this.#isCurrent(input)) {
-				void audioContext.close();
-				return;
-			}
+			if (!this.#isCurrent(input)) return;
 			this.#soundTouchNodeFactory = () => new SoundTouchNode({ context: audioContext });
 		}
 		gainNode.connect(audioContext.destination);
-		this.#audioContext = audioContext;
 		audioContext.addEventListener('statechange', this.#handleAudioContextStateChange);
-		this.#gainNode = gainNode;
 		this.#updateGain();
 
 		if (videoTrack) {
@@ -360,6 +370,7 @@ export class PlayerState {
 	}
 
 	pause() {
+		this.#resumeAfterLoad = false;
 		this.#playRequestId += 1;
 		if (this.paused) return;
 
@@ -390,7 +401,14 @@ export class PlayerState {
 	stepFrame(direction: -1 | 1) {
 		if (this.#frameStepTask) return this.#frameStepTask;
 
-		const promise = this.#stepFrame(direction).finally(() => (this.#frameStepTask = null));
+		const input = this.input;
+		const promise = this.#stepFrame(direction)
+			.catch((error) => {
+				if (input === this.input && !this.disposed) throw error;
+			})
+			.finally(() => {
+				if (this.#frameStepTask === promise) this.#frameStepTask = null;
+			});
 		this.#frameStepTask = promise;
 		return promise;
 	}
@@ -411,14 +429,15 @@ export class PlayerState {
 		}
 
 		// Manually draw the next frame, its not entirely ideal (with restaring the iterator n stuff) but it works
-		const frame = (await this.#scrubPreviewSink?.getCanvas(target)) ?? null;
-		if (!frame || this.disposed) return;
+		const sink = this.#scrubPreviewSink;
+		const frame = (await sink?.getCanvas(target)) ?? null;
+		if (!frame || sink !== this.#scrubPreviewSink || this.disposed) return;
 
 		this.#playbackTimeAtStart = target;
 		this.currentTime = target;
 		this.#updateMediaSessionPosition();
 		await this.#restartVideoIterator();
-		if (this.disposed) return;
+		if (sink !== this.#scrubPreviewSink || this.disposed) return;
 		this.#draw(frame);
 	}
 
@@ -519,21 +538,31 @@ export class PlayerState {
 		if (this.disposed) return;
 
 		this.disposed = true;
+		this.#clearMedia();
+		if (this.#animationFrameId !== null) cancelAnimationFrame(this.#animationFrameId);
+		if (this.#backgroundRenderId !== null) clearInterval(this.#backgroundRenderId);
+		this.#animationFrameId = null;
+		this.#backgroundRenderId = null;
+		this.#canvas = null;
+		this.#context = null;
+	}
+
+	#clearMedia() {
 		clearTimelineWaveformCache(this.#audioTrack);
 		this.#asyncId += 1;
 		this.#cancelScrubPreview();
 		this.pause();
-		void this.#videoFrameIterator?.return();
+		void this.#videoFrameIterator?.return().catch(() => {});
 		this.#videoFrameIterator = null;
 		this.#nextFrame = null;
 		this.#lastDrawnFrame = null;
 		this.#videoTrack = null;
 		this.#audioTrack = null;
-
-		if (this.#animationFrameId !== null) cancelAnimationFrame(this.#animationFrameId);
-		if (this.#backgroundRenderId !== null) clearInterval(this.#backgroundRenderId);
-		this.#animationFrameId = null;
-		this.#backgroundRenderId = null;
+		this.#videoSink = null;
+		this.#scrubPreviewSink = null;
+		this.#audioSink = null;
+		this.#scrubPreviewTask = null;
+		this.#frameStepTask = null;
 
 		this.#disconnectSoundTouchNode();
 		this.#gainNode?.disconnect();
@@ -545,8 +574,15 @@ export class PlayerState {
 		this.input?.dispose();
 		this.input = null;
 		this.#disposeMediaSession();
-		this.#canvas = null;
-		this.#context = null;
+		this.loadState = { status: 'loading' };
+		this.currentTime = 0;
+		this.playbackRange = null;
+		this.#firstTimestamp = 0;
+		this.#endTimestamp = 0;
+		this.#relativeToUnixEpoch = false;
+		this.#playbackTimeAtStart = 0;
+		this.#audioContextStartTime = null;
+		if (this.#canvas) this.#context?.clearRect(0, 0, this.#canvas.width, this.#canvas.height);
 	}
 
 	#handleAudioContextStateChange = () => {
@@ -586,19 +622,25 @@ export class PlayerState {
 	async #restartVideoIterator() {
 		const operationId = ++this.#asyncId;
 		this.#cancelScrubPreview();
-		await this.#videoFrameIterator?.return();
-		if (operationId !== this.#asyncId || this.disposed || !this.#videoSink) return true;
+		try {
+			await this.#videoFrameIterator?.return();
+			if (operationId !== this.#asyncId || this.disposed) return false;
+			if (!this.#videoSink) return true;
 
-		const iterator = this.#videoSink.canvases(this.#getPlaybackTime());
-		this.#videoFrameIterator = iterator;
-		const firstFrame = (await iterator.next()).value ?? null;
-		if (operationId !== this.#asyncId || this.disposed) return false;
-		const secondFrame = (await iterator.next()).value ?? null;
-		if (operationId !== this.#asyncId || this.disposed) return false;
+			const iterator = this.#videoSink.canvases(this.#getPlaybackTime());
+			this.#videoFrameIterator = iterator;
+			const firstFrame = (await iterator.next()).value ?? null;
+			if (operationId !== this.#asyncId || this.disposed) return false;
+			const secondFrame = (await iterator.next()).value ?? null;
+			if (operationId !== this.#asyncId || this.disposed) return false;
 
-		this.#nextFrame = secondFrame;
-		if (firstFrame) this.#draw(firstFrame);
-		return true;
+			this.#nextFrame = secondFrame;
+			if (firstFrame) this.#draw(firstFrame);
+			return true;
+		} catch (error) {
+			if (operationId === this.#asyncId && !this.disposed) throw error;
+			return false;
+		}
 	}
 
 	#render = () => {
@@ -631,15 +673,21 @@ export class PlayerState {
 		const iterator = this.#videoFrameIterator;
 		if (!iterator) return;
 
-		while (operationId === this.#asyncId && !this.disposed) {
-			const nextFrame = (await iterator.next()).value ?? null;
-			if (!nextFrame || operationId !== this.#asyncId || this.disposed) return;
+		try {
+			while (operationId === this.#asyncId && !this.disposed) {
+				const nextFrame = (await iterator.next()).value ?? null;
+				if (!nextFrame || operationId !== this.#asyncId || this.disposed) return;
 
-			if (nextFrame.timestamp <= this.#getPlaybackTime()) this.#draw(nextFrame);
-			else {
-				this.#nextFrame = nextFrame;
-				return;
+				if (nextFrame.timestamp <= this.#getPlaybackTime()) this.#draw(nextFrame);
+				else {
+					this.#nextFrame = nextFrame;
+					return;
+				}
 			}
+		} catch (error) {
+			if (operationId !== this.#asyncId || this.disposed) return;
+			this.pause();
+			console.error('Video playback failed:', error);
 		}
 	}
 
@@ -815,10 +863,6 @@ export class PlayerState {
 		if (!blob || !this.#isCurrent(input) || (!embeddedImage && !this.#mediaSession)) return;
 
 		const url = URL.createObjectURL(blob);
-		if (!this.#isCurrent(input)) {
-			URL.revokeObjectURL(url);
-			return;
-		}
 
 		if (this.#mediaSessionArtworkUrl) URL.revokeObjectURL(this.#mediaSessionArtworkUrl);
 		this.#mediaSessionArtworkUrl = url;

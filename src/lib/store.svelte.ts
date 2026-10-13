@@ -37,13 +37,13 @@ export function createRemoteMediaSource(value: string): RemoteMediaSource | null
 	return { origin: 'remote', url: url.href, name };
 }
 
-export type PlaylistEntry = {
+export type QueueEntry = {
 	id: number;
 	source: MediaSource;
 };
 
-export class Playlist {
-	entries = $state.raw<readonly PlaylistEntry[]>([]);
+export class Queue {
+	entries = $state.raw<readonly QueueEntry[]>([]);
 	#nextId = 0;
 
 	get activeEntry() {
@@ -76,4 +76,4 @@ export class Playlist {
 	}
 }
 
-export const playlist = new Playlist();
+export const queue = new Queue();

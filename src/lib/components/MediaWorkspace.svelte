@@ -2,7 +2,7 @@
 	import { onDestroy, untrack } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import prettyMilliseconds from 'pretty-ms';
-	import type { MediaSource } from '$lib/util/media';
+	import type { MediaSource } from '$lib/store.svelte';
 	import { PlayerState } from '$lib/player-state.svelte';
 	import EditingShell from './editor/EditingShell.svelte';
 	import EditorOverlayHost from './editor/EditorOverlayHost.svelte';
@@ -23,7 +23,7 @@
 		editing?: boolean;
 	} = $props();
 	const player = new PlayerState(untrack(() => source));
-	const editor = new EditorSession(player);
+	let editor = $state.raw(new EditorSession(player));
 	let mounted = true;
 	onDestroy(() => {
 		mounted = false;
@@ -32,6 +32,20 @@
 	let workspace: HTMLElement;
 	let playerControlsVisible = $state(true);
 	let editorLayout = $derived(editorTools.find((tool) => tool.id === editor.activeTool)?.layout);
+
+	$effect(() => {
+		const nextSource = source;
+		untrack(async () => {
+			editing = false;
+			editor.cancelSave();
+			editor = new EditorSession(player);
+			try {
+				await player.open(nextSource)
+			} catch (error: unknown) {
+				onloaderror(error instanceof Error ? error.message : String(error));
+			}
+		});
+	});
 
 	$effect(() => {
 		editor.initialize();
@@ -112,7 +126,6 @@
 		<Player
 			{player}
 			onclose={handleClose}
-			{onloaderror}
 			onedit={openEditor}
 			onfullscreen={toggleFullscreen}
 			bind:controlsVisible={playerControlsVisible}

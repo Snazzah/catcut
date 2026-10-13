@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, type Snippet } from 'svelte';
+	import { onMount, untrack, type Snippet } from 'svelte';
 	import type { PlayerState } from '$lib/player-state.svelte';
 	import fullscreenIcon from '@iconify-icons/mdi/fullscreen';
 	import loadingIcon from '@iconify-icons/mdi/loading';
@@ -18,7 +18,6 @@
 	type Props = {
 		player: PlayerState;
 		onclose: () => void;
-		onloaderror: (message: string) => void;
 		onedit?: () => void;
 		onfullscreen: () => void;
 		controlsVisible?: boolean;
@@ -29,7 +28,6 @@
 	let {
 		player,
 		onclose,
-		onloaderror,
 		onedit,
 		onfullscreen,
 		controlsVisible = $bindable(true),
@@ -43,6 +41,14 @@
 	let alternateDurationFormat = $state(false);
 	let shownTime = $derived(scrubTime ?? player.currentTime);
 	let seekStep = $derived(player.duration > 0 ? player.duration / SEEK_STEP_COUNT : 0.001);
+	$effect(() => {
+		if (player.loadState.status === 'loading')
+			untrack(() => {
+				scrubTime = null;
+				scrubbing = false;
+				resumeAfterScrub = false;
+			});
+	});
 
 	// Controls
 	let playerHovered = $state(false);
@@ -72,11 +78,6 @@
 	onMount(() => {
 		documentFocused = document.hasFocus();
 		player.attachCanvas(canvas);
-		void player.load().catch((error: unknown) => {
-			if (player.disposed) return;
-
-			onloaderror(error instanceof Error ? error.message : String(error));
-		});
 
 		return () => {
 			clearMobileControlsTimeout();
