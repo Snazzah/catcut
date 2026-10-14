@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { mobile, surfaces } from '$lib/platform.svelte';
+	import { verticalScrollbars } from '$lib/util/attachments';
 	import { DropdownMenu, Popover } from 'bits-ui';
 	import { onDestroy, type Snippet } from 'svelte';
 	import { Drawer } from 'vaul-svelte';
@@ -72,7 +73,13 @@
 				sideOffset={8}
 				align="end"
 			>
-				{@render children()}
+				{#snippet child({ wrapperProps, props })}
+					<div {...wrapperProps}>
+						<div {...props} data-overlayscrollbars-initialize {@attach verticalScrollbars}>
+							{@render children()}
+						</div>
+					</div>
+				{/snippet}
 			</Popover.Content>
 		</Popover.Portal>
 	</Popover.Root>
@@ -85,7 +92,13 @@
 				sideOffset={8}
 				align="end"
 			>
-				{@render children()}
+				{#snippet child({ wrapperProps, props })}
+					<div {...wrapperProps}>
+						<div {...props} data-overlayscrollbars-initialize {@attach verticalScrollbars}>
+							{@render children()}
+						</div>
+					</div>
+				{/snippet}
 			</DropdownMenu.Content>
 		</DropdownMenu.Portal>
 	</DropdownMenu.Root>
