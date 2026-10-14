@@ -82,6 +82,19 @@ export class Queue {
 		if (this.entries.some((entry) => entry.id === id)) this.#activeId = id;
 	}
 
+	reorder(ids: readonly number[]) {
+		if (ids.length !== this.entries.length || this.entries.some((entry) => !ids.includes(entry.id)))
+			return;
+		const entries: QueueEntry[] = [];
+		for (const id of ids) {
+			const entry = this.entries.find((entry) => entry.id === id);
+			if (!entry) return;
+			entries.push(entry);
+		}
+		this.#activeId = this.activeEntry?.id ?? null;
+		this.entries = entries;
+	}
+
 	replace(...sources: (MediaSource | null)[]) {
 		this.clear();
 		this.add(...sources.filter((source) => source !== null));

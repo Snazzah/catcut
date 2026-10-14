@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { mobile, surfaces } from '$lib/platform.svelte';
-	import { DropdownMenu } from 'bits-ui';
+	import { DropdownMenu, Popover } from 'bits-ui';
 	import { onDestroy, type Snippet } from 'svelte';
 	import { Drawer } from 'vaul-svelte';
 
@@ -9,13 +9,15 @@
 		trigger,
 		children,
 		headerActions,
-		onOpenChange
+		onOpenChange,
+		popover = false
 	}: {
 		title: string | Snippet;
 		trigger: Snippet<[{ props: Record<string, unknown> }]>;
 		children: Snippet;
 		headerActions?: Snippet;
 		onOpenChange?: (open: boolean) => void;
+		popover?: boolean;
 	} = $props();
 
 	let open = $state(false);
@@ -35,7 +37,7 @@
 		props: {
 			onclick: () => handleOpenChange(!open),
 			'aria-expanded': open,
-			'aria-haspopup': mobile.current ? 'dialog' : 'menu',
+			'aria-haspopup': mobile.current || popover ? 'dialog' : 'menu',
 			'data-state': open ? 'open' : 'closed'
 		}
 	})}
@@ -61,6 +63,19 @@
 			</Drawer.Content>
 		</Drawer.Portal>
 	</Drawer.Root>
+{:else if popover}
+	<Popover.Root {open} onOpenChange={handleOpenChange}>
+		<Popover.Portal>
+			<Popover.Content
+				class="z-50 max-h-[min(24rem,calc(100vh-5rem))] w-72 overflow-y-auto overscroll-contain rounded-md border border-white/10 bg-neutral-900 p-1 shadow-xl outline-none"
+				customAnchor={triggerAnchor}
+				sideOffset={8}
+				align="end"
+			>
+				{@render children()}
+			</Popover.Content>
+		</Popover.Portal>
+	</Popover.Root>
 {:else}
 	<DropdownMenu.Root {open} onOpenChange={handleOpenChange}>
 		<DropdownMenu.Portal>

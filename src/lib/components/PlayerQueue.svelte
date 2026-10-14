@@ -3,15 +3,26 @@
 	import addIcon from '@iconify-icons/mdi/plus';
 	import removeIcon from '@iconify-icons/mdi/trash-can';
 	import editIcon from '@iconify-icons/mdi/pencil';
+	import dragIcon from '@iconify-icons/mdi/drag-vertical';
 	import Icon from '@iconify/svelte';
+	import { dndzone, type DndEvent } from 'svelte-dnd-action';
 	import { queue, createLocalMediaSource, type QueueEntry } from '$lib/store.svelte';
 	import { mobile } from '$lib/platform.svelte';
-	import { DropdownMenu } from 'bits-ui';
 	import PlayerButton from './common/PlayerButton.svelte';
 	import ResponsiveMenu from './common/ResponsiveMenu.svelte';
 
 	let fileInput: HTMLInputElement;
 	let editingQueue = $state(false);
+	let editingEntries = $derived([...queue.entries]);
+
+	function considerOrder(event: CustomEvent<DndEvent<QueueEntry>>) {
+		editingEntries = event.detail.items;
+	}
+
+	function finalizeOrder(event: CustomEvent<DndEvent<QueueEntry>>) {
+		editingEntries = event.detail.items;
+		queue.reorder(editingEntries.map((entry) => entry.id));
+	}
 
 	function addFiles(event: Event) {
 		if (!(event.currentTarget instanceof HTMLInputElement)) return;
@@ -32,24 +43,40 @@
 {#snippet row(entry: QueueEntry, index: number, props: Record<string, unknown>)}
 	{@const name = entry.source.origin === 'local' ? entry.source.file.name : entry.source.name}
 	{@const active = entry.id === queue.activeEntry?.id}
-	<button
-		type="button"
+	<svelte:element
+		this={editingQueue ? 'div' : 'button'}
+		type={editingQueue ? undefined : 'button'}
+		role={editingQueue ? 'button' : undefined}
+		tabindex="0"
 		class={[
-			'flex min-w-0 flex-1 items-center gap-3 rounded px-3 py-2.5 text-left focus-visible:bg-white/10 focus-visible:outline-none enabled:cursor-pointer enabled:hover:bg-white/10',
+			'flex min-w-0 flex-1 items-center gap-3 rounded px-3 py-2.5 text-left hover:bg-white/10 focus-visible:bg-white/10 focus-visible:outline-none',
+			editingQueue ? 'cursor-grab active:cursor-grabbing' : 'enabled:cursor-pointer',
 			mobile.current ? 'min-h-11 text-base' : 'text-sm',
 			active ? 'bg-violet-400/10 text-violet-300' : 'text-neutral-100'
 		]}
 		aria-current={active ? 'true' : undefined}
 		title={name}
 		onclick={() => queue.select(entry.id)}
+		onkeydown={(event: KeyboardEvent) => {
+			if (editingQueue && event.key === 'Enter') {
+				event.preventDefault();
+				event.stopPropagation();
+				queue.select(entry.id);
+			}
+		}}
 		{...props}
 	>
 		<span
 			class="w-5 shrink-0 text-right tabular-nums {active ? 'text-violet-50' : 'text-neutral-400'}"
-			>{index + 1}</span
 		>
+			{#if editingQueue}
+				<Icon icon={dragIcon} class="size-5" aria-hidden="true" />
+			{:else}
+				{index + 1}
+			{/if}
+		</span>
 		<span class="min-w-0 flex-1 truncate">{name}</span>
-	</button>
+	</svelte:element>
 {/snippet}
 
 {#snippet removeButton(entry: QueueEntry, props: Record<string, unknown>)}
@@ -58,11 +85,13 @@
 		type="button"
 		class={[
 			'flex shrink-0 cursor-pointer items-center justify-center rounded text-neutral-400 hover:bg-white/10 hover:text-white focus-visible:bg-white/10 focus-visible:outline-none',
-			mobile.current ? 'size-11' : 'size-9 mr-1.5'
+			mobile.current ? 'size-11' : 'mr-1.5 size-9'
 		]}
 		title="Remove from queue"
 		aria-label={`Remove ${name} from queue`}
 		onclick={() => queue.remove(entry.id)}
+		onmousedown={(event) => event.stopPropagation()}
+		ontouchstart={(event) => event.stopPropagation()}
 		{...props}
 	>
 		<Icon icon={removeIcon} class="size-5" aria-hidden="true" />
@@ -85,6 +114,7 @@
 {/snippet}
 
 <ResponsiveMenu
+	popover={true}
 	title={queueTitle}
 	onOpenChange={(open) => {
 		if (!open) editingQueue = false;
@@ -106,43 +136,39 @@
 				{@render queueTitle()}
 			</p>
 			<div class="flex items-center gap-3">
-				<DropdownMenu.Item onSelect={() => (editingQueue = !editingQueue)} closeOnSelect={false}>
-					{#snippet child({ props })}
-						{@render editButton(props)}
-					{/snippet}
-				</DropdownMenu.Item>
-				<DropdownMenu.Item onSelect={() => fileInput.click()}>
-					{#snippet child({ props })}
-						<PlayerButton
-							title="Add to queue"
-							icon={addIcon}
-							onclick={() => fileInput.click()}
-							triggerProps={props}
-						/>
-					{/snippet}
-				</DropdownMenu.Item>
+				{@render editButton({})}
+				<PlayerButton title="Add to queue" icon={addIcon} onclick={() => fileInput.click()} />
 			</div>
 		</div>
 	{/if}
-	{#each queue.entries as entry, index (entry.id)}
-		<div class="flex items-center gap-1">
-			{#if mobile.current}
-				{@render row(entry, index, {})}
-				{#if editingQueue}{@render removeButton(entry, {})}{/if}
-			{:else}
-				<DropdownMenu.Item onSelect={() => queue.select(entry.id)}>
-					{#snippet child({ props })}
-						{@render row(entry, index, props)}
-					{/snippet}
-				</DropdownMenu.Item>
-				{#if editingQueue}
-					<DropdownMenu.Item onSelect={() => queue.remove(entry.id)} closeOnSelect={false}>
-						{#snippet child({ props })}
-							{@render removeButton(entry, props)}
-						{/snippet}
-					</DropdownMenu.Item>
-				{/if}
-			{/if}
+	{#if editingQueue}
+		<div
+			use:dndzone={{
+				items: editingEntries,
+				type: 'player-queue',
+				dropFromOthersDisabled: true,
+				dropTargetStyle: {},
+				zoneTabIndex: -1,
+				delayTouchStart: true
+			}}
+			aria-label="Queue"
+			onconsider={considerOrder}
+			onfinalize={finalizeOrder}
+			data-vaul-no-drag
+		>
+			{#each editingEntries as entry, index (entry.id)}
+				{@const name = entry.source.origin === 'local' ? entry.source.file.name : entry.source.name}
+				<div class="flex items-center gap-1" aria-label={name}>
+					{@render row(entry, index, {})}
+					{@render removeButton(entry, {})}
+				</div>
+			{/each}
 		</div>
-	{/each}
+	{:else}
+		{#each queue.entries as entry, index (entry.id)}
+			<div class="flex items-center gap-1">
+				{@render row(entry, index, {})}
+			</div>
+		{/each}
+	{/if}
 </ResponsiveMenu>
