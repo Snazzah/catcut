@@ -99,8 +99,8 @@ export class PlayerState {
 	#soundTouchNode: SoundTouchNode | null = null;
 	#soundTouchNodeFactory: (() => SoundTouchNode) | null = null;
 	#gainNode: GainNode | null = null;
-	#firstTimestamp = 0;
-	#endTimestamp = 0;
+	#firstTimestamp = $state(0);
+	#endTimestamp = $state(0);
 	#relativeToUnixEpoch = false;
 	#audioContextStartTime: number | null = null;
 	#playbackTimeAtStart = 0;

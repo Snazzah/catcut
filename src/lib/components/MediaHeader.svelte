@@ -7,6 +7,7 @@
 	import Icon from '@iconify/svelte';
 	import videoIcon from '@iconify-icons/mdi/movie';
 	import audioIcon from '@iconify-icons/mdi/music-note';
+	import loadingIcon from '@iconify-icons/mdi/loading';
 
 	let {
 		player,
@@ -30,8 +31,12 @@
 	inert={!visible}
 >
 	<Icon
-		icon={player.hasVideo || !!player.videoTrack ? videoIcon : audioIcon}
-		class="size-6"
+		icon={player.loadState.status === 'loading'
+			? loadingIcon
+			: player.hasVideo || !!player.videoTrack
+				? videoIcon
+				: audioIcon}
+		class={['size-6', player.loadState.status === 'loading' && 'animate-spin']}
 		aria-hidden="true"
 	/>
 	<div class="min-w-0 flex-1 py-2 font-medium">
