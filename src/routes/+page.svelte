@@ -15,6 +15,10 @@
 	let addingToQueue = $state(false);
 	let loadError = $state<string | null>(null);
 
+	$effect(() => {
+		if (!source) editing = false;
+	});
+
 	function closeMedia() {
 		queue.clear();
 		editing = false;

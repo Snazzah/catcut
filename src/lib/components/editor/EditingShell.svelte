@@ -171,15 +171,17 @@
 			</div>
 
 			<div class="grid min-h-0 w-full min-w-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden">
-				<div
-					class="relative w-full min-w-0 overflow-x-auto overflow-y-hidden overscroll-x-contain"
-					data-overlayscrollbars-initialize
-					{@attach horizontalScrollbars}
-				>
-					{#if Controls}
-						<Controls {session} />
-					{/if}
-				</div>
+				{#key activeDefinition?.id}
+					<div
+						class="relative w-full min-w-0 overflow-x-auto overflow-y-hidden overscroll-x-contain"
+						data-overlayscrollbars-initialize
+						{@attach horizontalScrollbars}
+					>
+						{#if Controls}
+							<Controls {session} />
+						{/if}
+					</div>
+				{/key}
 				<EditorTabs
 					{tabs}
 					{session}
