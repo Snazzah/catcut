@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { CropRectangle } from 'mediabunny';
-	import { createCropRectangle, isFullFrameCrop } from '$lib/util/editing';
+	import { createCropRectangle, isFullFrameCrop } from '#lib/util/editing.js';
 	import type { EditorSession } from '../editor-session.svelte';
 
 	let { session }: { session: EditorSession } = $props();

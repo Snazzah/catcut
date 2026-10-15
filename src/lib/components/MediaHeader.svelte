@@ -1,7 +1,7 @@
 <script lang="ts">
 	import closeIcon from '@iconify-icons/mdi/close';
-	import type { PlayerState } from '$lib/player-state.svelte';
-	import PlayerButton from '$lib/components/common/PlayerButton.svelte';
+	import type { PlayerState } from '#lib/player-state.svelte.js';
+	import PlayerButton from '#lib/components/common/PlayerButton.svelte';
 	import PlayerInfo from './PlayerInfo.svelte';
 	import PlayerQueue from './PlayerQueue.svelte';
 	import Icon from '@iconify/svelte';

@@ -2,8 +2,8 @@
 	import { onDestroy, untrack } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import prettyMilliseconds from 'pretty-ms';
-	import { queue, type MediaSource } from '$lib/store.svelte';
-	import { PlayerState } from '$lib/player-state.svelte';
+	import { queue, type MediaSource } from '#lib/store.svelte.js';
+	import { PlayerState } from '#lib/player-state.svelte.js';
 	import EditingShell from './editor/EditingShell.svelte';
 	import EditorOverlayHost from './editor/EditorOverlayHost.svelte';
 	import { EditorSession } from './editor/editor-session.svelte';

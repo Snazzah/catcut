@@ -2,11 +2,11 @@
 	import volumeIcon from '@iconify-icons/mdi/volume-high';
 	import volumeMutedIcon from '@iconify-icons/mdi/volume-off';
 	import { Tooltip } from 'bits-ui';
-	import type { PlayerState } from '$lib/player-state.svelte';
-	import { mobile } from '$lib/platform.svelte';
+	import type { PlayerState } from '#lib/player-state.svelte.js';
+	import { mobile } from '#lib/platform.svelte.js';
 	import PlayerButton from './common/PlayerButton.svelte';
 	import PlayerSlider from './PlayerSlider.svelte';
-	import SmallTooltipContent from '$lib/components/common/SmallTooltipContent.svelte';
+	import SmallTooltipContent from '#lib/components/common/SmallTooltipContent.svelte';
 
 	let {
 		player,

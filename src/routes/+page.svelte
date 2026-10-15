@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import FileDrop from '$lib/components/FileDrop.svelte';
-	import MediaWorkspace from '$lib/components/MediaWorkspace.svelte';
-	import ResponsiveModal from '$lib/components/common/ResponsiveModal.svelte';
-	import { catcut } from '$lib/icons';
-	import { queue, createRemoteMediaSource, createLocalMediaSource } from '$lib/store.svelte';
+	import FileDrop from '#lib/components/FileDrop.svelte';
+	import MediaWorkspace from '#lib/components/MediaWorkspace.svelte';
+	import ResponsiveModal from '#lib/components/common/ResponsiveModal.svelte';
+	import { catcut } from '#lib/icons.js';
+	import { queue, createRemoteMediaSource, createLocalMediaSource } from '#lib/store.svelte.js';
 	import Icon from '@iconify/svelte';
 	import { BitsConfig } from 'bits-ui';
 	import { onMount, tick } from 'svelte';
@@ -75,6 +75,7 @@
 					? `The shared file has an unsupported type: ${mime || '(empty)'}.`
 					: (messages[shareError] ?? 'Could not import the shared media.')
 			);
+
 			location.searchParams.delete('share-error');
 			location.searchParams.delete('mime');
 			window.history.replaceState(window.history.state, '', location);
@@ -130,9 +131,11 @@
 		if (!isMediaDrag(event.dataTransfer)) return;
 
 		event.preventDefault();
+
 		const sources = [...(event.dataTransfer?.files ?? [])]
 			.filter((file) => isMediaType(file.type))
 			.map(createLocalMediaSource);
+
 		if (!sources.length) return;
 		if (event.shiftKey) queue.add(...sources);
 		else queue.replace(...sources);
@@ -182,10 +185,11 @@
 			<Icon icon={catcut} class="size-6" />
 			<h1>catcut</h1>
 		</div>
+
 		<FileDrop dragging={draggingMedia} onselect={(sources) => queue.replace(...sources)} />
 
 		<div class="fixed bottom-0 flex flex-wrap gap-2 p-2 font-medium">
-			<a href={resolve('/codecs')} class="hover:text-white hover:underline">Codecs</a>
+			<a href={resolve('codecs')} class="hover:text-white hover:underline">Codecs</a>
 		</div>
 	{/if}
 </main>
@@ -201,9 +205,7 @@
 	{#snippet buttons()}
 		<button
 			class="cursor-pointer rounded-lg bg-neutral-700 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-600"
-			onclick={() => (loadError = null)}
+			onclick={() => (loadError = null)}>Okay</button
 		>
-			Okay
-		</button>
 	{/snippet}
 </ResponsiveModal>

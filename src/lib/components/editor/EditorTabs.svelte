@@ -14,8 +14,8 @@
 	import tagEditIcon from '@iconify-icons/mdi/tag-edit';
 	import MetadataEditorModal from './MetadataEditorModal.svelte';
 	import type { EditorSession } from './editor-session.svelte';
-	import type { PlayerState } from '$lib/player-state.svelte';
-	import { horizontalScrollbars } from '$lib/util/attachments';
+	import type { PlayerState } from '#lib/player-state.svelte.js';
+	import { horizontalScrollbars } from '#lib/util/attachments.js';
 
 	let {
 		tabs,

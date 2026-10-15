@@ -5,8 +5,8 @@
 	import linkIcon from '@iconify-icons/mdi/link-variant';
 	import restartIcon from '@iconify-icons/mdi/restart';
 	import { Tooltip } from 'bits-ui';
-	import SmallTooltipContent from '$lib/components/common/SmallTooltipContent.svelte';
-	import PlayerSlider from '$lib/components/PlayerSlider.svelte';
+	import SmallTooltipContent from '#lib/components/common/SmallTooltipContent.svelte';
+	import PlayerSlider from '#lib/components/PlayerSlider.svelte';
 	import type { EditorSession } from '../editor-session.svelte';
 
 	let { session }: { session: EditorSession } = $props();

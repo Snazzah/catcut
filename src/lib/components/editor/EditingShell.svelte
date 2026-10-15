@@ -4,7 +4,7 @@
 	import restartIcon from '@iconify-icons/mdi/restart';
 	import saveIcon from '@iconify-icons/mdi/content-save';
 	import crystalBallIcon from '@iconify-icons/mdi/crystal-ball';
-	import PlayerButton from '$lib/components/common/PlayerButton.svelte';
+	import PlayerButton from '#lib/components/common/PlayerButton.svelte';
 	import PlayerPlayButton from '../PlayerPlayButton.svelte';
 	import PlayerVolumeControl from '../PlayerVolumeControl.svelte';
 	import EditorTabs from './EditorTabs.svelte';
@@ -12,8 +12,8 @@
 	import type { EditorSession } from './editor-session.svelte';
 	import { editorTools, isEditorToolAvailable } from './editor-tools';
 	import Icon from '@iconify/svelte';
-	import { naturallyFullscreen } from '$lib/platform.svelte';
-	import { horizontalScrollbars } from '$lib/util/attachments';
+	import { naturallyFullscreen } from '#lib/platform.svelte.js';
+	import { horizontalScrollbars } from '#lib/util/attachments.js';
 
 	let {
 		session,

@@ -1,20 +1,20 @@
 <script lang="ts">
 	import { onMount, untrack, type Snippet } from 'svelte';
-	import type { PlayerState } from '$lib/player-state.svelte';
+	import type { PlayerState } from '#lib/player-state.svelte.js';
 	import fullscreenIcon from '@iconify-icons/mdi/fullscreen';
 	import loadingIcon from '@iconify-icons/mdi/loading';
 	import editIcon from '@iconify-icons/mdi/movie-edit-outline';
 	import cameraIcon from '@iconify-icons/mdi/camera-outline';
 	import previousIcon from '@iconify-icons/mdi/skip-previous';
 	import nextIcon from '@iconify-icons/mdi/skip-next';
-	import { queue } from '$lib/store.svelte';
-	import PlayerButton from '$lib/components/common/PlayerButton.svelte';
+	import { queue } from '#lib/store.svelte.js';
+	import PlayerButton from '#lib/components/common/PlayerButton.svelte';
 	import PlayerPlayButton from './PlayerPlayButton.svelte';
 	import PlayerSlider from './PlayerSlider.svelte';
 	import PlayerSettings from './PlayerSettings.svelte';
 	import PlayerVolumeControl from './PlayerVolumeControl.svelte';
 	import Icon from '@iconify/svelte';
-	import { mobile, narrowViewport, naturallyFullscreen, surfaces } from '$lib/platform.svelte';
+	import { mobile, narrowViewport, naturallyFullscreen, surfaces } from '#lib/platform.svelte.js';
 
 	const SEEK_STEP_COUNT = 10_000;
 	const MOBILE_CONTROLS_TIMEOUT_MS = 3_000;

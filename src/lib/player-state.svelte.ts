@@ -15,7 +15,7 @@ import {
 	type WrappedCanvas,
 	VideoSampleSink
 } from 'mediabunny';
-import type { MediaSource } from '$lib/store.svelte';
+import type { MediaSource } from '#lib/store.svelte.js';
 
 import { registerAacEncoder } from '@mediabunny/aac-encoder';
 import { registerAc3Decoder, registerAc3Encoder } from '@mediabunny/ac3';
@@ -26,8 +26,8 @@ import { registerProresDecoder } from '@mediabunny/prores';
 import { registerHevcDecoder, registerHevcEncoder } from '@snazzah/mediabunny-hevc';
 import soundTouchProcessorUrl from '@soundtouchjs/audio-worklet/processor?url';
 import type { SoundTouchNode } from '@soundtouchjs/audio-worklet';
-import type { SpeedAdjustment, TimelineRange, VideoSize } from '$lib/util/editing';
-import { clearTimelineWaveformCache } from '$lib/util/timeline';
+import type { SpeedAdjustment, TimelineRange, VideoSize } from '#lib/util/editing.js';
+import { clearTimelineWaveformCache } from '#lib/util/timeline.js';
 
 export type CodecRegistration = {
 	nativelyDecodable: ReadonlySet<MediaCodec>;

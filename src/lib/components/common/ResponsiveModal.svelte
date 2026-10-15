@@ -1,11 +1,11 @@
 <script lang="ts">
 	import closeIcon from '@iconify-icons/mdi/close';
 	import Icon from '@iconify/svelte';
-	import { mobile, surfaces } from '$lib/platform.svelte';
+	import { mobile, surfaces } from '#lib/platform.svelte.js';
 	import { Dialog } from 'bits-ui';
 	import { onDestroy, type Snippet } from 'svelte';
 	import { Drawer } from 'vaul-svelte';
-	import { verticalScrollbars } from '$lib/util/attachments';
+	import { verticalScrollbars } from '#lib/util/attachments.js';
 	import DrawerContentScope, { getDrawerDepth } from './DrawerContentScope.svelte';
 
 	let {

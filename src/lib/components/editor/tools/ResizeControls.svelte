@@ -1,6 +1,6 @@
 <script lang="ts">
-	import SelectField, { type SelectOption } from '$lib/components/common/SelectField.svelte';
-	import type { ResizeFit } from '$lib/util/editing';
+	import SelectField, { type SelectOption } from '#lib/components/common/SelectField.svelte';
+	import type { ResizeFit } from '#lib/util/editing.js';
 	import type { EditorSession } from '../editor-session.svelte';
 
 	let { session }: { session: EditorSession } = $props();

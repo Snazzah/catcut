@@ -6,7 +6,7 @@
 	import Icon from '@iconify/svelte';
 	import PlayerButton from './common/PlayerButton.svelte';
 	import PlayerSlider from './PlayerSlider.svelte';
-	import ResponsiveMenu from '$lib/components/common/ResponsiveMenu.svelte';
+	import ResponsiveMenu from '#lib/components/common/ResponsiveMenu.svelte';
 
 	let {
 		playbackRate,

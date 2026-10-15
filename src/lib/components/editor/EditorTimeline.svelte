@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
-	import { createTrimRange, expandTrimRangeToTime, stepTimelineTime } from '$lib/util/editing';
+	import { createTrimRange, expandTrimRangeToTime, stepTimelineTime } from '#lib/util/editing.js';
 	import type { EditorSession } from './editor-session.svelte';
 	import TimelinePreview from './TimelinePreview.svelte';
 

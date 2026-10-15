@@ -23,8 +23,8 @@ import {
 	type AudioAdjustment,
 	type ResizeAdjustment,
 	type SpeedAdjustment
-} from '$lib/util/editing';
-import type { PlayerState } from '$lib/player-state.svelte';
+} from '#lib/util/editing.js';
+import type { PlayerState } from '#lib/player-state.svelte.js';
 import {
 	ExportTask,
 	createExportDestination,
@@ -32,7 +32,7 @@ import {
 	getExportExtension,
 	getMatchingOutputFormat,
 	type ExportFormatId
-} from '$lib/util/export';
+} from '#lib/util/export.js';
 import type { EditorToolId } from './editor-tools';
 import { MetadataChangeSet } from './metadata-changeset.svelte';
 

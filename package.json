@@ -9,7 +9,7 @@
 		"preview": "bun run build && wrangler dev",
 		"deploy": "bun run build && wrangler deploy",
 		"cf-typegen": "wrangler types",
-		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && tsc --noEmit -p src/service-worker/tsconfig.json",
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write ."
 	},
@@ -27,8 +27,8 @@
 		"@mediabunny/mp3-encoder": "^1.60.0",
 		"@mediabunny/prores": "^1.60.0",
 		"@snazzah/mediabunny-hevc": "^0.1.0",
-		"@sveltejs/adapter-cloudflare": "7.2.9",
-		"@sveltejs/kit": "^2.70.3",
+		"@sveltejs/adapter-cloudflare": "8.0.1",
+		"@sveltejs/kit": "^3.1.0",
 		"@sveltejs/vite-plugin-svelte": "^7.3.1",
 		"@tailwindcss/vite": "^4.3.3",
 		"@types/wicg-file-system-access": "^2023.10.7",
@@ -41,7 +41,7 @@
 		"prettier-plugin-svelte": "^4.1.1",
 		"prettier-plugin-tailwindcss": "^0.8.1",
 		"pretty-ms": "^9.3.1",
-		"svelte": "^5.57.1",
+		"svelte": "^5.57.2",
 		"svelte-check": "^4.7.6",
 		"svelte-dnd-action": "^0.9.80",
 		"tailwindcss": "^4.3.3",
@@ -63,5 +63,9 @@
 		"mediabunny": "^1.60.0",
 		"overlayscrollbars": "^2.16.0",
 		"svelte-sonner": "^1.2.1"
+	},
+	"imports": {
+		"#lib": "./src/lib/index.js",
+		"#lib/*": "./src/lib/*"
 	}
 }

@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { updated } from '$app/state';
-	import { env } from '$env/dynamic/public';
+	import { PUBLIC_PLAUSIBLE_HOSTNAME } from '$app/env/public';
 	import '../app.css';
 	import { onMount, type Snippet } from 'svelte';
 	import { Tooltip } from 'bits-ui';
-	import { isDiscordActivity, initDiscordActivity } from '$lib/discord';
+	import { isDiscordActivity, initDiscordActivity } from '#lib/discord/index.js';
 	import { Toaster, toast } from 'svelte-sonner';
 
 	let { children }: { children: Snippet } = $props();
@@ -62,10 +62,10 @@
 </script>
 
 <svelte:head>
-	{#if env.PUBLIC_PLAUSIBLE_HOSTNAME}
+	{#if PUBLIC_PLAUSIBLE_HOSTNAME}
 		<script
 			data-domain="catcut.snaz.in"
-			src="https://{env.PUBLIC_PLAUSIBLE_HOSTNAME}/js/script.pageview-props.tagged-events.js"
+			src="https://{PUBLIC_PLAUSIBLE_HOSTNAME}/js/script.pageview-props.tagged-events.js"
 		></script>
 	{/if}
 </svelte:head>

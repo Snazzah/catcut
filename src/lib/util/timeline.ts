@@ -1,5 +1,5 @@
 import { AudioSampleSink, CanvasSink, type InputAudioTrack } from 'mediabunny';
-import type { PlayerState } from '$lib/player-state.svelte';
+import type { PlayerState } from '#lib/player-state.svelte.js';
 
 type TimelinePreviewOptions = {
 	player: PlayerState;

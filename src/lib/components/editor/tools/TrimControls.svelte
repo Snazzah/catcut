@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { createTrimRange } from '$lib/util/editing';
-	import TimeInput from '$lib/components/TimeInput.svelte';
+	import { createTrimRange } from '#lib/util/editing.js';
+	import TimeInput from '#lib/components/TimeInput.svelte';
 	import type { EditorSession } from '../editor-session.svelte';
 
 	let { session }: { session: EditorSession } = $props();

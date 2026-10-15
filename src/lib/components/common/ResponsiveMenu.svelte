@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { mobile, surfaces } from '$lib/platform.svelte';
-	import { verticalScrollbars } from '$lib/util/attachments';
+	import { mobile, surfaces } from '#lib/platform.svelte.js';
+	import { verticalScrollbars } from '#lib/util/attachments.js';
 	import { DropdownMenu, Popover } from 'bits-ui';
 	import { onDestroy, type Snippet } from 'svelte';
 	import { Drawer } from 'vaul-svelte';

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { catcut } from '$lib/icons';
-	import { registerAllCodecs } from '$lib/player-state.svelte';
+	import { catcut } from '#lib/icons.js';
+	import { registerAllCodecs } from '#lib/player-state.svelte.js';
 	import arrowIcon from '@iconify-icons/mdi/arrow-left';
 	import checkIcon from '@iconify-icons/mdi/check-circle';
 	import closeIcon from '@iconify-icons/mdi/close-circle';

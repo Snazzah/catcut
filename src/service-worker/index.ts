@@ -1,16 +1,22 @@
 /// <reference lib="webworker" />
 
-import { build, files, prerendered, version } from '$service-worker';
+import { version } from '$app/env';
+import { self } from '$app/service-worker';
+import { immutable, assets, prerendered } from '$app/manifest';
+import { asset, resolve } from '$app/paths';
 
 const CACHE_NAME = `catcut-${version}`;
 const SHARED_MEDIA_CACHE_NAME = 'catcut-shared-media';
-const appShell = [...build, ...prerendered];
+const appShell = [
+	...immutable.map(({ path }) => new URL(path, self.registration.scope).pathname),
+	...prerendered.map(({ path }) => resolve(path))
+];
 
 self.addEventListener('install', (event) => {
 	event.waitUntil(
 		caches.open(CACHE_NAME).then(async (cache) => {
 			await cache.addAll(appShell);
-			await Promise.all(files.map((asset) => cache.add(asset).catch(() => undefined)));
+			await Promise.all(assets.map(({ path }) => cache.add(asset(path)).catch(() => undefined)));
 		})
 	);
 });

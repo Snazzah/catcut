@@ -1,5 +1,5 @@
-import { env } from '$env/dynamic/public';
-import { browser } from '$app/environment';
+import { PUBLIC_DISCORD_CLIENT_ID } from '$app/env/public';
+import { browser } from '$app/env';
 
 export function isDiscordActivity() {
 	return browser && window.location.host.endsWith('.discordsays.com');
@@ -16,7 +16,7 @@ export async function initDiscordActivity() {
 	if (!isDiscordActivity() || sdk || initPromise) return;
 	initPromise = (async () => {
 		const { DiscordSDK } = await import('@discord/embedded-app-sdk');
-		sdk = new DiscordSDK(env.PUBLIC_DISCORD_CLIENT_ID!);
+		sdk = new DiscordSDK(PUBLIC_DISCORD_CLIENT_ID!);
 		await sdk.ready();
 	})();
 	await initPromise;

@@ -6,8 +6,8 @@
 	import dragIcon from '@iconify-icons/mdi/drag-vertical';
 	import Icon from '@iconify/svelte';
 	import { dndzone, type DndEvent } from 'svelte-dnd-action';
-	import { queue, createLocalMediaSource, type QueueEntry } from '$lib/store.svelte';
-	import { mobile } from '$lib/platform.svelte';
+	import { queue, createLocalMediaSource, type QueueEntry } from '#lib/store.svelte.js';
+	import { mobile } from '#lib/platform.svelte.js';
 	import PlayerButton from './common/PlayerButton.svelte';
 	import ResponsiveMenu from './common/ResponsiveMenu.svelte';
 

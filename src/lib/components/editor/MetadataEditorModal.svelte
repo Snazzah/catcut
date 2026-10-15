@@ -1,5 +1,5 @@
 <script lang="ts">
-	import ResponsiveModal from '$lib/components/common/ResponsiveModal.svelte';
+	import ResponsiveModal from '#lib/components/common/ResponsiveModal.svelte';
 	import CoverImageDropper from '../common/CoverImageDropper.svelte';
 	import TextInput from '../common/TextInput.svelte';
 	import NumberTotalInput from '../common/NumberTotalInput.svelte';
