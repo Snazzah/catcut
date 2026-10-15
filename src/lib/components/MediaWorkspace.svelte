@@ -4,6 +4,7 @@
 	import prettyMilliseconds from 'pretty-ms';
 	import { queue, type MediaSource } from '#lib/store.svelte.js';
 	import { PlayerState } from '#lib/player-state.svelte.js';
+	import { isDiscordActivity, activity } from '#lib/discord/index.svelte.js';
 	import EditingShell from './editor/EditingShell.svelte';
 	import EditorOverlayHost from './editor/EditorOverlayHost.svelte';
 	import { EditorSession } from './editor/editor-session.svelte';
@@ -87,15 +88,26 @@
 		}
 		if (result.kind === 'download') {
 			const file = result.file;
-			const url = URL.createObjectURL(file);
-			const link = document.createElement('a');
-			link.href = url;
-			link.download = file.name;
-			link.click();
-			setTimeout(() => {
-				URL.revokeObjectURL(url);
-				void result.dispose().catch(() => {});
-			}, 5 * 60_000);
+			if (isDiscordActivity()) {
+				// son...
+				try {
+					const data = new Uint8Array(await file.arrayBuffer());
+					const url = `data:${file.type || 'application/octet-stream'};base64,${data.toBase64()}`;
+					await activity.sdk!.commands.openExternalLink({ url });
+				} finally {
+					await result.dispose().catch(() => {});
+				}
+			} else {
+				const url = URL.createObjectURL(file);
+				const link = document.createElement('a');
+				link.href = url;
+				link.download = file.name;
+				link.click();
+				setTimeout(() => {
+					URL.revokeObjectURL(url);
+					result.dispose().catch(() => {});
+				}, 5_000);
+			}
 		}
 
 		toast.success(`Saved your file! This took ${prettyMilliseconds(result.durationMs)}.`);

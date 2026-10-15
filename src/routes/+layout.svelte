@@ -4,7 +4,7 @@
 	import '../app.css';
 	import { onMount, type Snippet } from 'svelte';
 	import { Tooltip } from 'bits-ui';
-	import { isDiscordActivity, initDiscordActivity } from '#lib/discord/index.js';
+	import { isDiscordActivity, initDiscord } from '#lib/discord/index.svelte.js';
 	import { Toaster, toast } from 'svelte-sonner';
 	import { dev } from '$app/env';
 	import { resolve } from '$app/paths';
@@ -84,12 +84,11 @@
 				}
 			}
 
-			if (document.readyState === 'complete') void registerServiceWorker();
-			else
-				window.addEventListener('load', () => void registerServiceWorker(), { once: true, signal });
+			if (document.readyState === 'complete') registerServiceWorker();
+			else window.addEventListener('load', () => registerServiceWorker(), { once: true, signal });
 		}
 
-		if (isDiscordActivity()) initDiscordActivity();
+		if (isDiscordActivity()) initDiscord();
 
 		return () => {
 			disposed = true;
