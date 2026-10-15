@@ -6,6 +6,7 @@
 	import { Tooltip } from 'bits-ui';
 	import { isDiscordActivity, initDiscordActivity } from '#lib/discord/index.js';
 	import { Toaster, toast } from 'svelte-sonner';
+	import { dev } from '$app/env';
 
 	let { children }: { children: Snippet } = $props();
 
@@ -47,17 +48,22 @@
 			navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
 		}
 
-		if ('serviceWorker' in navigator) {
-			void watchForServiceWorkerUpdate();
+		if ('serviceWorker' in navigator && !dev && !isDiscordActivity()) {
+			const script_url = './service-worker.js';
+			const policy = globalThis?.window?.trustedTypes?.createPolicy(
+				'sveltekit-trusted-url',
+				{ createScriptURL(url) { return url; } }
+			);
+			const sanitised = policy?.createScriptURL(script_url) as unknown as URL ?? script_url;
+			addEventListener('load', function () {
+				navigator.serviceWorker.register(sanitised, { type: 'module' });
+			});
+			watchForServiceWorkerUpdate();
 		}
 
-		if (isDiscordActivity()) {
-			initDiscordActivity().catch((err) => console.error('Discord activity init failed', err));
-		}
+		if (isDiscordActivity()) initDiscordActivity();
 
-		return () => {
-			disposed = true;
-		};
+		return () => (disposed = true);
 	});
 </script>
 

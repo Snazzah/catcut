@@ -12,7 +12,8 @@ export default defineConfig({
 			// for more information about preprocessors
 			preprocess: vitePreprocess(),
 			adapter: adapter(),
-			version: { pollInterval: 60000 }
+			version: { pollInterval: 60000 },
+			serviceWorker: { register: false }
 		})
 	],
 	resolve: { dedupe: ['mediabunny'] },

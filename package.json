@@ -31,6 +31,7 @@
 		"@sveltejs/kit": "^3.1.0",
 		"@sveltejs/vite-plugin-svelte": "^7.3.1",
 		"@tailwindcss/vite": "^4.3.3",
+		"@types/trusted-types": "^2.0.7",
 		"@types/wicg-file-system-access": "^2023.10.7",
 		"bits-ui": "^2.19.3",
 		"eslint": "^10.11.0",

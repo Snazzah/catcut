@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"sourceMap": true,
 		"strict": true,
-		"types": ["$app/types", "wicg-file-system-access"]
+		"types": ["$app/types", "wicg-file-system-access", "trusted-types"]
 	},
 	"include": ["src", "vite.config.ts", "eslint.config.js"],
 	"exclude": ["src/service-worker"]
