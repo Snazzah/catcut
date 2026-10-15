@@ -73,19 +73,19 @@
       "form_factor": "wide"
     },
     {
-      "src": "/images/screenshots/mobile-audio.jpeg",
+      "src": "/images/screenshots/mobile-audio.jpg",
       "sizes": "1080x2101",
       "type": "image/jpeg",
       "form_factor": "narrow"
     },
     {
-      "src": "/images/screenshots/mobile-audio-editing.jpeg",
+      "src": "/images/screenshots/mobile-audio-editing.jpg",
       "sizes": "1080x2101",
       "type": "image/jpeg",
       "form_factor": "narrow"
     },
     {
-      "src": "/images/screenshots/mobile-audio-metadata.jpeg",
+      "src": "/images/screenshots/mobile-audio-metadata.jpg",
       "sizes": "1080x2101",
       "type": "image/jpeg",
       "form_factor": "narrow"
