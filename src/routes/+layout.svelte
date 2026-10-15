@@ -7,11 +7,12 @@
 	import { isDiscordActivity, initDiscordActivity } from '#lib/discord/index.js';
 	import { Toaster, toast } from 'svelte-sonner';
 	import { dev } from '$app/env';
+	import { resolve } from '$app/paths';
 
 	let { children }: { children: Snippet } = $props();
 
 	$effect(() => {
-		if (!updated.current || !('serviceWorker' in navigator)) return;
+		if (dev || isDiscordActivity() || !updated.current || !('serviceWorker' in navigator)) return;
 
 		navigator.serviceWorker.ready
 			.then((registration) => registration.update())
@@ -20,6 +21,8 @@
 
 	onMount(() => {
 		let disposed = false;
+		const listeners = new AbortController();
+		const { signal } = listeners;
 		updated.check();
 
 		function showUpdateToast(registration: ServiceWorkerRegistration) {
@@ -35,35 +38,63 @@
 			});
 		}
 
-		async function watchForServiceWorkerUpdate() {
-			const registration = await navigator.serviceWorker.ready;
+		function watchForServiceWorkerUpdate(registration: ServiceWorkerRegistration) {
 			if (disposed) return;
 
 			showUpdateToast(registration);
-			registration.addEventListener('updatefound', () => {
-				registration.installing?.addEventListener('statechange', () =>
-					showUpdateToast(registration)
+			function watchInstallingWorker() {
+				registration.installing?.addEventListener(
+					'statechange',
+					() => showUpdateToast(registration),
+					{ signal }
 				);
-			});
-			navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
+			}
+			watchInstallingWorker();
+			registration.addEventListener('updatefound', watchInstallingWorker, { signal });
 		}
 
 		if ('serviceWorker' in navigator && !dev && !isDiscordActivity()) {
-			const script_url = './service-worker.js';
-			const policy = globalThis?.window?.trustedTypes?.createPolicy(
-				'sveltekit-trusted-url',
-				{ createScriptURL(url) { return url; } }
+			let hasController = !!navigator.serviceWorker.controller;
+			navigator.serviceWorker.addEventListener(
+				'controllerchange',
+				() => {
+					if (hasController) window.location.reload();
+					else hasController = true;
+				},
+				{ signal }
 			);
-			const sanitised = policy?.createScriptURL(script_url) as unknown as URL ?? script_url;
-			addEventListener('load', function () {
-				navigator.serviceWorker.register(sanitised, { type: 'module' });
-			});
-			watchForServiceWorkerUpdate();
+
+			async function registerServiceWorker() {
+				try {
+					const scriptUrl = new URL(`${resolve('')}service-worker.js`, window.location.origin);
+					const policy = window.trustedTypes?.createPolicy('sveltekit-trusted-url', {
+						createScriptURL: (url: string) => {
+							if (url !== scriptUrl.href) throw new TypeError('Unexpected service worker URL');
+							return url;
+						}
+					});
+					const sanitised =
+						(policy?.createScriptURL(scriptUrl.href) as unknown as URL) ?? scriptUrl;
+					const registration = await navigator.serviceWorker.register(sanitised, {
+						type: 'module'
+					});
+					watchForServiceWorkerUpdate(registration);
+				} catch (err) {
+					console.warn('Service worker registration failed', err);
+				}
+			}
+
+			if (document.readyState === 'complete') void registerServiceWorker();
+			else
+				window.addEventListener('load', () => void registerServiceWorker(), { once: true, signal });
 		}
 
 		if (isDiscordActivity()) initDiscordActivity();
 
-		return () => (disposed = true);
+		return () => {
+			disposed = true;
+			listeners.abort();
+		};
 	});
 </script>
 
