@@ -175,7 +175,8 @@
 	<div
 		class={[
 			'min-h-0 overflow-hidden bg-black transition-[padding] duration-300 ease-out motion-reduce:transition-none',
-			editing && player.hasVideo ? 'px-3 pt-[calc(3rem+var(--sait))] pb-3 sm:px-8 sm:pb-4' : ''
+			editing ? 'pt-[calc(3rem+var(--sait))]' : '',
+			editing && player.hasVideo ? 'px-3 pb-3 sm:px-8 sm:pb-4' : ''
 		]}
 	>
 		<Player
