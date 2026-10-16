@@ -14,11 +14,8 @@
 
 	function handleScroll() {
 		const scroll = window.scrollY;
-		if (!mobile.current) {
-			visible = true;
-		} else if (!hashChanged && scroll !== lastScroll) {
-			visible = scroll < 50 || scroll < lastScroll;
-		}
+		if (!mobile.current) visible = true;
+		else if (!hashChanged && scroll !== lastScroll) visible = scroll < 50 || scroll < lastScroll;
 		lastScroll = scroll;
 		hashChanged = false;
 	}

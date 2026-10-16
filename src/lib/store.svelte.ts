@@ -47,6 +47,10 @@ export class Queue {
 	#nextId = 0;
 	#activeId = $state<number | null>(null);
 
+	get active() {
+		return this.entries.length > 0;
+	}
+
 	get activeEntry() {
 		return this.entries[this.#activeIndex] ?? null;
 	}

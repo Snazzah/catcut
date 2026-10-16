@@ -16,7 +16,7 @@
 	let { children }: { children: Snippet } = $props();
 	let showHeader = $derived(
 		page.url.pathname !== resolve('/') ||
-			(!queue.source && activity.layoutMode !== 1 && activity.layoutMode !== 2)
+			(!queue.active && activity.layoutMode !== 1 && activity.layoutMode !== 2)
 	);
 
 	onMount(() => {
