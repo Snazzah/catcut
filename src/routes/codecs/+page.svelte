@@ -1,14 +1,12 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
-	import { catcut } from '#lib/icons.js';
 	import { registerAllCodecs } from '#lib/player-state.svelte.js';
-	import arrowIcon from '@iconify-icons/mdi/arrow-left';
 	import checkIcon from '@iconify-icons/mdi/check-circle';
 	import closeIcon from '@iconify-icons/mdi/close-circle';
 	import loadingIcon from '@iconify-icons/mdi/loading';
 	import Icon from '@iconify/svelte';
 	import { getDecodableCodecs, getEncodableCodecs, type MediaCodec } from 'mediabunny';
 	import { onMount } from 'svelte';
+	import PageContent from '#lib/components/PageContent.svelte';
 
 	type CodecRow = {
 		name: string;
@@ -97,30 +95,19 @@
 	<link href="https://catcut.snaz.in/codecs" rel="canonical" />
 </svelte:head>
 
-<main class="mx-auto min-h-svh w-full max-w-xl p-4 pt-[calc(var(--sait,0)+var(--spacing)*4)]">
-	<header>
-		<a
-			href={resolve('/')}
-			class="flex items-center gap-2 text-xl font-black text-neutral-500 hover:text-neutral-300"
-		>
-			<Icon icon={arrowIcon} class="size-6" />
-			<Icon icon={catcut} class="size-6" />
-			<span class="text-accent">catcut</span>
-		</a>
-	</header>
-
-	<section class="mt-6 mb-4">
+<PageContent>
+	<section class="mb-4">
 		<h1 class="text-2xl font-bold text-white">Codec compatibility</h1>
-		<p class="mt-2 text-sm text-neutral-400">
+		<p class="mt-2 text-neutral-300">
 			Check your browser's supported codecs using <a
 				href="https://mediabunny.dev/codec-registry/overview"
 				target="_blank"
-				class="text-accent hover:underline">Mediabunny's codec registry</a
+				class="text-violet-400 hover:underline">Mediabunny's codec registry</a
 			>.
 		</p>
 	</section>
 
-	<ul class="flex flex-wrap gap-x-4 gap-y-2 text-xs text-neutral-400" aria-label="Support legend">
+	<ul class="flex flex-wrap gap-x-4 gap-y-2 text-xs text-neutral-300" aria-label="Support legend">
 		<li class="flex items-center gap-1.5">
 			<Icon icon={checkIcon} class="size-4 text-emerald-400" aria-hidden="true" />
 			Native support
@@ -164,7 +151,7 @@
 			</div>
 		</section>
 	{/each}
-</main>
+</PageContent>
 
 {#snippet supportIndicator(
 	codecs: readonly MediaCodec[],

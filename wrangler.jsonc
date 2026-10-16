@@ -4,9 +4,9 @@
 	"main": ".svelte-kit/cloudflare/_worker.js",
 	"compatibility_date": "2026-09-15",
 	"compatibility_flags": ["nodejs_compat"],
-  "vars": {
-    "PUBLIC_DISCORD_CLIENT_ID": "1549966039054549002"
-  },
+	"vars": {
+		"PUBLIC_DISCORD_CLIENT_ID": "1549966039054549002"
+	},
 	"assets": {
 		"binding": "ASSETS",
 		"directory": ".svelte-kit/cloudflare"

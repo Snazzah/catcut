@@ -1,6 +1,8 @@
 @import 'tailwindcss' source('./');
 @import 'tw-animate-css';
 
+@plugin '@tailwindcss/typography';
+
 @font-face {
 	font-family: 'Satoshi';
 	src: url('/fonts/Satoshi-Variable.woff2') format('woff2');

@@ -1,15 +1,35 @@
 <script lang="ts">
-	import { updated } from '$app/state';
+	import { page, updated } from '$app/state';
 	import { PUBLIC_PLAUSIBLE_HOSTNAME } from '$app/env/public';
 	import '../app.css';
 	import { onMount, type Snippet } from 'svelte';
 	import { Tooltip } from 'bits-ui';
-	import { isDiscordActivity, initDiscord } from '#lib/discord/index.svelte.js';
+	import { activity, isDiscordActivity, initDiscord } from '#lib/discord/index.svelte.js';
+	import Header from '#lib/components/Header.svelte';
+	import { queue } from '#lib/store.svelte.js';
 	import { Toaster, toast } from 'svelte-sonner';
 	import { dev } from '$app/env';
 	import { resolve } from '$app/paths';
+	import { OverlayScrollbars } from 'overlayscrollbars';
+	import 'overlayscrollbars/overlayscrollbars.css';
 
 	let { children }: { children: Snippet } = $props();
+	let showHeader = $derived(
+		page.url.pathname !== resolve('/') ||
+			(!queue.source && activity.layoutMode !== 1 && activity.layoutMode !== 2)
+	);
+
+	onMount(() => {
+		const scrollbars = OverlayScrollbars(document.body, {
+			scrollbars: {
+				theme: 'os-theme-light',
+				autoHide: 'scroll',
+				autoHideDelay: 500
+			}
+		});
+
+		return () => scrollbars.destroy();
+	});
 
 	$effect(() => {
 		if (dev || isDiscordActivity() || !updated.current || !('serviceWorker' in navigator)) return;
@@ -111,6 +131,9 @@
 		class="fixed top-0 right-0 left-0 -z-1 h-svh bg-linear-to-b from-transparent via-violet-300/2 to-violet-500/5"
 	></div>
 	<Tooltip.Provider>
+		{#if showHeader}
+			<Header />
+		{/if}
 		{@render children()}
 	</Tooltip.Provider>
 	<Toaster richColors closeButton theme="dark" position="bottom-right" />

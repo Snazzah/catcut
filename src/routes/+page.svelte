@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
 	import FileDrop from '#lib/components/FileDrop.svelte';
 	import MediaWorkspace from '#lib/components/MediaWorkspace.svelte';
 	import ResponsiveModal from '#lib/components/common/ResponsiveModal.svelte';
@@ -194,9 +193,9 @@
 
 		<FileDrop dragging={draggingMedia} onselect={(sources) => queue.replace(...sources)} />
 
-		<div class="fixed bottom-0 flex flex-wrap gap-2 p-2 font-medium">
+		<!-- <div class="fixed bottom-0 flex flex-wrap gap-2 p-2 font-medium">
 			<a href={resolve('codecs')} class="hover:text-white hover:underline">Codecs</a>
-		</div>
+		</div> -->
 	{/if}
 </main>
 

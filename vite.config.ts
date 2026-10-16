@@ -1,3 +1,4 @@
+import { mdsvex } from 'mdsvex';
 import adapter from '@sveltejs/adapter-cloudflare';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { sveltekit } from '@sveltejs/kit/vite';
@@ -10,10 +11,11 @@ export default defineConfig({
 		sveltekit({
 			// Consult https://kit.svelte.dev/docs/integrations#preprocessors
 			// for more information about preprocessors
-			preprocess: vitePreprocess(),
+			preprocess: [vitePreprocess(), mdsvex({ extensions: ['.svx', '.md'] })],
 			adapter: adapter(),
 			version: { pollInterval: 60000 },
-			serviceWorker: { register: false }
+			serviceWorker: { register: false },
+			extensions: ['.svelte', '.svx', '.md']
 		})
 	],
 	resolve: { dedupe: ['mediabunny'] },
