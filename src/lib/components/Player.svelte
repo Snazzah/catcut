@@ -182,13 +182,14 @@
 	function handleKeydown(event: KeyboardEvent) {
 		if (event.defaultPrevented) return;
 
-		if (
-			event.target instanceof HTMLElement &&
-			event.target.closest(
-				'button, a, input, select, textarea, [contenteditable="true"], [role="slider"]'
+		if (event.target instanceof HTMLElement) {
+			if (event.target.closest('[role="slider"]')) {
+				if (event.code !== 'Space' && event.code !== 'KeyK') return;
+			} else if (
+				event.target.closest('button, a, input, select, textarea, [contenteditable="true"]')
 			)
-		)
-			return;
+				return;
+		}
 
 		if (event.code === 'Space' || event.code === 'KeyK') {
 			void player.togglePlayback();

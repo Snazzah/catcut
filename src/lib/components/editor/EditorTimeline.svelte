@@ -67,6 +67,8 @@
 		dragging = null;
 		void player.endScrub(handle === 'start' ? next.start : next.end, resumeAfterScrub);
 		resumeAfterScrub = false;
+		// Blur the trim handle cause thats annoying when using keybinds
+		if (event.currentTarget instanceof HTMLElement) event.currentTarget.blur();
 	}
 
 	function cancelHandleDrag() {
