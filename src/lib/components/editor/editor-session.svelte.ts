@@ -185,14 +185,15 @@ export class EditorSession {
 			this.saveState = { status: 'complete' };
 			return { kind: 'download', file, durationMs, dispose: destination.dispose };
 		} catch (error) {
+			const aborted = error instanceof DOMException && error.name === 'AbortError';
+			if (!aborted) console.error('Export failed:', error);
 			if (this.#job === job) {
-				this.saveState =
-					error instanceof DOMException && error.name === 'AbortError'
-						? { status: 'idle' }
-						: {
-								status: 'error',
-								message: error instanceof Error ? error.message : String(error)
-							};
+				this.saveState = aborted
+					? { status: 'idle' }
+					: {
+							status: 'error',
+							message: error instanceof Error ? error.message : String(error)
+						};
 			}
 			return null;
 		} finally {

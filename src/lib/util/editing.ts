@@ -141,6 +141,7 @@ export function createEditState({
 }
 
 function transformAudioSample(sample: AudioSample, gain: number): AudioSample {
+	if (sample.numberOfFrames === 0) return sample.clone();
 	const planeLength = sample.numberOfFrames;
 	const data = new Float32Array(planeLength * sample.numberOfChannels);
 
