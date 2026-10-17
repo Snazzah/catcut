@@ -17,6 +17,7 @@
 	import { mobile, narrowViewport, naturallyFullscreen, surfaces } from '#lib/platform.svelte.js';
 	import { isDiscordActivity } from '#lib/discord/index.svelte.js';
 	import { browser } from '$app/env';
+	import { toast } from 'svelte-sonner';
 
 	const SEEK_STEP_COUNT = 10_000;
 	const MOBILE_CONTROLS_TIMEOUT_MS = 3_000;
@@ -83,20 +84,49 @@
 		} else if (!surfaces.open && mobileControlsVisible) showMobileControls();
 	});
 
+	// Mirror player state onto the PiP video. play() isn't awaited since the
+	// canvas stream only gets frames on draw, so it can hang while we're paused
+	$effect(() => {
+		if (!pip) return;
+		if (player.paused) pipVideo.pause();
+		else pipVideo.play().catch(() => {});
+	});
+
+	function requestPipFrame() {
+		const [track] = (pipVideo.srcObject as MediaStream | null)?.getVideoTracks() ?? [];
+		(track as CanvasCaptureMediaStreamTrack | undefined)?.requestFrame();
+	}
+
+	// mobile pip works but sucks when its focused out of the page...
 	async function togglePip() {
 		if (pip) return document.exitPictureInPicture();
 
-		pipVideo.srcObject ??= canvas.captureStream();
-		// The stream only gets frames on draw, so force one in case we're paused
-		const [track] = (pipVideo.srcObject as MediaStream).getVideoTracks();
-		(track as CanvasCaptureMediaStreamTrack | undefined)?.requestFrame();
-		await pipVideo.play();
-		await pipVideo.requestPictureInPicture();
+		try {
+			pipVideo.srcObject ??= canvas.captureStream();
+
+			// wait for metadata
+			if (pipVideo.readyState < HTMLMediaElement.HAVE_METADATA) {
+				const loaded = new Promise((resolve) =>
+					pipVideo.addEventListener('loadedmetadata', resolve, { once: true })
+				);
+				requestPipFrame();
+				await loaded;
+			}
+
+			await pipVideo.requestPictureInPicture();
+			requestPipFrame();
+		} catch (e) {
+			console.error('Failed to enter picture-in-picture', e);
+			toast.error(`Failed to enter picture-in-picture: ${e}`);
+		}
 	}
 
 	onMount(() => {
 		documentFocused = document.hasFocus();
 		player.attachCanvas(canvas);
+		// Set the stream up early so metadata is ready when PiP is requested,
+		// otherwise waiting on it can outlast the click's user activation
+		if (pipSupported) pipVideo.srcObject = canvas.captureStream();
 
 		// Svelte doesn't type these events
 		pipVideo.addEventListener('enterpictureinpicture', () => (pip = true));
@@ -289,6 +319,12 @@
 			muted
 			playsinline
 			bind:this={pipVideo}
+			onplay={() => {
+				if (pip) player.play();
+			}}
+			onpause={() => {
+				if (pip) player.pause();
+			}}
 		></video>
 
 		{@render overlay?.()}
