@@ -2,7 +2,10 @@
 	import arrowLeftIcon from '@iconify-icons/mdi/arrow-left';
 	import chevronRightIcon from '@iconify-icons/mdi/chevron-right';
 	import cogIcon from '@iconify-icons/mdi/cog';
+	import pipIcon from '@iconify-icons/mdi/picture-in-picture-bottom-right-outline';
 	import speedometerIcon from '@iconify-icons/mdi/speedometer';
+	import toggleSwitchIcon from '@iconify-icons/mdi/toggle-switch';
+	import toggleSwitchOffIcon from '@iconify-icons/mdi/toggle-switch-off-outline';
 	import Icon from '@iconify/svelte';
 	import PlayerButton from './common/PlayerButton.svelte';
 	import PlayerSlider from './PlayerSlider.svelte';
@@ -10,10 +13,16 @@
 
 	let {
 		playbackRate,
-		onPlaybackRateChange
+		onPlaybackRateChange,
+		pip,
+		pipAllowed,
+		onPipToggle
 	}: {
 		playbackRate: number;
 		onPlaybackRateChange: (playbackRate: number) => void;
+		pip: boolean;
+		pipAllowed: boolean;
+		onPipToggle: () => void;
 	} = $props();
 
 	let page = $state<'settings' | 'playback-speed'>('settings');
@@ -39,6 +48,22 @@
 			<span class="ml-auto text-neutral-300 tabular-nums">{playbackRate}x</span>
 			<Icon icon={chevronRightIcon} class="size-5 text-neutral-400" aria-hidden="true" />
 		</button>
+		{#if pipAllowed}
+			<button
+				type="button"
+				class="flex w-full cursor-pointer items-center gap-3 rounded px-3 py-2.5 text-left text-base text-neutral-100 hover:bg-white/10 focus-visible:bg-white/10 focus-visible:outline-none sm:text-sm"
+				aria-pressed={pip}
+				onclick={onPipToggle}
+			>
+				<Icon icon={pipIcon} class="size-5 text-neutral-300" aria-hidden="true" />
+				<span class="font-medium">Picture-in-picture</span>
+				<Icon
+					icon={pip ? toggleSwitchIcon : toggleSwitchOffIcon}
+					class="ml-auto size-7 {pip ? 'text-violet-300' : 'text-neutral-400'}"
+					aria-hidden="true"
+				/>
+			</button>
+		{/if}
 	{:else}
 		<div class="grid gap-4 px-3 py-2">
 			<div class="flex items-center gap-2">

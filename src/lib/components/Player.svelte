@@ -15,6 +15,8 @@
 	import PlayerVolumeControl from './PlayerVolumeControl.svelte';
 	import Icon from '@iconify/svelte';
 	import { mobile, narrowViewport, naturallyFullscreen, surfaces } from '#lib/platform.svelte.js';
+	import { isDiscordActivity } from '#lib/discord/index.svelte.js';
+	import { browser } from '$app/env';
 
 	const SEEK_STEP_COUNT = 10_000;
 	const MOBILE_CONTROLS_TIMEOUT_MS = 3_000;
@@ -38,6 +40,9 @@
 		overlay
 	}: Props = $props();
 	let canvas: HTMLCanvasElement;
+	let pipVideo: HTMLVideoElement;
+	let pip = $state(false);
+	const pipSupported = browser && document.pictureInPictureEnabled && !isDiscordActivity();
 	let scrubTime = $state<number | null>(null);
 	let scrubbing = false;
 	let resumeAfterScrub = false;
@@ -78,9 +83,27 @@
 		} else if (!surfaces.open && mobileControlsVisible) showMobileControls();
 	});
 
+	async function togglePip() {
+		if (pip) return document.exitPictureInPicture();
+
+		pipVideo.srcObject ??= canvas.captureStream();
+		// The stream only gets frames on draw, so force one in case we're paused
+		const [track] = (pipVideo.srcObject as MediaStream).getVideoTracks();
+		(track as CanvasCaptureMediaStreamTrack | undefined)?.requestFrame();
+		await pipVideo.play();
+		await pipVideo.requestPictureInPicture();
+	}
+
 	onMount(() => {
 		documentFocused = document.hasFocus();
 		player.attachCanvas(canvas);
+
+		// Svelte doesn't type these events
+		pipVideo.addEventListener('enterpictureinpicture', () => (pip = true));
+		pipVideo.addEventListener('leavepictureinpicture', () => {
+			pip = false;
+			pipVideo.pause();
+		});
 
 		return () => {
 			clearMobileControlsTimeout();
@@ -258,6 +281,15 @@
 			onclick={handlePlayerClick}
 		></canvas>
 
+		<!-- For picture-in-picture -->
+		<video
+			class="pointer-events-none absolute size-px opacity-0"
+			aria-hidden="true"
+			muted
+			playsinline
+			bind:this={pipVideo}
+		></video>
+
 		{@render overlay?.()}
 	</div>
 
@@ -346,6 +378,9 @@
 					<PlayerSettings
 						playbackRate={player.playbackRate}
 						onPlaybackRateChange={(playbackRate) => player.setPlaybackRate(playbackRate)}
+						{pip}
+						pipAllowed={pipSupported && player.hasVideo}
+						onPipToggle={() => void togglePip()}
 					/>
 
 					{#if !naturallyFullscreen.current}
