@@ -132,7 +132,7 @@
 
 	function handlePlayerClick() {
 		if (!mobile.current) {
-			void player.togglePlayback();
+			player.togglePlayback();
 			return;
 		}
 
@@ -162,7 +162,7 @@
 		scrubTime = null;
 		scrubbing = false;
 		resumeAfterScrub = false;
-		void player.endScrub(time, shouldResume);
+		player.endScrub(time, shouldResume);
 	}
 
 	function downloadFrame() {
@@ -192,23 +192,23 @@
 		}
 
 		if (event.code === 'Space' || event.code === 'KeyK') {
-			void player.togglePlayback();
+			player.togglePlayback();
 		} else if (event.code === 'ArrowLeft') {
-			void player.seek(player.currentTime - 5);
+			player.seek(player.currentTime - 5);
 		} else if (event.code === 'ArrowRight') {
-			void player.seek(player.currentTime + 5);
+			player.seek(player.currentTime + 5);
 		} else if (player.paused && (event.code === 'Comma' || event.code === 'Period')) {
-			void player.stepFrame(event.code === 'Comma' ? -1 : 1);
+			player.stepFrame(event.code === 'Comma' ? -1 : 1);
 		} else if (event.code === 'KeyM') {
 			player.toggleMuted();
 		} else if (event.code === 'KeyP') {
-			void downloadFrame();
+			downloadFrame();
 		} else if (event.code === 'KeyF') {
-			void onfullscreen();
+			onfullscreen();
 		} else if (event.code === 'KeyE') {
-			void onedit?.();
+			onedit?.();
 		} else if (event.code === 'Escape') {
-			void onclose();
+			onclose();
 		} else {
 			return;
 		}
@@ -381,14 +381,14 @@
 						onPlaybackRateChange={(playbackRate) => player.setPlaybackRate(playbackRate)}
 						{pip}
 						pipAllowed={pipSupported && player.hasVideo}
-						onPipToggle={() => void togglePip()}
+						onPipToggle={() => togglePip()}
 					/>
 
 					{#if !naturallyFullscreen.current}
 						<PlayerButton
 							title="Fullscreen"
 							icon={fullscreenIcon}
-							onclick={() => void onfullscreen()}
+							onclick={() => onfullscreen()}
 							key="F"
 							offset={36}
 						/>

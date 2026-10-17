@@ -32,7 +32,7 @@
 	function handleLoadError(message: string) {
 		if (queue.activeEntry) queue.remove(queue.activeEntry.id);
 		editing = false;
-		void showLoadError(message);
+		showLoadError(message);
 	}
 
 	function isMediaType(type: string) {
@@ -51,7 +51,7 @@
 			);
 			if (files.length) queue.add(...files.map(createLocalMediaSource));
 		} catch (error) {
-			void showLoadError(error instanceof Error ? error.message : String(error));
+			showLoadError(error instanceof Error ? error.message : String(error));
 		}
 	}
 
@@ -60,7 +60,7 @@
 		const mediaUrl = location.searchParams.get('url');
 		if (mediaUrl) queue.replace(createRemoteMediaSource(mediaUrl));
 		const sharedMediaId = location.searchParams.get('shared-media');
-		if (sharedMediaId) void openSharedMedia(sharedMediaId);
+		if (sharedMediaId) openSharedMedia(sharedMediaId);
 		const shareError = location.searchParams.get('share-error');
 		if (shareError) {
 			const messages: Record<string, string> = {
@@ -70,7 +70,7 @@
 				storage: 'Chrome could not store the shared file on this device.'
 			};
 			const mime = location.searchParams.get('mime');
-			void showLoadError(
+			showLoadError(
 				shareError === 'type'
 					? `The shared file has an unsupported type: ${mime || '(empty)'}.`
 					: (messages[shareError] ?? 'Could not import the shared media.')
@@ -81,7 +81,7 @@
 			window.history.replaceState(window.history.state, '', location);
 		}
 
-		window.launchQueue?.setConsumer((launchParams) => void openLaunchFile(launchParams));
+		window.launchQueue?.setConsumer((launchParams) => openLaunchFile(launchParams));
 	});
 
 	async function openSharedMedia(id: string) {
@@ -102,7 +102,7 @@
 			queue.replace(createLocalMediaSource(file));
 			await cache.delete(key).catch(() => undefined);
 		} catch {
-			void showLoadError(failure);
+			showLoadError(failure);
 		} finally {
 			const url = new URL(window.location.href);
 			url.searchParams.delete('shared-media');

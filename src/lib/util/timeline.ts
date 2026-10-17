@@ -204,7 +204,7 @@ function getWaveformCacheEntry(audioTrack: InputAudioTrack, startTime: number, e
 	const ready = populateWaveformEnvelope(audioTrack, startTime, endTime, envelope, abortController);
 	const entry = { envelope, abortController, ready } satisfies WaveformCacheEntry;
 	waveformCache.set(audioTrack, entry);
-	void ready.catch(() => {
+	ready.catch(() => {
 		if (waveformCache.get(audioTrack) === entry) waveformCache.delete(audioTrack);
 	});
 	return entry;

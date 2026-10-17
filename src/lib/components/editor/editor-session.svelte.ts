@@ -208,7 +208,7 @@ export class EditorSession {
 		if (!job) return;
 		this.#job = null;
 		this.saveState = { status: 'idle' };
-		if (job.task) void job.task.cancel();
+		if (job.task) job.task.cancel();
 		else job.input.dispose();
 	}
 

@@ -197,7 +197,7 @@
 
 	<div class="min-h-0 overflow-hidden">
 		{#if editing}
-			<EditingShell session={editor} onfullscreen={toggleFullscreen} onsave={() => void save()} />
+			<EditingShell session={editor} onfullscreen={toggleFullscreen} onsave={() => save()} />
 		{/if}
 	</div>
 </section>

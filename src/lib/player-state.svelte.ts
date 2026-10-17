@@ -328,7 +328,7 @@ export class PlayerState {
 		const artworkSink = videoTrack
 			? new CanvasSink(videoTrack, { width: 512, height: 512, fit: 'cover' })
 			: null;
-		void this.#loadMediaSessionArtwork(tags, artworkSink, input).catch(() => {});
+		this.#loadMediaSessionArtwork(tags, artworkSink, input).catch(() => {});
 		await this.#restartVideoIterator();
 	}
 
@@ -363,10 +363,10 @@ export class PlayerState {
 		this.#updateMediaSessionState();
 
 		if (this.#audioSink) {
-			void this.#audioBufferIterator?.return();
+			this.#audioBufferIterator?.return();
 			const iterator = this.#audioSink.buffers(this.#getPlaybackTime());
 			this.#audioBufferIterator = iterator;
-			void this.#runAudioIterator(iterator);
+			this.#runAudioIterator(iterator);
 		}
 	}
 
@@ -378,7 +378,7 @@ export class PlayerState {
 		this.#playbackTimeAtStart = Math.min(this.#getPlaybackTime(), this.#endTimestamp);
 		this.currentTime = this.#playbackTimeAtStart;
 		this.paused = true;
-		void this.#audioBufferIterator?.return();
+		this.#audioBufferIterator?.return();
 		this.#audioBufferIterator = null;
 		this.#stopQueuedAudio();
 		this.#disconnectSoundTouchNode();
@@ -502,11 +502,11 @@ export class PlayerState {
 		this.#updateMediaSessionPosition();
 
 		if (!this.paused && this.#audioSink) {
-			void this.#audioBufferIterator?.return();
+			this.#audioBufferIterator?.return();
 			this.#stopQueuedAudio();
 			const iterator = this.#audioSink.buffers(this.#playbackTimeAtStart);
 			this.#audioBufferIterator = iterator;
-			void this.#runAudioIterator(iterator);
+			this.#runAudioIterator(iterator);
 		}
 	}
 
@@ -553,7 +553,7 @@ export class PlayerState {
 		this.#asyncId += 1;
 		this.#cancelScrubPreview();
 		this.pause();
-		void this.#videoFrameIterator?.return().catch(() => {});
+		this.#videoFrameIterator?.return().catch(() => {});
 		this.#videoFrameIterator = null;
 		this.#nextFrame = null;
 		this.#lastDrawnFrame = null;
@@ -568,7 +568,7 @@ export class PlayerState {
 		this.#disconnectSoundTouchNode();
 		this.#gainNode?.disconnect();
 		this.#audioContext?.removeEventListener('statechange', this.#handleAudioContextStateChange);
-		void this.#audioContext?.close();
+		this.#audioContext?.close();
 		this.#soundTouchNodeFactory = null;
 		this.#gainNode = null;
 		this.#audioContext = null;
@@ -666,7 +666,7 @@ export class PlayerState {
 		if (this.#nextFrame && this.#nextFrame.timestamp <= playbackTime) {
 			this.#draw(this.#nextFrame);
 			this.#nextFrame = null;
-			void this.#updateNextFrame();
+			this.#updateNextFrame();
 		}
 		if (finished) this.onended?.();
 	}
@@ -709,7 +709,7 @@ export class PlayerState {
 
 		const task = this.#renderScrubPreview();
 		this.#scrubPreviewTask = task;
-		void task.finally(() => {
+		task.finally(() => {
 			if (this.#scrubPreviewTask === task) this.#scrubPreviewTask = null;
 			if (this.#scrubPreviewTime !== null && this.#scrubPreviewTimer === null && !this.disposed)
 				this.#startScrubPreview();
@@ -785,7 +785,7 @@ export class PlayerState {
 
 	#suspendVideoIterator() {
 		this.#asyncId += 1;
-		void this.#videoFrameIterator?.return();
+		this.#videoFrameIterator?.return();
 		this.#videoFrameIterator = null;
 		this.#nextFrame = null;
 	}
@@ -826,21 +826,21 @@ export class PlayerState {
 		const mediaSession = navigator.mediaSession;
 		this.#mediaSession = mediaSession;
 		this.#setMediaSessionMetadata(tags);
-		this.#setMediaSessionAction('play', () => void this.play());
+		this.#setMediaSessionAction('play', () => this.play());
 		this.#setMediaSessionAction('pause', () => this.pause());
 		this.#setMediaSessionAction('stop', () => {
 			this.pause();
-			void this.seek(this.#firstTimestamp);
+			this.seek(this.#firstTimestamp);
 		});
 		this.#setMediaSessionAction('seekbackward', (details) => {
-			void this.seek(this.currentTime - (details.seekOffset ?? 10));
+			this.seek(this.currentTime - (details.seekOffset ?? 10));
 		});
 		this.#setMediaSessionAction('seekforward', (details) => {
-			void this.seek(this.currentTime + (details.seekOffset ?? 10));
+			this.seek(this.currentTime + (details.seekOffset ?? 10));
 		});
 		this.#setMediaSessionAction('seekto', (details) => {
 			if (details.seekTime === undefined) return;
-			void this.seek(this.#firstTimestamp + details.seekTime);
+			this.seek(this.#firstTimestamp + details.seekTime);
 		});
 		this.#updateMediaSessionState();
 	}

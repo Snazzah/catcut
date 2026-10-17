@@ -24,7 +24,7 @@
 		if (player.loadState.status !== 'ready' || width <= 0 || height <= 0) return;
 		const controller = new AbortController();
 		failed = false;
-		void renderTimelinePreview({
+		renderTimelinePreview({
 			player,
 			canvas,
 			width,

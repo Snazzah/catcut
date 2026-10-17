@@ -65,7 +65,7 @@
 				: createTrimRange({ start: trim.start, end: bounds.end }, trim.start, time);
 		session.updateTrim(next);
 		dragging = null;
-		void player.endScrub(handle === 'start' ? next.start : next.end, resumeAfterScrub);
+		player.endScrub(handle === 'start' ? next.start : next.end, resumeAfterScrub);
 		resumeAfterScrub = false;
 		// Blur the trim handle cause thats annoying when using keybinds
 		if (event.currentTarget instanceof HTMLElement) event.currentTarget.blur();
@@ -76,7 +76,7 @@
 		if (!handle || !trim) return;
 		dragging = null;
 		const time = handle === 'start' ? trim.start : trim.end;
-		void player.endScrub(time, resumeAfterScrub);
+		player.endScrub(time, resumeAfterScrub);
 		resumeAfterScrub = false;
 	}
 
@@ -104,7 +104,7 @@
 				? createTrimRange({ start: bounds.start, end: trim.end }, nextTime, trim.end)
 				: createTrimRange({ start: trim.start, end: bounds.end }, trim.start, nextTime);
 		session.updateTrim(next);
-		void player.seek(handle === 'start' ? next.start : next.end);
+		player.seek(handle === 'start' ? next.start : next.end);
 	}
 
 	function handleTimelineMove(event: PointerEvent) {
@@ -116,21 +116,19 @@
 		if (event.detail === 0 || !trim) return;
 		const time = timeFromClientX(event.clientX);
 		session.updateTrim(expandTrimRangeToTime(bounds, trim, time));
-		void player.seek(time);
+		player.seek(time);
 	}
 
 	function handleTimelineKeydown(event: KeyboardEvent) {
 		if (event.code === 'Space') {
 			event.preventDefault();
-			void player.togglePlayback();
+			player.togglePlayback();
 			return;
 		}
 
 		if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
 		event.preventDefault();
-		void player.seek(
-			stepTimelineTime(bounds, player.currentTime, event.key === 'ArrowLeft' ? -1 : 1)
-		);
+		player.seek(stepTimelineTime(bounds, player.currentTime, event.key === 'ArrowLeft' ? -1 : 1));
 	}
 </script>
 

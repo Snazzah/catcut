@@ -8,7 +8,7 @@
 	let {
 		player,
 		offset = 8,
-		onclick = () => void player.togglePlayback()
+		onclick = () => player.togglePlayback()
 	}: { player: PlayerState; offset?: number; onclick?: () => void } = $props();
 </script>
 
