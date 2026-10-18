@@ -39,21 +39,25 @@
 <div
 	class={[
 		'fixed right-0 left-0 isolate z-10 flex items-center justify-center transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] focus-within:translate-y-0 motion-reduce:transition-none',
-		mobile.current ? 'bottom-0' : 'top-0',
+		mobile.current ? 'bottom-0' : 'max-sm:bottom-0 sm:top-0',
 		mobile.current && !visible && 'translate-y-full'
 	]}
 >
 	<header
 		class={[
 			'relative isolate flex w-full items-center justify-center gap-1 rounded-t-md from-black/85 via-black/70 via-60% to-transparent p-2 md:max-w-xl md:rounded-t-none md:rounded-b-md',
-			!atHome ? (mobile.current ? 'bg-linear-to-t' : 'bg-linear-to-b') : null
+			!atHome ? (mobile.current ? 'bg-linear-to-t' : 'max-sm:bg-linear-to-t sm:bg-linear-to-b') : null
 		]}
 	>
 		{#if !atHome}
 			<div
 				aria-hidden="true"
-				class="pointer-events-none absolute inset-0 -z-10 rounded-[inherit] backdrop-blur-lg"
-				style:--blur-direction={mobile.current ? 'to top' : 'to bottom'}
+				class={[
+					'pointer-events-none absolute inset-0 -z-10 rounded-[inherit] backdrop-blur-lg',
+					mobile.current
+						? '[--blur-direction:to_top]'
+						: 'max-sm:[--blur-direction:to_top] sm:[--blur-direction:to_bottom]'
+				]}
 				style:mask-image="linear-gradient(var(--blur-direction), black 50%, transparent 100%)"
 			></div>
 		{/if}
