@@ -28,8 +28,8 @@
 		},
 		{
 			icon: cogIcon,
-			label: 'Codecs',
-			href: resolve('codecs')
+			label: 'Settings',
+			href: resolve('settings')
 		}
 	];
 </script>
@@ -46,7 +46,11 @@
 	<header
 		class={[
 			'relative isolate flex w-full items-center justify-center gap-1 rounded-t-md from-black/85 via-black/70 via-60% to-transparent p-2 md:max-w-xl md:rounded-t-none md:rounded-b-md',
-			!atHome ? (mobile.current ? 'bg-linear-to-t' : 'max-sm:bg-linear-to-t sm:bg-linear-to-b') : null
+			!atHome
+				? mobile.current
+					? 'bg-linear-to-t'
+					: 'max-sm:bg-linear-to-t sm:bg-linear-to-b'
+				: null
 		]}
 	>
 		{#if !atHome}
