@@ -4,10 +4,12 @@ const STORAGE_KEY = 'catcut-settings';
 
 export type Settings = {
 	analytics: boolean;
+	startWithEditor: boolean;
 };
 
 const defaults: Settings = {
-	analytics: true
+	analytics: true,
+	startWithEditor: false
 };
 
 function read(): Settings {

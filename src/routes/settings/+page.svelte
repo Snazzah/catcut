@@ -14,6 +14,11 @@
 	<h1 class="text-2xl font-bold text-white mb-3">Settings</h1>
 
 	<div class="flex flex-col gap-4">
+		<SwitchField title="Start with the editor" bind:checked={settings.startWithEditor}>
+			{#snippet description()}
+				Automatically open the editor when selecting a file.
+			{/snippet}
+		</SwitchField>
 		<SwitchField title="Plausible Analytics" bind:checked={settings.analytics}>
 			{#snippet description()}
 				This uses <a href="https://plausible.io/privacy-focused-web-analytics" target="_blank" class="text-violet-400 hover:underline">Plausible</a> to gather anonymized analytics. Learn more in the <a

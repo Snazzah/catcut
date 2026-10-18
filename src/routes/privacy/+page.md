@@ -25,9 +25,9 @@ stored in the browser (using local storage) and is never sent to any third-party
 Authorization data and access tokens stored using catcut is secure and only accessible through
 the catcut app. Security procedures are in place to protect the confidentiality of your data.
 
-This site uses a self-hosted instance of [plausible](https://plausible.io)
+This site uses a self-hosted instance of [Plausible](https://plausible.io/privacy-focused-web-analytics)
 for web analytics, which does not use cookies and is fully compliant with GDPR, CCPA and PECR.
 All data is anonymous and used to gauge traffic, and does not send any information about your
-media being used. Usage of analytics can be opted out of via settings.
+media being used. Usage of analytics can be opted out of via [settings](/settings).
 
 </MarkdownContent>

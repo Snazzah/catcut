@@ -3,11 +3,17 @@
 	import MediaWorkspace from '#lib/components/MediaWorkspace.svelte';
 	import ResponsiveModal from '#lib/components/common/ResponsiveModal.svelte';
 	import { catcut } from '#lib/icons.js';
-	import { queue, createRemoteMediaSource, createLocalMediaSource } from '#lib/store.svelte.js';
+	import {
+		queue,
+		createRemoteMediaSource,
+		createLocalMediaSource,
+		type MediaSource
+	} from '#lib/store.svelte.js';
 	import Icon from '@iconify/svelte';
 	import { BitsConfig } from 'bits-ui';
 	import { onMount, tick } from 'svelte';
 	import { activity } from '#lib/discord/index.svelte.ts';
+	import { settings } from '#lib/util/settings.svelte.js';
 
 	let source = $derived(queue.source);
 	let editing = $state(false);
@@ -18,6 +24,17 @@
 	$effect(() => {
 		if (!source) editing = false;
 	});
+
+	function openMedia(sources: (MediaSource | null)[], append = false) {
+		const validSources = sources.filter((source) => source !== null);
+		if (!validSources.length) return;
+
+		const opensNewSource = !append || !source;
+		if (opensNewSource && settings.startWithEditor) editing = true;
+
+		if (append) queue.add(...validSources);
+		else queue.replace(...validSources);
+	}
 
 	function closeMedia() {
 		queue.clear();
@@ -49,7 +66,7 @@
 			const files = (await Promise.all(handles.map((handle) => handle.getFile()))).filter((file) =>
 				isMediaType(file.type)
 			);
-			if (files.length) queue.add(...files.map(createLocalMediaSource));
+			openMedia(files.map(createLocalMediaSource), true);
 		} catch (error) {
 			showLoadError(error instanceof Error ? error.message : String(error));
 		}
@@ -58,7 +75,7 @@
 	onMount(() => {
 		const location = new URL(window.location.href);
 		const mediaUrl = location.searchParams.get('url');
-		if (mediaUrl) queue.replace(createRemoteMediaSource(mediaUrl));
+		if (mediaUrl) openMedia([createRemoteMediaSource(mediaUrl)]);
 		const sharedMediaId = location.searchParams.get('shared-media');
 		if (sharedMediaId) openSharedMedia(sharedMediaId);
 		const shareError = location.searchParams.get('share-error');
@@ -99,7 +116,7 @@
 			const file = new File([await response.blob()], name, {
 				type: response.headers.get('Content-Type') ?? ''
 			});
-			queue.replace(createLocalMediaSource(file));
+			openMedia([createLocalMediaSource(file)]);
 			await cache.delete(key).catch(() => undefined);
 		} catch {
 			showLoadError(failure);
@@ -136,9 +153,7 @@
 			.filter((file) => isMediaType(file.type))
 			.map(createLocalMediaSource);
 
-		if (!sources.length) return;
-		if (event.shiftKey) queue.add(...sources);
-		else queue.replace(...sources);
+		openMedia(sources, event.shiftKey);
 	}
 </script>
 
@@ -191,11 +206,7 @@
 			<h1>catcut</h1>
 		</div>
 
-		<FileDrop dragging={draggingMedia} onselect={(sources) => queue.replace(...sources)} />
-
-		<!-- <div class="fixed bottom-0 flex flex-wrap gap-2 p-2 font-medium">
-			<a href={resolve('codecs')} class="hover:text-white hover:underline">Codecs</a>
-		</div> -->
+		<FileDrop dragging={draggingMedia} onselect={(sources) => openMedia(sources)} />
 	{/if}
 </main>
 
