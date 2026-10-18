@@ -416,7 +416,7 @@
 						playbackRate={player.playbackRate}
 						onPlaybackRateChange={(playbackRate) => player.setPlaybackRate(playbackRate)}
 						{pip}
-						pipAllowed={pipSupported && player.hasVideo}
+						pipAllowed={pipSupported && player.hasVideo && !mobile.current}
 						onPipToggle={() => togglePip()}
 					/>
 
