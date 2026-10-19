@@ -5,6 +5,16 @@ import { enhancedImages } from '@sveltejs/enhanced-img';
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
+import { execSync } from 'node:child_process';
+
+function getCommitSha() {
+	if (process.env.WORKERS_CI_COMMIT_SHA) return process.env.WORKERS_CI_COMMIT_SHA;
+	try {
+		return execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim();
+	} catch {
+		return undefined;
+	}
+}
 
 export default defineConfig({
 	plugins: [
@@ -15,7 +25,7 @@ export default defineConfig({
 			// for more information about preprocessors
 			preprocess: [vitePreprocess(), mdsvex({ extensions: ['.svx', '.md'] })],
 			adapter: adapter(),
-			version: { pollInterval: 60000 },
+			version: { name: getCommitSha(), pollInterval: 60000 },
 			serviceWorker: { register: false },
 			extensions: ['.svelte', '.svx', '.md']
 		})

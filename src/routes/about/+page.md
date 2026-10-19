@@ -4,6 +4,12 @@
 	import githubIcon from '@iconify-icons/mdi/github';
 	import heartIcon from '@iconify-icons/mdi/heart';
 	import privacyIcon from '@iconify-icons/mdi/file-document';
+	import commitIcon from '@iconify-icons/mdi/source-commit';
+
+	import { version } from '$app/env';
+
+	// version.name is the commit SHA when built from git, otherwise a timestamp
+	const commitSha = /^[0-9a-f]{40}$/.test(version) ? version : null;
 </script>
 
 <svelte:head>
@@ -27,15 +33,18 @@ catcut is a webapp that uses [Mediabunny](https://mediabunny.dev) to view, trim,
 	<Icon icon={privacyIcon} inline class="inline" />
 	Privacy Policy
 </a>
-
 <div class="flex gap-4 items-center-safe **:m-0! my-4">
 	<a href="https://snazzah.com" target="_blank" class="hover:scale-105 hover:rotate-2 motion-safe:transition-transform">
 		<enhanced:img src="../../assets/snazzah.png" sizes="(min-width: 768px) 128px, 64px" alt="Snazzah" class="size-16 md:size-32 rounded-md bg-black/75" />
 	</a>
 	<div class="flex flex-col">
-		<span>made by</span>
+		<span>Made by</span>
 		<h3 class="text-2xl md:text-4xl">Snazzah</h3>
 	</div>
 </div>
+
+{#if commitSha}<a href="https://github.com/Snazzah/catcut/commit/{commitSha}" target="_blank" class="text-xs">
+	Build <span class="font-mono">{commitSha.slice(0, 7)}</span>
+</a>{/if}
 
 </MarkdownContent>
