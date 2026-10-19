@@ -1,12 +1,10 @@
 import {
 	ALL_FORMATS,
-	BlobSource,
 	Input,
 	MPEG_TS,
 	Mp3OutputFormat,
 	Mp4OutputFormat,
 	Output,
-	UrlSource,
 	type CropRectangle
 } from 'mediabunny';
 import {
@@ -25,6 +23,7 @@ import {
 	type SpeedAdjustment
 } from '#lib/util/editing.js';
 import type { PlayerState } from '#lib/player-state.svelte.js';
+import { createInputSource } from '#lib/store.svelte.js';
 import {
 	ExportTask,
 	createExportDestination,
@@ -136,7 +135,7 @@ export class EditorSession {
 		const source = this.player.source;
 		const input = new Input({
 			formats: ALL_FORMATS,
-			source: source.origin === 'local' ? new BlobSource(source.file) : new UrlSource(source.url)
+			source: createInputSource(source)
 		});
 		const job: SaveJob = { input, task: null };
 		this.#job = job;

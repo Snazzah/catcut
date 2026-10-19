@@ -70,7 +70,7 @@
 		{/if}
 		<a
 			href="/"
-			class="text-accent mr-auto flex items-center justify-center gap-1 text-2xl font-black"
+			class="text-accent mr-auto flex items-center justify-center gap-1 text-2xl font-black transition-all active:scale-95"
 		>
 			<Icon icon={catcut} class="size-10" />
 			<span class="hidden md:contents">catcut</span>

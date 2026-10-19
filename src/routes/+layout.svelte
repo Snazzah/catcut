@@ -16,8 +16,9 @@
 
 	let { children }: { children: Snippet } = $props();
 	let showHeader = $derived(
-		page.url.pathname !== resolve('/') ||
-			(!queue.active && activity.layoutMode !== 1 && activity.layoutMode !== 2)
+		!page.route.id?.startsWith('/pick/') &&
+			(page.url.pathname !== resolve('/') ||
+				(!queue.active && activity.layoutMode !== 1 && activity.layoutMode !== 2))
 	);
 
 	onMount(() => {
@@ -121,6 +122,7 @@
 <svelte:head>
 	{#if PUBLIC_PLAUSIBLE_HOSTNAME}
 		<script
+			crossorigin="anonymous"
 			data-domain="catcut.snaz.in"
 			src="https://{PUBLIC_PLAUSIBLE_HOSTNAME}/js/script.pageview-props.tagged-events.js"
 		></script>

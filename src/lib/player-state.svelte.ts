@@ -1,21 +1,19 @@
 import {
 	ALL_FORMATS,
 	AudioBufferSink,
-	BlobSource,
 	CanvasSink,
 	getDecodableCodecs,
 	getEncodableCodecs,
 	Input,
 	type InputAudioTrack,
 	type InputVideoTrack,
-	UrlSource,
 	type MediaCodec,
 	type MetadataTags,
 	type WrappedAudioBuffer,
 	type WrappedCanvas,
 	VideoSampleSink
 } from 'mediabunny';
-import type { MediaSource } from '#lib/store.svelte.js';
+import { createInputSource, type MediaSource } from '#lib/store.svelte.js';
 
 import { registerAacEncoder } from '@mediabunny/aac-encoder';
 import { registerAc3Decoder, registerAc3Encoder } from '@mediabunny/ac3';
@@ -188,7 +186,7 @@ export class PlayerState {
 		this.#resumeAfterLoad = resume;
 		const input = new Input({
 			formats: ALL_FORMATS,
-			source: source.origin === 'local' ? new BlobSource(source.file) : new UrlSource(source.url)
+			source: createInputSource(source)
 		});
 		this.input = input;
 		try {

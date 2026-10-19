@@ -1,3 +1,5 @@
+import { BlobSource, UrlSource } from 'mediabunny';
+
 export type LocalMediaSource = {
 	origin: 'local';
 	file: File;
@@ -8,9 +10,15 @@ export type RemoteMediaSource = {
 	url: string;
 	name: string;
 	size?: number;
+	headers?: Record<string, string>;
 };
 
 export type MediaSource = LocalMediaSource | RemoteMediaSource;
+
+export function createInputSource(source: MediaSource) {
+	if (source.origin === 'local') return new BlobSource(source.file);
+	return new UrlSource(source.url, { requestInit: { headers: source.headers } });
+}
 
 export function createLocalMediaSource(file: File): LocalMediaSource {
 	return { origin: 'local', file };

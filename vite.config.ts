@@ -4,8 +4,23 @@ import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { enhancedImages } from '@sveltejs/enhanced-img';
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import { execSync } from 'node:child_process';
+
+function crossOriginIsolation(): Plugin {
+	return {
+		name: 'catcut:cross-origin-isolation',
+		configureServer(server) {
+			server.middlewares.use((req, res, next) => {
+				if (!req.url?.startsWith('/pick/')) {
+					res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+					res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+				}
+				next();
+			});
+		}
+	};
+}
 
 function getCommitSha() {
 	if (process.env.WORKERS_CI_COMMIT_SHA) return process.env.WORKERS_CI_COMMIT_SHA;
@@ -18,6 +33,7 @@ function getCommitSha() {
 
 export default defineConfig({
 	plugins: [
+		crossOriginIsolation(),
 		tailwindcss(),
 		enhancedImages(),
 		sveltekit({

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import FileDrop from '#lib/components/FileDrop.svelte';
+	import CloudPickers from '#lib/components/CloudPickers.svelte';
 	import MediaWorkspace from '#lib/components/MediaWorkspace.svelte';
 	import ResponsiveModal from '#lib/components/common/ResponsiveModal.svelte';
 	import { catcut } from '#lib/icons.js';
@@ -207,6 +208,7 @@
 		</div>
 
 		<FileDrop dragging={draggingMedia} onselect={(sources) => openMedia(sources)} />
+		<CloudPickers onselect={(sources) => openMedia(sources)} />
 	{/if}
 </main>
 
