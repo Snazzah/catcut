@@ -7,6 +7,7 @@
 	import { activity, isDiscordActivity, initDiscord } from '#lib/discord/index.svelte.js';
 	import Header from '#lib/components/Header.svelte';
 	import { queue } from '#lib/store.svelte.js';
+	import { update } from '#lib/install.svelte.js';
 	import { Toaster, toast } from 'svelte-sonner';
 	import { dev } from '$app/env';
 	import { resolve } from '$app/paths';
@@ -46,14 +47,14 @@
 		updated.check();
 
 		function showUpdateToast(registration: ServiceWorkerRegistration) {
-			if (!registration.waiting || !navigator.serviceWorker.controller) return;
+			if (!update.track(registration)) return;
 
 			toast('An update is ready.', {
 				description: 'Reload when you are ready to use the latest version.',
 				duration: Infinity,
 				action: {
 					label: 'Reload',
-					onClick: () => registration.waiting?.postMessage({ type: 'SKIP_WAITING' })
+					onClick: () => update.apply()
 				}
 			});
 		}

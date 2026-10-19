@@ -2,10 +2,13 @@
 	import Icon from '@iconify/svelte';
 	import infoIcon from '@iconify-icons/mdi/info-outline';
 	import cogIcon from '@iconify-icons/mdi/cog-outline';
+	import installIcon from '@iconify-icons/mdi/tray-arrow-down';
 	import { catcut } from '#lib/icons.ts';
 	import { resolve } from '$app/paths';
 	import { mobile } from '#lib/platform.svelte.js';
 	import { page } from '$app/state';
+	import { install, update } from '#lib/install.svelte.js';
+	import updateIcon from '@iconify-icons/mdi/update';
 
 	let visible = $state(true);
 	let lastScroll = 0;
@@ -72,10 +75,19 @@
 			<Icon icon={catcut} class="size-10" />
 			<span class="hidden md:contents">catcut</span>
 		</a>
+		{#if update.available || install.available}
+			<button
+				onclick={() => (update.available ? update.apply() : install.prompt())}
+				class="flex min-w-18 cursor-pointer flex-col items-center justify-center rounded-md p-1 text-xs font-bold text-violet-400 transition-all hover:bg-violet-400/10 hover:text-violet-100 active:scale-95 data-active:bg-violet-500/75"
+			>
+				<Icon icon={update.available ? updateIcon : installIcon} class="size-6" />
+				<span>{update.available ? 'Update' : 'Install'}</span>
+			</button>
+		{/if}
 		{#each links as link, i (i)}
 			<a
 				href={link.href}
-				class="flex min-w-18 flex-col items-center justify-center rounded-md p-1 text-xs text-neutral-200 hover:bg-neutral-200/10 hover:text-neutral-50 data-active:bg-violet-500/75 data-active:text-white"
+				class="flex min-w-18 flex-col items-center justify-center rounded-md p-1 text-xs text-neutral-200 transition-all hover:bg-neutral-200/10 hover:text-neutral-50 active:scale-95 data-active:bg-violet-500/75 data-active:text-white"
 				data-active={page.url.pathname === link.href ? 'true' : undefined}
 			>
 				<Icon icon={link.icon} class="size-6" />
