@@ -1,6 +1,7 @@
 import { mdsvex } from 'mdsvex';
 import adapter from '@sveltejs/adapter-cloudflare';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+import { enhancedImages } from '@sveltejs/enhanced-img';
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
@@ -8,6 +9,7 @@ import { defineConfig } from 'vite';
 export default defineConfig({
 	plugins: [
 		tailwindcss(),
+		enhancedImages(),
 		sveltekit({
 			// Consult https://kit.svelte.dev/docs/integrations#preprocessors
 			// for more information about preprocessors

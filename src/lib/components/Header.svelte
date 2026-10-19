@@ -75,7 +75,7 @@
 		{#each links as link, i (i)}
 			<a
 				href={link.href}
-				class="flex min-w-18 flex-col items-center justify-center rounded-md p-1 text-xs text-neutral-200 hover:bg-neutral-200/10 hover:text-neutral-50 data-active:bg-violet-500/75 data-active:text-white md:flex-row md:gap-2 md:p-2 md:px-4 md:text-base md:font-semibold"
+				class="flex min-w-18 flex-col items-center justify-center rounded-md p-1 text-xs text-neutral-200 hover:bg-neutral-200/10 hover:text-neutral-50 data-active:bg-violet-500/75 data-active:text-white"
 				data-active={page.url.pathname === link.href ? 'true' : undefined}
 			>
 				<Icon icon={link.icon} class="size-6" />

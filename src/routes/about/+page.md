@@ -30,7 +30,7 @@ catcut is a webapp that uses [Mediabunny](https://mediabunny.dev) to view, trim,
 
 <div class="flex gap-4 items-center-safe **:m-0! my-4">
 	<a href="https://snazzah.com" target="_blank" class="hover:scale-105 hover:rotate-2 motion-safe:transition-transform">
-		<img src="https://cdn.snaz.in/avy/current.min.png" alt="Snazzah" class="size-16 md:size-32 rounded-md bg-black/75" />
+		<enhanced:img src="../../assets/snazzah.png" sizes="(min-width: 768px) 128px, 64px" alt="Snazzah" class="size-16 md:size-32 rounded-md bg-black/75" />
 	</a>
 	<div class="flex flex-col">
 		<span>made by</span>
