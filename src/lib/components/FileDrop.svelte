@@ -2,6 +2,7 @@
 	import Icon from '@iconify/svelte';
 	import uploadIcon from '@iconify-icons/mdi/file-upload-outline';
 	import { createLocalMediaSource, type LocalMediaSource } from '#lib/store.svelte.js';
+	import { mobile } from '#lib/platform.svelte.ts';
 
 	let {
 		dragging = false,
@@ -37,7 +38,7 @@
 		]}
 	>
 		<Icon class="size-7 text-violet-400" icon={uploadIcon} aria-hidden="true" />
-		<span class="text-white">{dragging ? 'drop them here!' : 'drag or select files'}</span>
-		<small class="max-w-80 text-xs"> supports video & audio files </small>
+		<span class="text-white">{dragging ? 'drop them here!' : mobile.current ? 'select files' : 'drag or select files'}</span>
+		<small class="max-w-80 text-xs">supports video & audio files</small>
 	</span>
 </label>

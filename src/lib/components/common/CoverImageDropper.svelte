@@ -7,6 +7,7 @@
 	import type { IconifyIcon } from '@iconify/svelte';
 	import { Tooltip } from 'bits-ui';
 	import SmallTooltipContent from './SmallTooltipContent.svelte';
+	import { mobile } from '#lib/platform.svelte.ts';
 
 	let {
 		src = null,
@@ -26,6 +27,7 @@
 
 	let input = $state<HTMLInputElement | null>(null);
 	let dragging = $state(false);
+	let coverAddLabel = $derived(mobile.current ? 'tap to add cover' : 'drop image here or click to add')
 
 	function isImageDrag(dataTransfer: DataTransfer | null) {
 		if (!dataTransfer?.types.includes('Files')) return false;
@@ -109,7 +111,7 @@
 	{:else}
 		<button
 			type="button"
-			aria-label="drop image here or click to add"
+			aria-label={coverAddLabel}
 			class={[
 				'flex aspect-square w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed text-neutral-400 transition-colors focus-visible:ring-2 focus-visible:ring-violet-200 focus-visible:outline-none',
 				changed
@@ -125,7 +127,7 @@
 			onclick={() => input?.click()}
 		>
 			<Icon icon={editIcon} class="size-8" aria-hidden="true" />
-			<span class="text-xs">drop image here or click to add</span>
+			<span class="text-xs">{coverAddLabel}</span>
 		</button>
 	{/if}
 	{#if src || (changed && onrevert)}

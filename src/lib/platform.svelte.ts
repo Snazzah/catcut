@@ -21,7 +21,7 @@ const standalone = new MediaQuery('display-mode: standalone', false);
 /** Mainly for iOS webapps, whether to show the option to fullscreen */
 export const naturallyFullscreen = {
 	get current() {
-		return mobile.current && standalone.current && navigator.userAgent.includes('AppleWebKit/');
+		return mobile.current && standalone.current && (navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad'));
 	}
 };
 
