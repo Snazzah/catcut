@@ -3,8 +3,8 @@
 	import Icon from '@iconify/svelte';
 	import TimeInputPart from './TimeInputPart.svelte';
 
-	const CLOCK_TIME = /^\s*(?:(\d+):)?(\d{1,2}):(\d{1,2}(?:\.\d+)?)\s*$/;
-	const HUMAN_TIME = /^\s*(?:(\d+)h\s*)?(?:(\d+)m\s*)?(?:(\d+(?:\.\d+)?)s)?\s*$/;
+	const CLOCK_TIME = /^\s*(?:(\d+):)?(\d+):(\d+(?:[.,]\d*)?)\s*$/;
+	const HUMAN_TIME = /^\s*(?:(\d+)\s*h\s*)?(?:(\d+)\s*m\s*)?(?:(\d+(?:[.,]\d*)?)\s*s)?\s*$/i;
 
 	let {
 		value,
@@ -64,33 +64,22 @@
 		onchange(clamp(next));
 	}
 
-	function parseTime(text: string) {
-		const clockMatch = CLOCK_TIME.exec(text);
-		if (clockMatch) {
-			return {
-				hour: Number(clockMatch[1] ?? 0),
-				minute: Number(clockMatch[2]),
-				second: Number(clockMatch[3])
-			};
-		}
+	function toNumber(part: string | undefined) {
+		return part === undefined ? 0 : Number(part.replace(',', '.'));
+	}
 
-		const humanMatch = HUMAN_TIME.exec(text);
-		if (!humanMatch || humanMatch.slice(1).every((part) => part === undefined)) return null;
-		return {
-			hour: Number(humanMatch[1] ?? 0),
-			minute: Number(humanMatch[2] ?? 0),
-			second: Number(humanMatch[3] ?? 0)
-		};
+	function parseTime(text: string) {
+		const match = CLOCK_TIME.exec(text) ?? HUMAN_TIME.exec(text);
+		if (!match || match.slice(1).every((part) => part === undefined)) return null;
+		const total = toNumber(match[1]) * 3600 + toNumber(match[2]) * 60 + toNumber(match[3]);
+		return Number.isFinite(total) ? total : null;
 	}
 
 	function handlePaste(text: string) {
 		const parsed = parseTime(text);
-		if (!parsed) return;
-		update({
-			hour: Math.max(0, parsed.hour),
-			minute: Math.max(0, Math.min(parsed.minute, 59)),
-			second: Math.max(0, Math.min(parsed.second, 59.99))
-		});
+		if (parsed === null) return false;
+		onchange(clamp(parsed));
+		return true;
 	}
 
 	function snapToBoundary(boundary: 'min' | 'max') {

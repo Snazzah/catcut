@@ -23,7 +23,7 @@
 		min?: number;
 		max?: number;
 		onchange: (value: number) => void;
-		onpaste: (text: string) => void;
+		onpaste: (text: string) => boolean;
 		onstep: (value: number, delta: -1 | 1) => void;
 		atLowerBound: boolean;
 		atUpperBound: boolean;
@@ -73,9 +73,7 @@
 
 	function handlePaste(event: ClipboardEvent) {
 		const text = event.clipboardData?.getData('text');
-		if (!text) return;
-		event.preventDefault();
-		onpaste(text);
+		if (text && onpaste(text)) event.preventDefault();
 	}
 </script>
 
