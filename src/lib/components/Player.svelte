@@ -15,7 +15,7 @@
 	import PlayerVolumeControl from './PlayerVolumeControl.svelte';
 	import Icon from '@iconify/svelte';
 	import { mobile, narrowViewport, naturallyFullscreen, surfaces } from '#lib/platform.svelte.js';
-	import { isDiscordActivity } from '#lib/discord/index.svelte.js';
+	import { activity, isDiscordActivity } from '#lib/discord/index.svelte.js';
 	import { browser } from '$app/env';
 	import { toast } from 'svelte-sonner';
 
@@ -200,6 +200,17 @@
 		const timestamp = player.currentTime.toFixed(3);
 		canvas.toBlob((blob) => {
 			if (!blob) return;
+			if (isDiscordActivity()) {
+				const file = new File([blob], `${filename}-${timestamp}s.png`, { type: 'image/png' });
+				activity.saveFile(file).then(
+					({ opened }) => {
+						if (!opened) toast.error('Your frame was uploaded, but the link was not opened.');
+					},
+					(error) =>
+						toast.error(error instanceof Error ? error.message : 'Failed to upload to Discord.')
+				);
+				return;
+			}
 			const url = URL.createObjectURL(blob);
 			const link = document.createElement('a');
 			link.href = url;

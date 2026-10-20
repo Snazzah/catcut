@@ -89,11 +89,12 @@
 		if (result.kind === 'download') {
 			const file = result.file;
 			if (isDiscordActivity()) {
-				// son...
 				try {
-					const data = new Uint8Array(await file.arrayBuffer());
-					const url = `data:${file.type || 'application/octet-stream'};base64,${data.toBase64()}`;
-					await activity.sdk!.commands.openExternalLink({ url });
+					const { opened } = await activity.saveFile(file);
+					if (!opened) toast.error('Your file was uploaded, but the link was not opened.');
+				} catch (error) {
+					toast.error(error instanceof Error ? error.message : 'Failed to upload to Discord.');
+					return;
 				} finally {
 					await result.dispose().catch(() => {});
 				}

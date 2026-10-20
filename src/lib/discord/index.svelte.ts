@@ -6,8 +6,6 @@ export function isDiscordActivity() {
 	return browser && window.location.host.endsWith('.discordsays.com');
 }
 
-// TODO i need a small server for auth n stuff
-
 let sdk: DiscordSDK | undefined;
 let initPromise: Promise<DiscordActivity> | undefined;
 
@@ -41,12 +39,12 @@ export async function initDiscord() {
 type LayoutUpdate = EventPayloadData<'ACTIVITY_LAYOUT_MODE_UPDATE'>;
 type OrientationUpdate = EventPayloadData<'ORIENTATION_UPDATE'>;
 type Authorization = Awaited<ReturnType<DiscordSDK['commands']['authenticate']>>;
-type AuthorizeOptions = Parameters<DiscordSDK['commands']['authorize']>[0];
 
 class DiscordActivity {
 	#layoutMode = $state<LayoutUpdate['layout_mode'] | null>(null);
 	#orientation = $state<OrientationUpdate['screen_orientation'] | null>(null);
 	#authorization = $state.raw<Authorization | null>(null);
+	#authorizing: Promise<Authorization> | null = null;
 
 	get sdk() {
 		if (!sdk) throw new Error('Discord Activity has not been initialized');
@@ -88,48 +86,60 @@ class DiscordActivity {
 		]);
 	}
 
-	async authorizeUser({
-		exchangeCode,
-		scope = ['identify']
-	}: {
-		exchangeCode: (code: string) => Promise<string>;
-		scope?: AuthorizeOptions['scope'];
-	}) {
+	async authorize() {
+		if (this.#authorization) return this.#authorization;
+		this.#authorizing ??= this.#authorize().finally(() => (this.#authorizing = null));
+		return this.#authorizing;
+	}
+
+	async #authorize() {
 		await this.sdk.ready();
 		const { code } = await this.sdk.commands.authorize({
 			client_id: this.sdk.clientId,
 			response_type: 'code',
 			prompt: 'none',
-			scope
+			scope: ['identify']
 		});
-		const accessToken = await exchangeCode(code);
-		if (!accessToken) throw new Error('Discord token exchange returned an empty access token');
-		const authorization = await this.sdk.commands.authenticate({ access_token: accessToken });
+		const response = await fetch('/api/discord/token', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ code })
+		});
+		if (!response.ok) throw new Error(`Discord token exchange failed (${response.status})`);
+		const { access_token }: { access_token?: string } = await response.json();
+		if (!access_token) throw new Error('Discord token exchange returned an empty access token');
+		const authorization = await this.sdk.commands.authenticate({ access_token });
 		this.#authorization = authorization;
-		return authorization.user;
+		return authorization;
 	}
 
 	async uploadFile(file: File) {
-		if (!this.#authorization) throw new Error('Authorize the Discord user before uploading');
+		const { access_token } = await this.authorize();
 		const body = new FormData();
 		body.append('file', file);
 		const response = await fetch(
 			`https://discord.com/api/applications/${this.sdk.clientId}/attachment`,
-			{
-				method: 'POST',
-				headers: { Authorization: `Bearer ${this.#authorization.access_token}` },
-				body
-			}
+			{ method: 'POST', headers: { Authorization: `Bearer ${access_token}` }, body }
 		);
+		if (response.status === 401) this.#authorization = null;
+		if (response.status === 413) throw new Error('This file is too large to upload to Discord.');
 		if (!response.ok) throw new Error(`Discord upload failed (${response.status})`);
-		const data: any = await response.json();
+		const data: { attachment: { url: string } } = await response.json();
 		return data.attachment.url;
 	}
 
-	async shareFile(file: File) {
-		const mediaUrl = await this.uploadFile(file);
-		await this.sdk.commands.openShareMomentDialog({ mediaUrl });
-		return mediaUrl;
+	async saveFile(file: File) {
+		const url = await this.uploadFile(file);
+		if (this.sdk.platform !== 'mobile') {
+			try {
+				await this.sdk.commands.openShareMomentDialog({ mediaUrl: url });
+				return { url, opened: true };
+			} catch (error) {
+				console.warn('Share moment dialog failed, opening link instead', error);
+			}
+		}
+		const { opened } = await this.sdk.commands.openExternalLink({ url });
+		return { url, opened: opened !== false };
 	}
 }
 
