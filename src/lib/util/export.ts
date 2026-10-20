@@ -41,7 +41,6 @@ import {
 } from 'mediabunny';
 import { StretchAudio } from '../audio/stretch-audio';
 import type { SpeedAdjustment, TimelineRange } from './editing';
-import { isDiscordActivity } from '#lib/discord/index.svelte.js';
 
 type ExportDestination = { dispose: () => Promise<void> } & (
 	| { kind: 'saved'; target: StreamTarget }
@@ -63,7 +62,7 @@ export async function createExportDestination({
 		file: FileSystemFileHandle;
 	} | null = null;
 	let writable: FileSystemWritableFileStream;
-	if (window.showSaveFilePicker && !isDiscordActivity()) {
+	if (window.showSaveFilePicker) {
 		const handle = await window.showSaveFilePicker({
 			startIn: 'downloads',
 			suggestedName,

@@ -4,7 +4,6 @@
 	import '../app.css';
 	import { onMount, type Snippet } from 'svelte';
 	import { Tooltip } from 'bits-ui';
-	import { activity, isDiscordActivity, initDiscord } from '#lib/discord/index.svelte.js';
 	import Header from '#lib/components/Header.svelte';
 	import { queue } from '#lib/store.svelte.js';
 	import { update } from '#lib/install.svelte.js';
@@ -16,9 +15,7 @@
 
 	let { children }: { children: Snippet } = $props();
 	let showHeader = $derived(
-		!page.route.id?.startsWith('/pick/') &&
-			(page.url.pathname !== resolve('/') ||
-				(!queue.active && activity.layoutMode !== 1 && activity.layoutMode !== 2))
+		!page.route.id?.startsWith('/pick/') && (page.url.pathname !== resolve('/') || !queue.active)
 	);
 
 	onMount(() => {
@@ -34,7 +31,7 @@
 	});
 
 	$effect(() => {
-		if (dev || isDiscordActivity() || !updated.current || !('serviceWorker' in navigator)) return;
+		if (dev || !updated.current || !('serviceWorker' in navigator)) return;
 
 		navigator.serviceWorker.ready
 			.then((registration) => registration.update())
@@ -75,7 +72,7 @@
 			registration.addEventListener('updatefound', watchInstallingWorker, { signal });
 		}
 
-		if ('serviceWorker' in navigator && !dev && !isDiscordActivity()) {
+		if ('serviceWorker' in navigator && !dev) {
 			let hasController = !!navigator.serviceWorker.controller;
 			navigator.serviceWorker.addEventListener(
 				'controllerchange',
@@ -109,8 +106,6 @@
 			if (document.readyState === 'complete') registerServiceWorker();
 			else window.addEventListener('load', () => registerServiceWorker(), { once: true, signal });
 		}
-
-		if (isDiscordActivity()) initDiscord();
 
 		return () => {
 			disposed = true;

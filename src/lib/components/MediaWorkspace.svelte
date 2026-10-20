@@ -4,7 +4,6 @@
 	import prettyMilliseconds from 'pretty-ms';
 	import { queue, type MediaSource } from '#lib/store.svelte.js';
 	import { PlayerState } from '#lib/player-state.svelte.js';
-	import { isDiscordActivity, activity } from '#lib/discord/index.svelte.js';
 	import EditingShell from './editor/EditingShell.svelte';
 	import EditorOverlayHost from './editor/EditorOverlayHost.svelte';
 	import { EditorSession } from './editor/editor-session.svelte';
@@ -88,27 +87,15 @@
 		}
 		if (result.kind === 'download') {
 			const file = result.file;
-			if (isDiscordActivity()) {
-				try {
-					const { opened } = await activity.saveFile(file);
-					if (!opened) toast.error('Your file was uploaded, but the link was not opened.');
-				} catch (error) {
-					toast.error(error instanceof Error ? error.message : 'Failed to upload to Discord.');
-					return;
-				} finally {
-					await result.dispose().catch(() => {});
-				}
-			} else {
-				const url = URL.createObjectURL(file);
-				const link = document.createElement('a');
-				link.href = url;
-				link.download = file.name;
-				link.click();
-				setTimeout(() => {
-					URL.revokeObjectURL(url);
-					result.dispose().catch(() => {});
-				}, 5_000);
-			}
+			const url = URL.createObjectURL(file);
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = file.name;
+			link.click();
+			setTimeout(() => {
+				URL.revokeObjectURL(url);
+				result.dispose().catch(() => {});
+			}, 5_000);
 		}
 
 		toast.success(`Saved your file! This took ${prettyMilliseconds(result.durationMs)}.`);

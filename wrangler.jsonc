@@ -5,7 +5,6 @@
 	"compatibility_date": "2026-09-15",
 	"compatibility_flags": ["nodejs_compat"],
 	"vars": {
-		"PUBLIC_DISCORD_CLIENT_ID": "1549966039054549002",
 		"PUBLIC_DROPBOX_CLIENT_ID": "gckh0f9o51dl0vf",
 		"PUBLIC_GOOGLE_CLIENT_ID": "404284548268-gi0kcfb4v0n81vdth18oph04vcs3qobp.apps.googleusercontent.com",
 		"PUBLIC_GOOGLE_KEY": "AIzaSyDJu9S6Wht3-whdOXlF1pJA0iRNa4Vn13Q"

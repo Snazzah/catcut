@@ -13,7 +13,6 @@
 	import Icon from '@iconify/svelte';
 	import { BitsConfig } from 'bits-ui';
 	import { onMount, tick } from 'svelte';
-	import { activity } from '#lib/discord/index.svelte.ts';
 	import { settings } from '#lib/util/settings.svelte.js';
 
 	let source = $derived(queue.source);
@@ -196,11 +195,6 @@
 				onclose={closeMedia}
 			/>
 		</BitsConfig>
-	{:else if activity.layoutMode === 2 || activity.layoutMode === 1}
-		<div class="text-accent flex items-center justify-center gap-2 text-xl font-black">
-			<Icon icon={catcut} class="size-6" />
-			<h1>catcut</h1>
-		</div>
 	{:else}
 		<div class="text-accent flex items-center justify-center gap-2 text-xl font-black">
 			<Icon icon={catcut} class="size-6" />
