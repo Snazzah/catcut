@@ -279,11 +279,8 @@
 					/>
 				{/if}
 				<div class="flex w-full max-w-lg min-w-0 flex-col items-center justify-center">
-					<h3
-						class="w-full truncate text-2xl font-bold text-white"
-						title={player.loadState.metadata.tags.title ?? player.filename}
-					>
-						{player.loadState.metadata.tags.title ?? player.filename}
+					<h3 class="w-full truncate text-2xl font-bold text-white" title={player.title}>
+						{player.title}
 					</h3>
 					{#if player.loadState.metadata.tags.artist}
 						<h4

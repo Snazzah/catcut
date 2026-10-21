@@ -129,6 +129,12 @@ export class PlayerState {
 		return this.source.origin === 'local' ? this.source.file.name : this.source.name;
 	}
 
+	get title() {
+		const title =
+			this.loadState.status === 'ready' ? this.loadState.metadata.tags.title?.trim() : undefined;
+		return title || this.filename;
+	}
+
 	get startTime() {
 		return this.#firstTimestamp;
 	}
@@ -882,8 +888,8 @@ export class PlayerState {
 		if (!this.#mediaSession || typeof MediaMetadata === 'undefined') return;
 
 		this.#mediaSession.metadata = new MediaMetadata({
-			title: tags.title ?? this.filename,
-			artist: tags.artist ?? tags.albumArtist,
+			title: tags.title?.trim() || this.filename,
+			artist: tags.artist || tags.albumArtist,
 			album: tags.album,
 			artwork: artwork ? [artwork] : []
 		});

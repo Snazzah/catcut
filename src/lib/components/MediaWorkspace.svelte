@@ -114,7 +114,7 @@
 
 <svelte:head>
 	{#if player.loadState.status === 'ready'}
-		<title>{player.loadState.metadata.tags.title ?? player.filename} - catcut</title>
+		<title>{player.title} - catcut</title>
 	{/if}
 </svelte:head>
 
