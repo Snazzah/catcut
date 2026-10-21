@@ -11,7 +11,8 @@
 		children,
 		headerActions,
 		onOpenChange,
-		popover = false
+		popover = false,
+		desktopHeader = false
 	}: {
 		title: string | Snippet;
 		trigger: Snippet<[{ props: Record<string, unknown> }]>;
@@ -19,11 +20,15 @@
 		headerActions?: Snippet;
 		onOpenChange?: (open: boolean) => void;
 		popover?: boolean;
+		desktopHeader?: boolean;
 	} = $props();
 
 	let open = $state(false);
 	let triggerAnchor = $state<HTMLElement>();
 	const unsubscribeSurface = surfaces.subscribe(() => open);
+
+	const desktopContentClass =
+		'z-50 flex max-h-[min(24rem,calc(100vh-5rem))] w-72 flex-col overflow-hidden rounded-md border border-white/10 bg-neutral-900 shadow-xl outline-none';
 
 	function handleOpenChange(nextOpen: boolean) {
 		open = nextOpen;
@@ -32,6 +37,24 @@
 
 	onDestroy(unsubscribeSurface);
 </script>
+
+{#snippet desktopBody()}
+	{#if desktopHeader}
+		<div class="flex shrink-0 items-center justify-between gap-3 px-4 pt-3 pb-2">
+			<p class="text-sm font-semibold text-neutral-100">
+				{#if typeof title === 'string'}{title}{:else}{@render title()}{/if}
+			</p>
+			{@render headerActions?.()}
+		</div>
+	{/if}
+	<div
+		class="min-h-0 flex-1 overflow-y-auto overscroll-contain p-1"
+		data-overlayscrollbars-initialize
+		{@attach verticalScrollbars}
+	>
+		{@render children()}
+	</div>
+{/snippet}
 
 <span class="inline-flex" bind:this={triggerAnchor}>
 	{@render trigger({
@@ -68,15 +91,15 @@
 	<Popover.Root {open} onOpenChange={handleOpenChange}>
 		<Popover.Portal>
 			<Popover.Content
-				class="z-50 max-h-[min(24rem,calc(100vh-5rem))] w-72 overflow-y-auto overscroll-contain rounded-md border border-white/10 bg-neutral-900 p-1 shadow-xl outline-none"
+				class={desktopContentClass}
 				customAnchor={triggerAnchor}
 				sideOffset={8}
 				align="end"
 			>
 				{#snippet child({ wrapperProps, props })}
 					<div {...wrapperProps}>
-						<div {...props} data-overlayscrollbars-initialize {@attach verticalScrollbars}>
-							{@render children()}
+						<div {...props}>
+							{@render desktopBody()}
 						</div>
 					</div>
 				{/snippet}
@@ -87,15 +110,15 @@
 	<DropdownMenu.Root {open} onOpenChange={handleOpenChange}>
 		<DropdownMenu.Portal>
 			<DropdownMenu.Content
-				class="z-50 max-h-[min(24rem,calc(100vh-5rem))] w-72 overflow-y-auto overscroll-contain rounded-md border border-white/10 bg-neutral-900 p-1 shadow-xl outline-none"
+				class={desktopContentClass}
 				customAnchor={triggerAnchor}
 				sideOffset={8}
 				align="end"
 			>
 				{#snippet child({ wrapperProps, props })}
 					<div {...wrapperProps}>
-						<div {...props} data-overlayscrollbars-initialize {@attach verticalScrollbars}>
-							{@render children()}
+						<div {...props}>
+							{@render desktopBody()}
 						</div>
 					</div>
 				{/snippet}

@@ -2,7 +2,7 @@
 	import type { IconifyIcon } from '@iconify/svelte';
 	import Icon from '@iconify/svelte';
 	import { Tooltip } from 'bits-ui';
-	import type { MouseEventHandler } from 'svelte/elements';
+	import type { ClassValue, MouseEventHandler } from 'svelte/elements';
 	import SmallTooltipContent from './SmallTooltipContent.svelte';
 
 	let {
@@ -12,7 +12,8 @@
 		offset = 8,
 		key,
 		disabled = false,
-		triggerProps = {}
+		triggerProps = {},
+		class: className
 	}: {
 		icon: IconifyIcon;
 		title: string;
@@ -21,6 +22,7 @@
 		offset?: number;
 		disabled?: boolean;
 		triggerProps?: Record<string, unknown>;
+		class?: ClassValue;
 	} = $props();
 </script>
 
@@ -28,7 +30,10 @@
 	<Tooltip.Trigger {onclick} {...triggerProps} aria-label={title}>
 		{#snippet child({ props })}
 			<button
-				class="rounded-full focus-visible:ring-2 focus-visible:ring-violet-200 focus-visible:outline-none enabled:cursor-pointer enabled:hover:text-violet-300 disabled:opacity-50"
+				class={[
+					'rounded-full focus-visible:ring-2 focus-visible:ring-violet-200 focus-visible:outline-none enabled:cursor-pointer enabled:hover:text-violet-300 disabled:opacity-50',
+					className
+				]}
 				{disabled}
 				{...props}
 			>

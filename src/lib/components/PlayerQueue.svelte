@@ -103,18 +103,18 @@
 {/snippet}
 
 {#snippet editButton(props: Record<string, unknown>)}
-	<span class={editingQueue ? 'text-violet-300' : undefined}>
-		<PlayerButton
-			title="Edit queue"
-			icon={editIcon}
-			onclick={() => (editingQueue = !editingQueue)}
-			triggerProps={{ ...props, 'aria-pressed': editingQueue }}
-		/>
-	</span>
+	<PlayerButton
+		title="Edit queue"
+		icon={editIcon}
+		class={{ 'text-violet-300': editingQueue }}
+		onclick={() => (editingQueue = !editingQueue)}
+		triggerProps={{ ...props, 'aria-pressed': editingQueue }}
+	/>
 {/snippet}
 
 <ResponsiveMenu
 	popover={true}
+	desktopHeader={true}
 	title={queueTitle}
 	onOpenChange={(open) => {
 		if (!open) editingQueue = false;
@@ -130,17 +130,6 @@
 		<PlayerButton triggerProps={props} title="Queue" icon={playlistIcon} />
 	{/snippet}
 
-	{#if !mobile.current}
-		<div class="flex items-center justify-between gap-3 px-3 py-2">
-			<p class="text-sm font-semibold text-neutral-100">
-				{@render queueTitle()}
-			</p>
-			<div class="flex items-center gap-3">
-				{@render editButton({})}
-				<PlayerButton title="Add to queue" icon={addIcon} onclick={() => fileInput.click()} />
-			</div>
-		</div>
-	{/if}
 	{#if editingQueue}
 		<div
 			use:dndzone={{

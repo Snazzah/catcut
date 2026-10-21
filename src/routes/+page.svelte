@@ -196,9 +196,12 @@
 			/>
 		</BitsConfig>
 	{:else}
-		<div class="text-accent flex items-center justify-center gap-2 text-xl font-black">
-			<Icon icon={catcut} class="size-6" />
-			<h1>catcut</h1>
+		<div class="flex flex-col">
+			<div class="text-accent flex items-center justify-center gap-2 text-xl font-black">
+				<Icon icon={catcut} class="size-6" />
+				<h1>catcut</h1>
+			</div>
+			<span class="text-sm">in-browser media viewer & editor</span>
 		</div>
 
 		<FileDrop dragging={draggingMedia} onselect={(sources) => openMedia(sources)} />
