@@ -24,6 +24,7 @@ import {
 } from '#lib/util/editing.js';
 import type { PlayerState } from '#lib/player-state.svelte.js';
 import { createInputSource } from '#lib/store.svelte.js';
+import { isAbort } from '#lib/util/common.js';
 import {
 	ExportTask,
 	createExportDestination,
@@ -184,7 +185,7 @@ export class EditorSession {
 			this.saveState = { status: 'complete' };
 			return { kind: 'download', file, durationMs, dispose: destination.dispose };
 		} catch (error) {
-			const aborted = error instanceof DOMException && error.name === 'AbortError';
+			const aborted = isAbort(error);
 			if (!aborted) console.error('Export failed:', error);
 			if (this.#job === job) {
 				this.saveState = aborted

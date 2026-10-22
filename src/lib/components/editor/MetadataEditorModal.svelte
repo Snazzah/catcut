@@ -1,31 +1,10 @@
 <script lang="ts">
 	import ResponsiveModal from '#lib/components/common/ResponsiveModal.svelte';
-	import CoverImageDropper from '../common/CoverImageDropper.svelte';
-	import TextInput from '../common/TextInput.svelte';
-	import NumberTotalInput from '../common/NumberTotalInput.svelte';
+	import MetadataFields from './MetadataFields.svelte';
 	import type { EditorSession } from './editor-session.svelte';
-	import { metadataFields } from './metadata-changeset.svelte';
 
 	let { open = $bindable(false), session }: { open?: boolean; session: EditorSession } = $props();
 	let metadata = $derived(session.metadata);
-	let image = $derived(metadata?.cover?.[0]);
-	let src = $derived(image ? `data:${image.mimeType};base64,${image.data.toBase64()}` : null);
-
-	async function selectCover(file: File) {
-		const changes = metadata;
-		if (!changes) return;
-		const data = new Uint8Array(await file.arrayBuffer());
-		if (metadata === changes) changes.cover = [{ data, mimeType: file.type, kind: 'coverFront' }];
-	}
-
-	function revertMetadata() {
-		if (!metadata) return;
-		for (const field of metadataFields) {
-			metadata.resetField(field.key);
-			if (field.type === 'number-total') metadata.resetField(field.total);
-		}
-		metadata.cover = metadata.original.images;
-	}
 </script>
 
 <ResponsiveModal bind:open title="Edit metadata">
@@ -34,7 +13,7 @@
 			type="button"
 			class="cursor-pointer rounded-lg border border-white/10 px-4 py-2 text-sm font-medium hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
 			disabled={!metadata?.hasChanges}
-			onclick={revertMetadata}
+			onclick={() => metadata?.reset()}
 		>
 			Revert
 		</button>
@@ -47,47 +26,6 @@
 		</button>
 	{/snippet}
 	{#if metadata}
-		<div class="flex flex-col items-center gap-4">
-			<CoverImageDropper
-				{src}
-				changed={metadata.coverChanged}
-				onselect={selectCover}
-				ondelete={() => {
-					if (metadata) metadata.cover = [];
-				}}
-				onrevert={metadata.original.images?.length
-					? () => {
-							if (metadata) metadata.cover = metadata.original.images;
-						}
-					: undefined}
-			/>
-		</div>
-		<div class="mt-2 grid gap-2 md:grid-cols-2">
-			{#each metadataFields as field (field.key)}
-				{#if field.type === 'text'}
-					<TextInput
-						label={field.label}
-						bind:value={
-							() => metadata?.values[field.key] ?? '',
-							(value) => {
-								if (metadata) metadata.values[field.key] = value;
-							}
-						}
-						changed={metadata.fieldChanged(field.key)}
-						onrevert={() => metadata?.resetField(field.key)}
-					/>
-				{:else}
-					<NumberTotalInput
-						label={field.label}
-						bind:value={metadata.values[field.key]}
-						bind:total={metadata.values[field.total]}
-						changed={metadata.fieldChanged(field.key)}
-						totalChanged={metadata.fieldChanged(field.total)}
-						onrevert={() => metadata?.resetField(field.key)}
-						onreverttotal={() => metadata?.resetField(field.total)}
-					/>
-				{/if}
-			{/each}
-		</div>
+		<MetadataFields {metadata} />
 	{/if}
 </ResponsiveModal>

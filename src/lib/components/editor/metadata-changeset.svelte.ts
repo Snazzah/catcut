@@ -46,6 +46,14 @@ export class MetadataChangeSet {
 		this.values = { ...this.values, [field]: this.original[field] };
 	}
 
+	reset() {
+		for (const field of metadataFields) {
+			this.resetField(field.key);
+			if (field.type === 'number-total') this.resetField(field.total);
+		}
+		this.cover = this.original.images;
+	}
+
 	get coverChanged() {
 		if (!this.cover?.length && !this.original.images?.length) return false;
 		return this.cover !== this.original.images;

@@ -6,12 +6,30 @@
 
 	let {
 		dragging = false,
+		multiple = true,
+		hint = 'supports video & audio files',
+		pick,
 		onselect
-	}: { dragging?: boolean; onselect: (sources: LocalMediaSource[]) => void } = $props();
+	}: {
+		dragging?: boolean;
+		multiple?: boolean;
+		hint?: string;
+		pick?: () => void;
+		onselect: (sources: LocalMediaSource[]) => void;
+	} = $props();
+
+	let noun = $derived(multiple ? 'files' : 'a file');
+
+	function handleClick(event: MouseEvent) {
+		if (!pick) return;
+		event.preventDefault();
+		pick();
+	}
 
 	function handleChange(event: Event) {
 		if (!(event.currentTarget instanceof HTMLInputElement)) return;
 		const files = [...(event.currentTarget.files ?? [])];
+		event.currentTarget.value = '';
 		if (files.length) onselect(files.map(createLocalMediaSource));
 	}
 </script>
@@ -27,8 +45,9 @@
 	<input
 		class="absolute size-px overflow-hidden whitespace-nowrap [clip-path:inset(50%)]"
 		type="file"
-		multiple
+		{multiple}
 		accept="audio/*,video/*"
+		onclick={handleClick}
 		onchange={handleChange}
 	/>
 	<span
@@ -38,7 +57,15 @@
 		]}
 	>
 		<Icon class="size-7 text-violet-400" icon={uploadIcon} aria-hidden="true" />
-		<span class="text-white">{dragging ? 'drop them here!' : mobile.current ? 'select files' : 'drag or select files'}</span>
-		<small class="max-w-80 text-xs">supports video & audio files</small>
+		<span class="text-white"
+			>{dragging
+				? multiple
+					? 'drop them here!'
+					: 'drop it here!'
+				: mobile.current
+					? `select ${noun}`
+					: `drag or select ${noun}`}</span
+		>
+		<small class="max-w-80 text-xs">{hint}</small>
 	</span>
 </label>
