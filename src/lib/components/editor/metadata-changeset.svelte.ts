@@ -11,6 +11,40 @@ export const metadataFields = [
 	{ type: 'text', key: 'comment', label: 'Comment' }
 ] as const;
 
+// Raw tag keys Mediabunny reads each field from, across all types
+// This is to make sure that `raw` tags don't re-create fields that are intended to be deleted
+const rawFieldKeys: Record<MetadataFieldDefinition['key'], string[]> = {
+	title: [
+		'TIT2',
+		'TT2',
+		'TITLE',
+		'©nam',
+		'name',
+		'titl',
+		'com.apple.quicktime.title',
+		'INAM',
+		'TITL'
+	],
+	artist: ['TPE1', 'TP1', 'ARTIST', '©ART', 'com.apple.quicktime.artist', 'IART'],
+	album: ['TALB', 'TAL', 'ALBUM', '©alb', 'albm', 'com.apple.quicktime.album', 'IPRD'],
+	albumArtist: ['TPE2', 'TP2', 'ALBUMARTIST', 'aART', 'album_artist'],
+	trackNumber: [
+		'TRCK',
+		'TRK',
+		'TRACKNUMBER',
+		'TRACKTOTAL',
+		'trkn',
+		'track',
+		'track_number',
+		'part_number',
+		'IPRT',
+		'ITRK'
+	],
+	discNumber: ['TPOS', 'TPA', 'DISCNUMBER', 'DISCTOTAL', 'disk', 'disc', 'disc_number'],
+	genre: ['TCON', 'TCO', 'GENRE', '©gen', 'gnre', 'com.apple.quicktime.genre', 'IGNR', 'GENR'],
+	comment: ['COMM', 'COM', 'COMMENT', '©cmt', 'com.apple.quicktime.comment', 'ICMT', 'CMNT']
+};
+
 type MetadataFieldDefinition = (typeof metadataFields)[number];
 type MetadataField =
 	| MetadataFieldDefinition['key']
@@ -75,6 +109,18 @@ export class MetadataChangeSet {
 			...this.values,
 			images: this.cover ? [...this.cover] : undefined
 		};
+		const staleRawKeys = metadataFields
+			.filter(
+				(field) =>
+					this.fieldChanged(field.key) ||
+					(field.type === 'number-total' && this.fieldChanged(field.total))
+			)
+			.flatMap((field) => rawFieldKeys[field.key].map((key) => key.toLowerCase()));
+		if (tags.raw && staleRawKeys.length)
+			// Matroska tag names are case-insensitive, so match raw keys loosely
+			tags.raw = Object.fromEntries(
+				Object.entries(tags.raw).filter(([key]) => !staleRawKeys.includes(key.toLowerCase()))
+			);
 		for (const field of metadataFields) {
 			if (field.type === 'text') {
 				if (!tags[field.key]?.trim()) delete tags[field.key];
