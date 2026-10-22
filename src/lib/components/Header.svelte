@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Icon from '@iconify/svelte';
+	import { onMount } from 'svelte';
 	import infoIcon from '@iconify-icons/mdi/info-outline';
 	import cogIcon from '@iconify-icons/mdi/cog-outline';
 	import installIcon from '@iconify-icons/mdi/tray-arrow-down';
@@ -11,17 +12,33 @@
 	import updateIcon from '@iconify-icons/mdi/update';
 
 	let visible = $state(true);
+	let scrolled = $state(false);
+	let scrollable = $state(false);
 	let lastScroll = 0;
 	let hashChanged = false;
 	let atHome = $derived(page.url.pathname === '/');
 
 	function handleScroll() {
 		const scroll = window.scrollY;
+		scrolled = scroll > 0;
 		if (!mobile.current) visible = true;
 		else if (!hashChanged && scroll !== lastScroll) visible = scroll < 50 || scroll < lastScroll;
 		lastScroll = scroll;
 		hashChanged = false;
 	}
+
+	function updateScrollable() {
+		scrollable = document.documentElement.scrollHeight > window.innerHeight;
+	}
+
+	onMount(() => {
+		scrolled = window.scrollY > 0;
+		updateScrollable();
+
+		const observer = new ResizeObserver(updateScrollable);
+		observer.observe(document.documentElement);
+		return () => observer.disconnect();
+	});
 
 	const links = [
 		{
@@ -37,7 +54,11 @@
 	];
 </script>
 
-<svelte:window onscroll={handleScroll} onhashchange={() => (hashChanged = true)} />
+<svelte:window
+	onscroll={handleScroll}
+	onresize={updateScrollable}
+	onhashchange={() => (hashChanged = true)}
+/>
 
 <div
 	class={[
@@ -46,28 +67,34 @@
 		mobile.current && !visible && 'translate-y-full'
 	]}
 >
-	<header
-		class={[
-			'relative isolate flex w-full items-center justify-center gap-1 rounded-t-md from-black/85 via-black/70 via-60% to-transparent p-2 md:max-w-xl md:rounded-t-none md:rounded-b-md',
-			!atHome
-				? mobile.current
-					? 'bg-linear-to-t'
-					: 'max-sm:bg-linear-to-t sm:bg-linear-to-b'
-				: null
+	{#if !atHome}
+		{@const fadeClass = [
+			'pointer-events-none absolute inset-0 -z-10 transition-opacity duration-200 motion-reduce:transition-none',
+			mobile.current
+				? !scrollable && 'opacity-0'
+				: [!scrolled && 'sm:opacity-0', !scrollable && 'max-sm:opacity-0']
 		]}
-	>
-		{#if !atHome}
-			<div
-				aria-hidden="true"
-				class={[
-					'pointer-events-none absolute inset-0 -z-10 rounded-[inherit] backdrop-blur-lg',
-					mobile.current
-						? '[--blur-direction:to_top]'
-						: 'max-sm:[--blur-direction:to_top] sm:[--blur-direction:to_bottom]'
-				]}
-				style:mask-image="linear-gradient(var(--blur-direction), black 50%, transparent 100%)"
-			></div>
-		{/if}
+		<div
+			aria-hidden="true"
+			class={[
+				fadeClass,
+				'from-black/85 via-black/70 via-60% to-transparent',
+				mobile.current ? 'bg-linear-to-t' : 'max-sm:bg-linear-to-t sm:bg-linear-to-b'
+			]}
+		></div>
+		<div
+			aria-hidden="true"
+			class={[
+				fadeClass,
+				'backdrop-blur-lg',
+				mobile.current
+					? '[--blur-direction:to_top]'
+					: 'max-sm:[--blur-direction:to_top] sm:[--blur-direction:to_bottom]'
+			]}
+			style:mask-image="linear-gradient(var(--blur-direction), black 50%, transparent 100%)"
+		></div>
+	{/if}
+	<header class="flex w-full items-center justify-center gap-1 p-2 md:max-w-xl">
 		<a
 			href="/"
 			class="text-accent mr-auto flex items-center justify-center gap-1 text-2xl font-black transition-all active:scale-95"
