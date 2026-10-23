@@ -94,9 +94,16 @@ self.addEventListener('fetch', (event) => {
 	event.respondWith(
 		caches.open(CACHE_NAME).then(async (cache) => {
 			if (event.request.mode === 'navigate') {
-				return (
-					(await cache.match(url.pathname)) ?? (await cache.match('/')) ?? fetch(event.request)
-				);
+				const cached = await cache.match(url.pathname);
+				if (cached) return cached;
+
+				try {
+					return await fetch(event.request);
+				} catch (err) {
+					const shell = await cache.match('/');
+					if (shell) return shell;
+					throw err;
+				}
 			}
 
 			return (await cache.match(event.request)) ?? fetch(event.request);

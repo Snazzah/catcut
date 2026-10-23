@@ -43,6 +43,7 @@ export default defineConfig({
 			adapter: adapter(),
 			version: { name: getCommitSha(), pollInterval: 60000 },
 			serviceWorker: { register: false },
+			paths: { relative: false },
 			extensions: ['.svelte', '.svx', '.md']
 		})
 	],
