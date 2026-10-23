@@ -140,7 +140,7 @@
 		if (
 			!discardChanges &&
 			opened?.metadata.hasChanges &&
-			!confirm('Discard your unsaved metadata changes?')
+			!confirm('Discard your unsaved changes?')
 		)
 			return;
 		const token = ++openToken;
@@ -261,7 +261,7 @@
 
 	function close() {
 		if (saving) return;
-		if (opened?.metadata.hasChanges && !confirm('Discard your unsaved metadata changes?')) return;
+		if (opened?.metadata.hasChanges && !confirm('Discard your unsaved changes?')) return;
 		openToken++;
 		loading = false;
 		opened = null;
@@ -298,7 +298,6 @@
 	label: string;
 	icon: IconifyIcon;
 	primary?: boolean;
-	/** Only show the icon on small viewports */
 	compact?: boolean;
 })}
 	<button
@@ -328,7 +327,7 @@
 	<section class="mb-4 mt-8 text-center">
 		<h1 class="text-2xl font-bold text-white">Metadata editor</h1>
 		<p class="mt-2 text-neutral-300">
-			Edit tags and cover art without re-encoding. Your files never leave your device.
+			Edit metadata tags and cover art in your own browser, with the ability to overwrite files (if the browser supports it).
 		</p>
 	</section>
 
