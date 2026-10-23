@@ -11,6 +11,7 @@
 	import downloadIcon from '@iconify-icons/mdi/download';
 	import alertIcon from '@iconify-icons/mdi/alert-outline';
 	import closeIcon from '@iconify-icons/mdi/close';
+	import revertIcon from '@iconify-icons/mdi/undo';
 	import {
 		ALL_FORMATS,
 		BlobSource,
@@ -290,29 +291,35 @@
 	asCopy,
 	label,
 	icon,
-	primary = false
+	primary = false,
+	compact = false
 }: {
 	asCopy: boolean;
 	label: string;
 	icon: IconifyIcon;
 	primary?: boolean;
+	/** Only show the icon on small viewports */
+	compact?: boolean;
 })}
 	<button
 		type="button"
+		title={compact ? label : undefined}
 		class={[
 			'flex cursor-pointer items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium tabular-nums disabled:cursor-not-allowed disabled:opacity-50',
 			primary
 				? 'border-white bg-white text-neutral-900 hover:border-neutral-200 hover:bg-neutral-200'
-				: 'border-white/10 hover:bg-white/10'
+				: 'border-white/10 hover:bg-white/10',
+			compact && 'max-sm:px-2.5'
 		]}
 		disabled={saving || !opened?.metadata.hasChanges}
 		onclick={() => save(asCopy)}
 	>
 		{#if saveProgress !== null && savingCopy === asCopy}
-			Saving… {Math.floor(saveProgress * 100)}%
+			<span class={[compact && 'max-sm:sr-only']}>Saving…</span>
+			{Math.floor(saveProgress * 100)}%
 		{:else}
 			<Icon {icon} class="size-4" aria-hidden="true" />
-			{label}
+			<span class={[compact && 'max-sm:sr-only']}>{label}</span>
 		{/if}
 	</button>
 {/snippet}
@@ -351,17 +358,19 @@
 			<MetadataFields metadata={opened.metadata} />
 		</fieldset>
 
-		<div class="mt-6 flex justify-end gap-2">
+		<div class="mt-6 flex justify-end gap-2 flex-wrap">
 			<button
 				type="button"
-				class="cursor-pointer rounded-lg border border-white/10 px-4 py-2 text-sm font-medium hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+				title="Revert"
+				class="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-white/10 px-4 py-2 text-sm font-medium hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50 max-sm:px-2.5"
 				disabled={saving || !opened.metadata.hasChanges}
 				onclick={() => opened?.metadata.reset()}
 			>
-				Revert
+				<Icon icon={revertIcon} class="size-4" aria-hidden="true" />
+				<span class="max-sm:sr-only">Revert</span>
 			</button>
 			{#if overwrites}
-				{@render saveButton({ asCopy: true, label: 'Save copy', icon: downloadIcon })}
+				{@render saveButton({ asCopy: true, label: 'Save copy', icon: downloadIcon, compact: true })}
 			{/if}
 			{@render saveButton({
 				asCopy: !overwrites,
