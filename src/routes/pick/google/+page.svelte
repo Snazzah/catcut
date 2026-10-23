@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import { PUBLIC_GOOGLE_CLIENT_ID, PUBLIC_GOOGLE_KEY } from '$app/env/public';
 	import {
+		GOOGLE_TOKEN_KEY,
 		googleAllowed,
 		loadScript,
 		PICKER_MIME_TYPES,
@@ -12,7 +13,6 @@
 
 	type StoredToken = { accessToken: string; expiresAt: number };
 
-	const TOKEN_KEY = 'catcut-google-token';
 	const SCOPE = 'https://www.googleapis.com/auth/drive.file';
 	const APP_ID = PUBLIC_GOOGLE_CLIENT_ID.split('-')[0];
 
@@ -26,7 +26,7 @@
 
 	function getStoredToken() {
 		try {
-			const token: StoredToken = JSON.parse(localStorage.getItem(TOKEN_KEY) ?? 'null');
+			const token: StoredToken = JSON.parse(localStorage.getItem(GOOGLE_TOKEN_KEY) ?? 'null');
 			if (token && token.expiresAt - 10 * 60_000 > Date.now()) return token.accessToken;
 		} catch {}
 		return null;
@@ -67,9 +67,9 @@
 			.setVisible(true);
 	}
 
-	function signIn(prompt = '') {
+	function signIn() {
 		error = null;
-		tokenClient.requestAccessToken({ prompt });
+		tokenClient.requestAccessToken({ prompt: '' });
 	}
 
 	function pick() {
@@ -98,7 +98,7 @@
 							return;
 						}
 						localStorage.setItem(
-							TOKEN_KEY,
+							GOOGLE_TOKEN_KEY,
 							JSON.stringify({
 								accessToken: response.access_token,
 								expiresAt: Date.now() + response.expires_in * 1000
@@ -136,7 +136,7 @@
 		{#if ready}
 			<button
 				class="cursor-pointer rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white transition-[background-color,scale] hover:bg-violet-500 active:scale-95"
-				onclick={() => signIn()}>Try again</button
+				onclick={signIn}>Try again</button
 			>
 		{/if}
 	</PickerStatus>
@@ -153,10 +153,6 @@
 		<button
 			class="cursor-pointer rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white transition-[background-color,scale] hover:bg-violet-500 active:scale-95"
 			onclick={pick}>{picking ? 'Reopen picker' : 'Continue with Google'}</button
-		>
-		<button
-			class="cursor-pointer text-xs text-neutral-400 hover:text-neutral-200 hover:underline"
-			onclick={() => signIn('select_account')}>use a different account</button
 		>
 	</PickerStatus>
 {/if}

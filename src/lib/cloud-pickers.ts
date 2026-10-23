@@ -12,6 +12,8 @@ export type CloudProvider = 'google' | 'dropbox';
 export const googleAllowed = !!PUBLIC_GOOGLE_CLIENT_ID && !!PUBLIC_GOOGLE_KEY;
 export const dropboxAllowed = !!PUBLIC_DROPBOX_CLIENT_ID;
 
+export const GOOGLE_TOKEN_KEY = 'catcut-google-token';
+
 const CHANNEL_NAME = 'catcut-picker';
 
 type PickerMessage = { id: string; sources: RemoteMediaSource[] };
