@@ -5,6 +5,7 @@
 	import heartIcon from '@iconify-icons/mdi/heart';
 	import privacyIcon from '@iconify-icons/mdi/file-document';
 	import commitIcon from '@iconify-icons/mdi/source-commit';
+	import AboutLink from './AboutLink.svelte';
 
 	import { version } from '$app/env';
 
@@ -23,23 +24,18 @@
 
 catcut is a webapp that uses [Mediabunny](https://mediabunny.dev) to view, trim, and edit audio and video without uploading anything to a server. Everything is processed in your own browser, and should be pretty fast too.
 
-<a href="https://github.com/Snazzah/catcut" target="_blank">
-	<Icon icon={githubIcon} inline class="inline" />
-	Source Code
-</a><br/><a href="https://github.com/sponsors/Snazzah" target="_blank">
-	<Icon icon={heartIcon} inline class="inline" />
-	Donate
-</a><br/><a href="/privacy">
-	<Icon icon={privacyIcon} inline class="inline" />
-	Privacy Policy
-</a>
+<AboutLink label="Source Code" icon={githubIcon} href="https://github.com/Snazzah/catcut" />
+<AboutLink label="Donate" icon={heartIcon} href="https://github.com/sponsors/Snazzah" />
+<AboutLink label="Privacy Policy" icon={privacyIcon} href="/privacy" />
+
 <div class="flex gap-4 items-center-safe **:m-0! my-4">
-	<a href="https://snazzah.com" target="_blank" class="hover:scale-105 hover:rotate-2 motion-safe:transition-transform">
-		<enhanced:img src="../../assets/snazzah.png" sizes="(min-width: 768px) 128px, 64px" alt="Snazzah" class="size-16 md:size-32 rounded-md bg-black/75" />
+	<a href="https://snazzah.com" target="_blank" class="hover:scale-105 hover:rotate-2 motion-safe:transition-transform active:scale-95 active:-rotate-2">
+		<enhanced:img src="../../assets/snazzah.png" sizes="(min-width: 768px) 128px, 64px" alt="Snazzah" class="size-24 md:size-32 rounded-md bg-black/50" />
 	</a>
 	<div class="flex flex-col">
 		<span>Made by</span>
 		<h3 class="text-2xl md:text-4xl">Snazzah</h3>
+		<a href="https://snazzah.com" target="_blank">snazzah.com</a>
 	</div>
 </div>
 
