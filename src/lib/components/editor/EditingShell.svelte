@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { onDestroy, untrack } from 'svelte';
-	import fullscreenIcon from '@iconify-icons/mdi/fullscreen';
 	import restartIcon from '@iconify-icons/mdi/restart';
 	import saveIcon from '@iconify-icons/mdi/content-save';
 	import crystalBallIcon from '@iconify-icons/mdi/crystal-ball';
+	import cameraIcon from '@iconify-icons/mdi/camera-outline';
 	import PlayerButton from '#lib/components/common/PlayerButton.svelte';
 	import PlayerPlayButton from '../PlayerPlayButton.svelte';
 	import PlayerVolumeControl from '../PlayerVolumeControl.svelte';
@@ -12,16 +12,13 @@
 	import type { EditorSession } from './editor-session.svelte';
 	import { editorTools, isEditorToolAvailable } from './editor-tools';
 	import Icon from '@iconify/svelte';
-	import { naturallyFullscreen } from '#lib/platform.svelte.js';
 	import { horizontalScrollbars } from '#lib/util/attachments.js';
 
 	let {
 		session,
-		onfullscreen,
 		onsave
 	}: {
 		session: EditorSession;
-		onfullscreen: () => void;
 		onsave: () => void;
 	} = $props();
 
@@ -121,12 +118,12 @@
 				/ {player.formatTimestamp(player.endTime)}
 			</span>
 			<span class="mx-auto"></span>
-			{#if !naturallyFullscreen.current}
+			{#if player.hasVideo}
 				<PlayerButton
-					title="Fullscreen"
-					icon={fullscreenIcon}
-					onclick={onfullscreen}
-					key="F"
+					title="Screenshot frame"
+					key="P"
+					icon={cameraIcon}
+					onclick={() => player.downloadFrame(session.cropChanged ? session.crop : null)}
 					offset={32}
 				/>
 				<span class="h-5 w-px shrink-0 bg-white/20" aria-hidden="true"></span>

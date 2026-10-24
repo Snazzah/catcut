@@ -7,6 +7,7 @@ import {
 	Input,
 	type InputAudioTrack,
 	type InputVideoTrack,
+	type CropRectangle,
 	type MediaCodec,
 	type MetadataTags,
 	type WrappedAudioBuffer,
@@ -183,6 +184,43 @@ export class PlayerState {
 		this.#context = context;
 		this.#animationFrameId = requestAnimationFrame(this.#render);
 		this.#backgroundRenderId = window.setInterval(() => this.#renderFrame(), 500);
+	}
+
+	downloadFrame(crop?: CropRectangle | null) {
+		const source = this.#canvas;
+		if (!source) return;
+
+		let canvas = source;
+		if (crop) {
+			canvas = document.createElement('canvas');
+			canvas.width = crop.width;
+			canvas.height = crop.height;
+			canvas
+				.getContext('2d')
+				?.drawImage(
+					source,
+					crop.left,
+					crop.top,
+					crop.width,
+					crop.height,
+					0,
+					0,
+					crop.width,
+					crop.height
+				);
+		}
+
+		const filename = this.filename.replace(/\.[^.]+$/, '');
+		const timestamp = this.currentTime.toFixed(3);
+		canvas.toBlob((blob) => {
+			if (!blob) return;
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = `${filename}-${timestamp}s.png`;
+			link.click();
+			setTimeout(() => URL.revokeObjectURL(url), 300);
+		}, 'image/png');
 	}
 
 	async open(source: MediaSource, options: { autoplay?: boolean } = {}) {

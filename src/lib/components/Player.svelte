@@ -17,6 +17,7 @@
 	import { mobile, narrowViewport, naturallyFullscreen, surfaces } from '#lib/platform.svelte.js';
 	import { browser } from '$app/env';
 	import { toast } from 'svelte-sonner';
+	import type { CropRectangle } from 'mediabunny';
 
 	const SEEK_STEP_COUNT = 10_000;
 	const MOBILE_CONTROLS_TIMEOUT_MS = 3_000;
@@ -28,6 +29,7 @@
 		controlsVisible?: boolean;
 		showControls?: boolean;
 		overlay?: Snippet;
+		screenshotCrop?: CropRectangle | null;
 	};
 
 	let {
@@ -37,7 +39,8 @@
 		onfullscreen,
 		controlsVisible = $bindable(true),
 		showControls = true,
-		overlay
+		overlay,
+		screenshotCrop = null
 	}: Props = $props();
 	let canvas: HTMLCanvasElement;
 	let pipVideo: HTMLVideoElement;
@@ -194,20 +197,6 @@
 		player.endScrub(time, shouldResume);
 	}
 
-	function downloadFrame() {
-		const filename = player.filename.replace(/\.[^.]+$/, '');
-		const timestamp = player.currentTime.toFixed(3);
-		canvas.toBlob((blob) => {
-			if (!blob) return;
-			const url = URL.createObjectURL(blob);
-			const link = document.createElement('a');
-			link.href = url;
-			link.download = `${filename}-${timestamp}s.png`;
-			link.click();
-			setTimeout(() => URL.revokeObjectURL(url), 300);
-		}, 'image/png');
-	}
-
 	function handleKeydown(event: KeyboardEvent) {
 		if (event.defaultPrevented) return;
 
@@ -231,7 +220,7 @@
 		} else if (event.code === 'KeyM') {
 			player.toggleMuted();
 		} else if (event.code === 'KeyP') {
-			downloadFrame();
+			player.downloadFrame(screenshotCrop);
 		} else if (event.code === 'KeyF') {
 			onfullscreen();
 		} else if (event.code === 'KeyE') {
@@ -403,7 +392,7 @@
 							title="Screenshot frame"
 							key="P"
 							icon={cameraIcon}
-							onclick={downloadFrame}
+							onclick={() => player.downloadFrame(screenshotCrop)}
 							offset={36}
 						/>
 					{/if}

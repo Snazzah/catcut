@@ -174,6 +174,7 @@
 			onfullscreen={toggleFullscreen}
 			bind:controlsVisible={playerControlsVisible}
 			showControls={!editing}
+			screenshotCrop={editing && editor.cropChanged ? editor.crop : null}
 		>
 			{#snippet overlay()}
 				{#if editing && !editor.saving}
@@ -185,7 +186,7 @@
 
 	<div class="min-h-0 overflow-hidden">
 		{#if editing}
-			<EditingShell session={editor} onfullscreen={toggleFullscreen} onsave={() => save()} />
+			<EditingShell session={editor} onsave={() => save()} />
 		{/if}
 	</div>
 </section>
