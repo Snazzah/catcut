@@ -13,6 +13,7 @@
 	import Icon from '@iconify/svelte';
 	import { BitsConfig } from 'bits-ui';
 	import { onMount, tick } from 'svelte';
+	import { toast } from 'svelte-sonner';
 	import { settings } from '#lib/util/settings.svelte.js';
 
 	let source = $derived(queue.source);
@@ -31,9 +32,26 @@
 
 		const opensNewSource = !append || !source;
 		if (opensNewSource && settings.startWithEditor) editing = true;
+		else if (opensNewSource && !settings.askAboutEditor) promptStartWithEditor();
 
 		if (append) queue.add(...validSources);
 		else queue.replace(...validSources);
+	}
+
+	function promptStartWithEditor() {
+		settings.askAboutEditor = true;
+		toast('Always open files in the editor?', {
+			description: 'You can change this later in settings.',
+			duration: 15_000,
+			action: {
+				label: 'Yes',
+				onClick: () => {
+					settings.startWithEditor = true;
+					if (source) editing = true;
+				}
+			},
+			cancel: { label: 'No', onClick: () => {} }
+		});
 	}
 
 	function closeMedia() {
