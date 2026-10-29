@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import infoIcon from '@iconify-icons/mdi/info-outline';
 	import cogIcon from '@iconify-icons/mdi/cog-outline';
+	import toolsIcon from '@iconify-icons/mdi/wrench-outline';
 	import installIcon from '@iconify-icons/mdi/tray-arrow-down';
 	import { catcut } from '#lib/icons.ts';
 	import { resolve } from '$app/paths';
@@ -41,6 +42,11 @@
 	});
 
 	const links = [
+		{
+			icon: toolsIcon,
+			label: 'Tools',
+			href: resolve('tools')
+		},
 		{
 			icon: infoIcon,
 			label: 'About',
