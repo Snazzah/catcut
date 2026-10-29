@@ -6,8 +6,8 @@
 </script>
 
 <svelte:head>
-<title>About - catcut</title>
-<link href="https://catcut.snaz.in/about" rel="canonical" />
+<title>Privacy Policy - catcut</title>
+<link href="https://catcut.snaz.in/privacy" rel="canonical" />
 </svelte:head>
 
 <MarkdownContent>
