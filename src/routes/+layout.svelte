@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page, updated } from '$app/state';
-	import { PUBLIC_PLAUSIBLE_HOSTNAME } from '$app/env/public';
+	import { PUBLIC_ORIGIN, PUBLIC_PLAUSIBLE_HOSTNAME } from '$app/env/public';
 	import '../app.css';
 	import { onMount, type Snippet } from 'svelte';
 	import { Tooltip } from 'bits-ui';
@@ -115,6 +115,9 @@
 </script>
 
 <svelte:head>
+	<meta content="{PUBLIC_ORIGIN}/images/social-cover.jpg" property="og:image" />
+	<meta content={PUBLIC_ORIGIN} property="og:url" />
+	<meta property="twitter:image" content="{PUBLIC_ORIGIN}/images/social-cover.jpg" />
 	{#if PUBLIC_PLAUSIBLE_HOSTNAME}
 		<script
 			crossorigin="anonymous"

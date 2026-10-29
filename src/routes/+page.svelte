@@ -3,6 +3,7 @@
 	import CloudPickers from '#lib/components/CloudPickers.svelte';
 	import MediaWorkspace from '#lib/components/MediaWorkspace.svelte';
 	import ResponsiveModal from '#lib/components/common/ResponsiveModal.svelte';
+	import { PUBLIC_ORIGIN } from '$app/env/public';
 	import { catcut } from '#lib/icons.js';
 	import {
 		queue,
@@ -187,7 +188,7 @@
           "items": [
             {
               "media": {
-                "url": "https://get.snaz.in/48Ejjhe.jpg"
+                "url": `${PUBLIC_ORIGIN}/images/social-cover.jpg`
               }
             }
           ]
