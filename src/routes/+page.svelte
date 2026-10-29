@@ -180,7 +180,7 @@
       "components": [
         {
           "type": 10,
-          "content": "# <:catcut:1565032010815381644> [catcut](https://catcut.snaz.in)\nin-browser media viewer & editor"
+          "content": "# <:catcut:1565032010815381644> [catcut](https://catcut.snazzah.workers.dev/)\nin-browser media viewer & editor"
         },
         {
           "type": 12,
@@ -196,7 +196,7 @@
     };
 
 		function toDiscordComponent() {
-    	return `<scr`+`ipt id="discord:component-embed" type="application/json">${JSON.stringify(componentEmbed, null, 2)}</`+`script>`
+    	return `<scr`+`ipt id="discord:component-embed" type="application/json">${JSON.stringify({ component: componentEmbed }, null, 2)}</`+`script>`
 		}
 </script>
 

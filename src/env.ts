@@ -8,6 +8,6 @@ export const variables = defineEnvVars({
 	PUBLIC_ORIGIN: {
 		public: true,
 		static: true,
-		schema: (input) => (input || 'https://catcut.snaz.in').replace(/\/+$/, '')
+		schema: (input) => (input || 'https://catcut.snazzah.workers.dev').replace(/\/+$/, '')
 	}
 });
