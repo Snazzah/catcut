@@ -173,6 +173,31 @@
 
 		openMedia(sources, event.shiftKey);
 	}
+
+	const componentEmbed = {
+      "type": 17,
+      "accent_color": 8141549,
+      "components": [
+        {
+          "type": 10,
+          "content": "# <:catcut:1565032010815381644> [catcut](https://catcut.snaz.in)\nin-browser media viewer & editor"
+        },
+        {
+          "type": 12,
+          "items": [
+            {
+              "media": {
+                "url": "https://get.snaz.in/48Ejjhe.jpg"
+              }
+            }
+          ]
+        }
+      ]
+    };
+
+		function toDiscordComponent() {
+    	return `<scr`+`ipt id="discord:component-embed" type="application/json">${JSON.stringify(componentEmbed, null, 2)}</`+`script>`
+		}
 </script>
 
 <svelte:window
@@ -195,6 +220,8 @@
 <svelte:head>
 	<title>catcut</title>
 	<link href="https://catcut.snaz.in/" rel="canonical" />
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+	{@html toDiscordComponent()}
 </svelte:head>
 
 <main
