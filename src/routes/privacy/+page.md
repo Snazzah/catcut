@@ -3,11 +3,12 @@
 	import Icon from '@iconify/svelte';
 	import githubIcon from '@iconify-icons/mdi/github';
 	import heartIcon from '@iconify-icons/mdi/heart';
+	import { pageMeta } from '#lib/seo.svelte';
 </script>
 
 <svelte:head>
 <title>Privacy Policy - catcut</title>
-<link href="https://catcut.snaz.in/privacy" rel="canonical" />
+{@render pageMeta('/privacy')}
 </svelte:head>
 
 <MarkdownContent>

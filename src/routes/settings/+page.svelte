@@ -18,13 +18,14 @@
 	}
 
 	onMount(checkGoogleToken);
+	import { pageMeta } from '#lib/seo.svelte';
 </script>
 
 <svelte:window onstorage={checkGoogleToken} />
 
 <svelte:head>
 	<title>Settings - catcut</title>
-	<link href="https://catcut.snaz.in/settings" rel="canonical" />
+	{@render pageMeta('/settings')}
 </svelte:head>
 
 <PageContent>

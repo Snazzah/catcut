@@ -116,7 +116,7 @@
 
 <svelte:head>
 	<meta content="{PUBLIC_ORIGIN}/images/social-cover.jpg" property="og:image" />
-	<meta content={PUBLIC_ORIGIN} property="og:url" />
+	<meta content="{PUBLIC_ORIGIN}{page.url.pathname}" property="og:url" />
 	<meta property="twitter:image" content="{PUBLIC_ORIGIN}/images/social-cover.jpg" />
 	{#if PUBLIC_PLAUSIBLE_HOSTNAME}
 		<script

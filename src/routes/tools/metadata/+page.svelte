@@ -266,6 +266,7 @@
 		loading = false;
 		opened = null;
 	}
+	import { pageMeta } from '#lib/seo.svelte';
 </script>
 
 <svelte:window
@@ -284,7 +285,7 @@
 
 <svelte:head>
 	<title>Metadata Editor - catcut</title>
-	<link href="https://catcut.snaz.in/tools/metadata" rel="canonical" />
+	{@render pageMeta('/tools/metadata', 'Edit the metadata tags and album covers of your audio files in place, all in your browser. No ads, no uploads, no limits.')}
 </svelte:head>
 
 {#snippet saveButton({

@@ -6,16 +6,16 @@
 	import privacyIcon from '@iconify-icons/mdi/file-document';
 	import commitIcon from '@iconify-icons/mdi/source-commit';
 	import AboutLink from './AboutLink.svelte';
+	import { pageMeta } from '#lib/seo.svelte';
 
 	import { version } from '$app/env';
 
-	// version.name is the commit SHA when built from git, otherwise a timestamp
 	const commitSha = /^[0-9a-f]{40}$/.test(version) ? version : null;
 </script>
 
 <svelte:head>
 <title>About - catcut</title>
-<link href="https://catcut.snaz.in/about" rel="canonical" />
+{@render pageMeta('/about')}
 </svelte:head>
 
 <MarkdownContent>

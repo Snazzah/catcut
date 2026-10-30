@@ -13,11 +13,12 @@
 			path: '/tools/metadata'
 		},
 	] as const;
+	import { pageMeta } from '#lib/seo.svelte';
 </script>
 
 <svelte:head>
 	<title>Tools - catcut</title>
-	<link href="https://catcut.snaz.in/tools" rel="canonical" />
+	{@render pageMeta('/tools')}
 </svelte:head>
 
 <PageContent>

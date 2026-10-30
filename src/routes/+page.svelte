@@ -15,6 +15,7 @@
 	import { onMount, tick } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { settings } from '#lib/util/settings.svelte.js';
+	import { pageMeta, toDiscordComponent } from '#lib/seo.svelte';
 
 	let source = $derived(queue.source);
 	let editing = $state(false);
@@ -195,9 +196,6 @@
       ]
     };
 
-		function toDiscordComponent() {
-    	return `<scr`+`ipt id="discord:component-embed" type="application/json">${JSON.stringify({ component: componentEmbed }, null, 2)}</`+`script>`
-		}
 </script>
 
 <svelte:window
@@ -219,9 +217,9 @@
 
 <svelte:head>
 	<title>catcut</title>
-	<link href="https://catcut.snaz.in/" rel="canonical" />
+	{@render pageMeta('/')}
 	<!-- eslint-disable-next-line svelte/no-at-html-tags -->
-	{@html toDiscordComponent()}
+	{@html toDiscordComponent(componentEmbed)}
 </svelte:head>
 
 <main

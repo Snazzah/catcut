@@ -1,5 +1,4 @@
 User-agent: *
 Allow: /
-Disallow: /pick/
 
 Sitemap: https://catcut.snaz.in/sitemap.xml
