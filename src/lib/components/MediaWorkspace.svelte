@@ -223,4 +223,18 @@
 			--editor-height: 6rem;
 		}
 	}
+
+	@media (min-width: 640px) and (orientation: landscape) and (max-height: 32rem) {
+		#catcut-player {
+			--editor-height: calc(12.5rem + var(--saib));
+		}
+
+		#catcut-player.editor-expanded {
+			--editor-height: calc(15.5rem + var(--saib));
+		}
+
+		#catcut-player.editor-saving {
+			--editor-height: calc(6rem + var(--saib));
+		}
+	}
 </style>

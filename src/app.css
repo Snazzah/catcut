@@ -3,6 +3,8 @@
 
 @plugin '@tailwindcss/typography';
 
+@custom-variant short-landscape (@media (orientation: landscape) and (max-height: 32rem));
+
 @font-face {
 	font-family: 'Satoshi';
 	src: url('/fonts/Satoshi-Variable.woff2') format('woff2');

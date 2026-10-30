@@ -159,11 +159,11 @@
 				>
 			</div>
 		{:else}
-			<div class="pt-4 pb-1 sm:pt-5 sm:pb-2">
+			<div class="short-landscape:pt-4 short-landscape:pb-1 pt-4 pb-1 sm:pt-5 sm:pb-2">
 				{#if session.ready}
 					<EditorTimeline {session} />
 				{:else}
-					<div class="h-10 animate-pulse bg-neutral-900 sm:h-18"></div>
+					<div class="short-landscape:h-10 h-10 animate-pulse bg-neutral-900 sm:h-18"></div>
 				{/if}
 			</div>
 

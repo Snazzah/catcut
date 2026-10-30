@@ -134,7 +134,7 @@
 
 {#if trim}
 	<div
-		class="relative h-10 w-full touch-none overflow-visible select-none sm:h-18"
+		class="short-landscape:h-10 relative h-10 w-full touch-none overflow-visible select-none sm:h-18"
 		role="presentation"
 		bind:this={timeline}
 		onpointermove={handleTimelineMove}
