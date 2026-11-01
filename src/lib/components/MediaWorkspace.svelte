@@ -1,12 +1,10 @@
 <script lang="ts">
 	import { onDestroy, untrack } from 'svelte';
-	import { toast } from 'svelte-sonner';
-	import prettyMilliseconds from 'pretty-ms';
 	import { queue, type MediaSource } from '#lib/store.svelte.js';
 	import { PlayerState } from '#lib/player-state.svelte.js';
 	import EditingShell from './editor/EditingShell.svelte';
 	import EditorOverlayHost from './editor/EditorOverlayHost.svelte';
-	import { EditorSession } from './editor/editor-session.svelte';
+	import { EditorSession, deliverSaveResult } from './editor/editor-session.svelte';
 	import { editorTools } from './editor/editor-tools';
 	import MediaHeader from './MediaHeader.svelte';
 	import Player from './Player.svelte';
@@ -81,24 +79,7 @@
 			if (result?.kind === 'download') await result.dispose().catch(() => {});
 			return;
 		}
-		if (!result) {
-			if (editor.saveState.status === 'error') toast.error(editor.saveState.message);
-			return;
-		}
-		if (result.kind === 'download') {
-			const file = result.file;
-			const url = URL.createObjectURL(file);
-			const link = document.createElement('a');
-			link.href = url;
-			link.download = file.name;
-			link.click();
-			setTimeout(() => {
-				URL.revokeObjectURL(url);
-				result.dispose().catch(() => {});
-			}, 5_000);
-		}
-
-		toast.success(`Saved your file! This took ${prettyMilliseconds(result.durationMs)}.`);
+		deliverSaveResult(session, result);
 	}
 
 	function openEditor() {

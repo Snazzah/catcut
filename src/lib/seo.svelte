@@ -11,13 +11,13 @@
 			`script>`
 		);
 	}
-
-	export { pageMeta };
 </script>
 
-<!-- Canonical link and description tags, rendered inside a page's <svelte:head> -->
-{#snippet pageMeta(path: string, pageDescription: string = description)}
-	<link href="{origin}{path}" rel="canonical" />
-	<meta name="description" content={pageDescription} />
-	<meta property="og:description" content={pageDescription} />
-{/snippet}
+<script lang="ts">
+	let { path, description: pageDescription }: { path: string; description?: string } = $props();
+</script>
+
+<link href="{origin}{path}" rel="canonical" />
+<meta name="description" content={pageDescription || description} />
+<meta property="og:description" content={pageDescription || description} />
+

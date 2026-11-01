@@ -4,7 +4,7 @@
 	import MetadataFields from '#lib/components/editor/MetadataFields.svelte';
 	import { MetadataChangeSet } from '#lib/components/editor/metadata-changeset.svelte.js';
 	import { getMatchingOutputFormat } from '#lib/util/export.js';
-	import { canOverwriteFiles, isAbort } from '#lib/util/common.js';
+	import { canOverwriteFiles, isAbort, isMediaDrag, isMediaType } from '#lib/util/common.js';
 	import Icon, { type IconifyIcon } from '@iconify/svelte';
 	import fileIcon from '@iconify-icons/mdi/file-music-outline';
 	import overwriteIcon from '@iconify-icons/mdi/file-replace-outline';
@@ -60,10 +60,6 @@
 
 	function errorMessage(error: unknown) {
 		return error instanceof Error ? error.message : String(error);
-	}
-
-	function isMediaType(type: string) {
-		return type === '' || type.startsWith('audio/') || type.startsWith('video/');
 	}
 
 	async function readMetadata(file: File) {
@@ -171,13 +167,6 @@
 		}
 	}
 
-	function isMediaDrag(dataTransfer: DataTransfer | null) {
-		if (!dataTransfer?.types.includes('Files')) return false;
-
-		const fileItems = [...dataTransfer.items].filter((item) => item.kind === 'file');
-		return fileItems.length === 0 || fileItems.some((item) => isMediaType(item.type));
-	}
-
 	function handleDrag(event: DragEvent) {
 		if (saving || !isMediaDrag(event.dataTransfer)) return;
 
@@ -266,7 +255,7 @@
 		loading = false;
 		opened = null;
 	}
-	import { pageMeta } from '#lib/seo.svelte';
+	import PageMeta from '#lib/seo.svelte';
 </script>
 
 <svelte:window
@@ -285,7 +274,7 @@
 
 <svelte:head>
 	<title>Metadata Editor - catcut</title>
-	{@render pageMeta('/tools/metadata', 'Edit the metadata tags and album covers of your audio files in place, all in your browser. No ads, no uploads, no limits.')}
+	<PageMeta path="/tools/metadata" description="Edit the metadata tags and album covers of your audio files in place, all in your browser. No ads, no uploads, no limits." />
 </svelte:head>
 
 {#snippet saveButton({
@@ -325,7 +314,7 @@
 {/snippet}
 
 <PageContent>
-	<section class="mb-4 mt-8 text-center">
+	<section class="my-8 text-center">
 		<h1 class="text-2xl font-bold text-white">Metadata editor</h1>
 		<p class="mt-2 text-neutral-300">
 			Edit metadata tags and cover art in your own browser, with the ability to overwrite files (if the browser supports it).

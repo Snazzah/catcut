@@ -30,6 +30,7 @@
 		showControls?: boolean;
 		overlay?: Snippet;
 		screenshotCrop?: CropRectangle | null;
+		compact?: boolean;
 	};
 
 	let {
@@ -40,7 +41,8 @@
 		controlsVisible = $bindable(true),
 		showControls = true,
 		overlay,
-		screenshotCrop = null
+		screenshotCrop = null,
+		compact = false
 	}: Props = $props();
 	let canvas: HTMLCanvasElement;
 	let pipVideo: HTMLVideoElement;
@@ -257,23 +259,37 @@
 			<!-- Audio view -->
 			<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 			<div
-				class="m-0 flex h-full w-full min-w-0 flex-col items-center justify-center gap-6 bg-linear-to-t from-violet-950/50 to-transparent px-6 text-center text-neutral-200"
+				class={[
+					'm-0 flex h-full w-full min-w-0 items-center bg-linear-to-t from-violet-950/50 to-transparent text-neutral-200',
+					compact ? 'gap-4 px-4 text-left' : 'flex-col justify-center gap-6 px-6 text-center'
+				]}
 				onclick={handlePlayerClick}
 			>
 				{#if player.coverImageUrl}
 					<img
 						src={player.coverImageUrl}
 						alt="Cover art"
-						class="size-[min(16rem,75vw,75vh)] shrink-0 rounded-lg object-cover shadow-2xl"
+						class={[
+							'shrink-0 rounded-lg object-cover shadow-2xl',
+							compact ? 'size-24' : 'size-[min(16rem,75vw,75vh)]'
+						]}
 					/>
 				{/if}
-				<div class="flex w-full max-w-lg min-w-0 flex-col items-center justify-center">
-					<h3 class="w-full truncate text-2xl font-bold text-white" title={player.title}>
+				<div
+					class={[
+						'flex w-full min-w-0 flex-col justify-center',
+						compact ? 'flex-1 items-start text-sm' : 'max-w-lg items-center'
+					]}
+				>
+					<h3
+						class={['w-full truncate font-bold text-white', compact ? 'text-lg' : 'text-2xl']}
+						title={player.title}
+					>
 						{player.title}
 					</h3>
 					{#if player.loadState.metadata.tags.artist}
 						<h4
-							class="w-full truncate text-xl text-neutral-100"
+							class={['w-full truncate text-neutral-100', compact ? 'text-base' : 'text-xl']}
 							title={player.loadState.metadata.tags.artist}
 						>
 							{player.loadState.metadata.tags.artist}

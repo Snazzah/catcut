@@ -3,6 +3,7 @@
 	import PageContent from '#lib/components/PageContent.svelte';
 	import Icon from '@iconify/svelte';
 	import metadataIcon from '@iconify-icons/mdi/tag-text-outline';
+	import speedIcon from '@iconify-icons/mdi/speedometer';
 	import chevronIcon from '@iconify-icons/mdi/chevron-right';
 
 	const tools = [
@@ -12,13 +13,19 @@
 			description: 'Edit metadata tags and cover art of audio and video files.',
 			path: '/tools/metadata'
 		},
+		{
+			icon: speedIcon,
+			label: 'Speed & pitch changer',
+			description: 'Change the speed and pitch of audio and video files.',
+			path: '/tools/speed'
+		},
 	] as const;
-	import { pageMeta } from '#lib/seo.svelte';
+	import PageMeta from '#lib/seo.svelte';
 </script>
 
 <svelte:head>
 	<title>Tools - catcut</title>
-	{@render pageMeta('/tools')}
+	<PageMeta path="/tools" />
 </svelte:head>
 
 <PageContent>

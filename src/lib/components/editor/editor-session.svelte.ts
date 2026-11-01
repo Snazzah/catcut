@@ -33,6 +33,8 @@ import {
 	getMatchingOutputFormat,
 	type ExportFormatId
 } from '#lib/util/export.js';
+import prettyMilliseconds from 'pretty-ms';
+import { toast } from 'svelte-sonner';
 import type { EditorToolId } from './editor-tools';
 import { MetadataChangeSet } from './metadata-changeset.svelte';
 
@@ -53,6 +55,27 @@ type SaveJob = {
 type SaveResult =
 	| { kind: 'saved'; durationMs: number }
 	| { kind: 'download'; file: File; durationMs: number; dispose: () => Promise<void> };
+
+export function deliverSaveResult(session: EditorSession, result: SaveResult | null) {
+	if (!result) {
+		if (session.saveState.status === 'error') toast.error(session.saveState.message);
+		return;
+	}
+	if (result.kind === 'download') {
+		const file = result.file;
+		const url = URL.createObjectURL(file);
+		const link = document.createElement('a');
+		link.href = url;
+		link.download = file.name;
+		link.click();
+		setTimeout(() => {
+			URL.revokeObjectURL(url);
+			result.dispose().catch(() => {});
+		}, 5_000);
+	}
+
+	toast.success(`Saved your file! This took ${prettyMilliseconds(result.durationMs)}.`);
+}
 
 export class EditorSession {
 	readonly player: PlayerState;

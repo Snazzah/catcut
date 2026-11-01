@@ -88,12 +88,12 @@
 		encodableCodecs = new Set(encodable);
 		loading = false;
 	});
-	import { pageMeta } from '#lib/seo.svelte';
+	import PageMeta from '#lib/seo.svelte';
 </script>
 
 <svelte:head>
 	<title>Codec Compatibility - catcut</title>
-	{@render pageMeta('/codecs')}
+	<PageMeta path="/codecs" />
 </svelte:head>
 
 <PageContent>

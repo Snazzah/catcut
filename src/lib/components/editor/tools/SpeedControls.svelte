@@ -9,19 +9,25 @@
 	import PlayerSlider from '#lib/components/PlayerSlider.svelte';
 	import type { EditorSession } from '../editor-session.svelte';
 
-	let { session }: { session: EditorSession } = $props();
+	let { session, stacked = false }: { session: EditorSession; stacked?: boolean } = $props();
 	let adjustment = $derived(session.speedAdjustment);
+	let rowClass = $derived([
+		'grid h-11 min-w-0 grid-cols-[1.5rem_minmax(0,1fr)_4rem] items-center gap-2',
+		!stacked && 'sm:h-13 sm:shrink-0 sm:grid-cols-[1.5rem_auto_3rem] sm:gap-3'
+	]);
+	let sliderClass = $derived(stacked ? 'w-full' : 'w-full sm:w-64');
 </script>
 
 {#if adjustment}
 	<div
-		class="grid h-full w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 text-sm text-neutral-300 sm:flex sm:w-max sm:min-w-full sm:gap-3"
-		role="tabpanel"
+		class={[
+			'grid h-full w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-2 text-sm text-neutral-300',
+			!stacked && 'sm:flex sm:w-max sm:min-w-full sm:gap-3'
+		]}
+		role={stacked ? 'group' : 'tabpanel'}
 		aria-label="Speed and pitch settings"
 	>
-		<div
-			class="col-start-1 row-start-1 grid h-11 min-w-0 grid-cols-[1.5rem_minmax(0,1fr)_4rem] items-center gap-2 sm:h-13 sm:shrink-0 sm:grid-cols-[1.5rem_auto_3rem] sm:gap-3"
-		>
+		<div class={['col-start-1 row-start-1', rowClass]}>
 			<Tooltip.Root delayDuration={200} disableHoverableContent>
 				<Tooltip.Trigger
 					type="button"
@@ -33,7 +39,7 @@
 				<SmallTooltipContent offset={8}>Speed</SmallTooltipContent>
 			</Tooltip.Root>
 			<PlayerSlider
-				class="w-full sm:w-64"
+				class={sliderClass}
 				min={0.25}
 				max={4}
 				step={0.05}
@@ -46,9 +52,7 @@
 			<span class="text-right tabular-nums sm:w-12">{adjustment.speed.toFixed(2)}×</span>
 		</div>
 		{#if session.player.hasAudio}
-			<div
-				class="col-start-1 row-start-2 grid h-11 min-w-0 grid-cols-[1.5rem_minmax(0,1fr)_4rem] items-center gap-2 sm:h-13 sm:shrink-0 sm:grid-cols-[1.5rem_auto_3rem] sm:gap-3"
-			>
+			<div class={['col-start-1 row-start-2', rowClass]}>
 				<Tooltip.Root delayDuration={200} disableHoverableContent>
 					<Tooltip.Trigger
 						type="button"
@@ -60,7 +64,7 @@
 					<SmallTooltipContent offset={8}>Pitch in semitones</SmallTooltipContent>
 				</Tooltip.Root>
 				<PlayerSlider
-					class="w-full sm:w-64"
+					class={sliderClass}
 					min={-24}
 					max={24}
 					step={1}

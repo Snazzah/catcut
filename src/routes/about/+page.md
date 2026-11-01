@@ -6,7 +6,7 @@
 	import privacyIcon from '@iconify-icons/mdi/file-document';
 	import commitIcon from '@iconify-icons/mdi/source-commit';
 	import AboutLink from './AboutLink.svelte';
-	import { pageMeta } from '#lib/seo.svelte';
+	import PageMeta from '#lib/seo.svelte';
 
 	import { version } from '$app/env';
 
@@ -15,7 +15,7 @@
 
 <svelte:head>
 <title>About - catcut</title>
-{@render pageMeta('/about')}
+<PageMeta path="/about" />
 </svelte:head>
 
 <MarkdownContent>

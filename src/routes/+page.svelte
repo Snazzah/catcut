@@ -14,8 +14,9 @@
 	import { BitsConfig } from 'bits-ui';
 	import { onMount, tick } from 'svelte';
 	import { toast } from 'svelte-sonner';
+	import { isMediaDrag, isMediaType } from '#lib/util/common.js';
 	import { settings } from '#lib/util/settings.svelte.js';
-	import { pageMeta, toDiscordComponent } from '#lib/seo.svelte';
+	import PageMeta, { toDiscordComponent } from '#lib/seo.svelte';
 
 	let source = $derived(queue.source);
 	let editing = $state(false);
@@ -69,10 +70,6 @@
 		if (queue.activeEntry) queue.remove(queue.activeEntry.id);
 		editing = false;
 		showLoadError(message);
-	}
-
-	function isMediaType(type: string) {
-		return type === '' || type.startsWith('audio/') || type.startsWith('video/');
 	}
 
 	async function openLaunchFile(launchParams: LaunchParams) {
@@ -146,13 +143,6 @@
 		}
 	}
 
-	function isMediaDrag(dataTransfer: DataTransfer | null) {
-		if (!dataTransfer?.types.includes('Files')) return false;
-
-		const fileItems = [...dataTransfer.items].filter((item) => item.kind === 'file');
-		return fileItems.length === 0 || fileItems.some((item) => isMediaType(item.type));
-	}
-
 	function handleDrag(event: DragEvent) {
 		if (!isMediaDrag(event.dataTransfer)) return;
 
@@ -217,7 +207,7 @@
 
 <svelte:head>
 	<title>catcut</title>
-	{@render pageMeta('/')}
+	<PageMeta path="/" />
 	<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 	{@html toDiscordComponent(componentEmbed)}
 </svelte:head>
