@@ -121,7 +121,10 @@
 			<a
 				href={link.href}
 				class="flex min-w-18 flex-col items-center justify-center rounded-md p-1 text-xs text-neutral-200 transition-all hover:bg-neutral-200/10 hover:text-neutral-50 active:scale-95 data-active:bg-violet-500/75 data-active:text-white"
-				data-active={page.url.pathname === link.href ? 'true' : undefined}
+				data-active={page.url.pathname === link.href ||
+				page.url.pathname.startsWith(`${link.href}/`)
+					? 'true'
+					: undefined}
 			>
 				<Icon icon={link.icon} class="size-6" />
 				<span>{link.label}</span>

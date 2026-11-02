@@ -6,7 +6,7 @@
 	import { mobile } from '#lib/platform.svelte.js';
 	import type { Snippet } from 'svelte';
 
-	let { children }: { children: Snippet } = $props();
+	let { children, tool = false }: { children: Snippet; tool?: boolean } = $props();
 </script>
 
 <main
@@ -17,12 +17,16 @@
 >
 	<section class={['mb-4', !mobile.current && 'sm:hidden']}>
 		<a
-			href={resolve('/')}
+			href={tool ? resolve('/tools') : resolve('/')}
 			class="flex items-center gap-2 text-xl font-black text-neutral-500 hover:text-neutral-300"
 		>
 			<Icon icon={arrowIcon} class="size-6" />
 			<Icon icon={catcut} class="size-6" />
 			<span class="text-accent">catcut</span>
+			{#if tool}
+				<span aria-hidden="true" class="font-medium text-neutral-600">/</span>
+				<span class="font-semibold text-neutral-100">Tools</span>
+			{/if}
 		</a>
 	</section>
 

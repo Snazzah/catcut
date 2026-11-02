@@ -20,4 +20,3 @@
 <link href="{origin}{path}" rel="canonical" />
 <meta name="description" content={pageDescription || description} />
 <meta property="og:description" content={pageDescription || description} />
-

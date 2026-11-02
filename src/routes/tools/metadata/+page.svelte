@@ -133,11 +133,7 @@
 
 	async function open(file: File, handle: FileSystemFileHandle | null, discardChanges = false) {
 		if (saving) return;
-		if (
-			!discardChanges &&
-			opened?.metadata.hasChanges &&
-			!confirm('Discard your unsaved changes?')
-		)
+		if (!discardChanges && opened?.metadata.hasChanges && !confirm('Discard your unsaved changes?'))
 			return;
 		const token = ++openToken;
 		loading = true;
@@ -274,7 +270,10 @@
 
 <svelte:head>
 	<title>Metadata Editor - catcut</title>
-	<PageMeta path="/tools/metadata" description="Edit the metadata tags and album covers of your audio files in place, all in your browser. No ads, no uploads, no limits." />
+	<PageMeta
+		path="/tools/metadata"
+		description="Edit the metadata tags and album covers of your audio files in place, all in your browser. No ads, no uploads, no limits."
+	/>
 </svelte:head>
 
 {#snippet saveButton({
@@ -313,11 +312,12 @@
 	</button>
 {/snippet}
 
-<PageContent>
+<PageContent tool>
 	<section class="my-8 text-center">
 		<h1 class="text-2xl font-bold text-white">Metadata editor</h1>
 		<p class="mt-2 text-neutral-300">
-			Edit metadata tags and cover art in your own browser, with the ability to overwrite files (if the browser supports it).
+			Edit metadata tags and cover art in your own browser, with the ability to overwrite files (if
+			the browser supports it).
 		</p>
 	</section>
 
@@ -347,7 +347,7 @@
 			<MetadataFields metadata={opened.metadata} />
 		</fieldset>
 
-		<div class="mt-6 flex justify-end gap-2 flex-wrap">
+		<div class="mt-6 flex flex-wrap justify-end gap-2">
 			<button
 				type="button"
 				title="Revert"
@@ -359,7 +359,12 @@
 				<span class="max-sm:sr-only">Revert</span>
 			</button>
 			{#if overwrites}
-				{@render saveButton({ asCopy: true, label: 'Save copy', icon: downloadIcon, compact: true })}
+				{@render saveButton({
+					asCopy: true,
+					label: 'Save copy',
+					icon: downloadIcon,
+					compact: true
+				})}
 			{/if}
 			{@render saveButton({
 				asCopy: !overwrites,

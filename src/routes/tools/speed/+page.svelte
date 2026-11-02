@@ -123,7 +123,7 @@
 	/>
 </svelte:head>
 
-<PageContent>
+<PageContent tool>
 	<section class="my-8 text-center">
 		<h1 class="text-2xl font-bold text-white">Speed & pitch changer</h1>
 		<p class="mt-2 text-neutral-300">

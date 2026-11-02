@@ -18,7 +18,7 @@
 </script>
 
 <Icon {icon} class="size-16 text-violet-400" aria-hidden="true" />
-<h1 class="text-xl md:text-2xl font-bold text-white">{title}</h1>
+<h1 class="text-xl font-bold text-white md:text-2xl">{title}</h1>
 {#if message}
 	<p class={['max-w-80 text-sm', error ? 'text-red-400' : 'text-neutral-400']}>{message}</p>
 {/if}

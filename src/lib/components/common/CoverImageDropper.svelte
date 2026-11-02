@@ -27,7 +27,9 @@
 
 	let input = $state<HTMLInputElement | null>(null);
 	let dragging = $state(false);
-	let coverAddLabel = $derived(mobile.current ? 'tap to add cover' : 'drop image here or click to add')
+	let coverAddLabel = $derived(
+		mobile.current ? 'tap to add cover' : 'drop image here or click to add'
+	);
 
 	function isImageDrag(dataTransfer: DataTransfer | null) {
 		if (!dataTransfer?.types.includes('Files')) return false;

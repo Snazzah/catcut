@@ -29,7 +29,7 @@
 </svelte:head>
 
 <PageContent>
-	<h1 class="text-2xl font-bold text-white mb-3">Settings</h1>
+	<h1 class="mb-3 text-2xl font-bold text-white">Settings</h1>
 
 	<div class="flex flex-col gap-4">
 		<SwitchField title="Start with the editor" bind:checked={settings.startWithEditor}>
@@ -39,10 +39,13 @@
 		</SwitchField>
 		<SwitchField title="Plausible Analytics" bind:checked={settings.analytics}>
 			{#snippet description()}
-				This uses <a href="https://plausible.io/privacy-focused-web-analytics" target="_blank" class="text-violet-400 hover:underline">Plausible</a> to gather anonymized analytics. Learn more in the <a
-					href={resolve('/privacy')}
-					class="text-violet-400 hover:underline">privacy policy</a
-				>.
+				This uses <a
+					href="https://plausible.io/privacy-focused-web-analytics"
+					target="_blank"
+					class="text-violet-400 hover:underline">Plausible</a
+				>
+				to gather anonymized analytics. Learn more in the
+				<a href={resolve('/privacy')} class="text-violet-400 hover:underline">privacy policy</a>.
 			{/snippet}
 		</SwitchField>
 		{#if googleAllowed}
@@ -64,8 +67,10 @@
 		{/if}
 	</div>
 
-	<section class="mt-8 flex items-center justify-center text-sm gap-6 flex-wrap">
-		<button class="text-violet-400 hover:underline cursor-pointer" onclick={() => resetSettings()}>Reset settings to default</button>
+	<section class="mt-8 flex flex-wrap items-center justify-center gap-6 text-sm">
+		<button class="cursor-pointer text-violet-400 hover:underline" onclick={() => resetSettings()}
+			>Reset settings to default</button
+		>
 		<a href={resolve('/codecs')} class="text-violet-400 hover:underline">Supported codecs</a>
 	</section>
 </PageContent>

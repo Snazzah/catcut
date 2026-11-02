@@ -40,7 +40,7 @@ catcut is a webapp that uses [Mediabunny](https://mediabunny.dev) to view, trim,
 </div>
 
 {#if commitSha}<a href="https://github.com/Snazzah/catcut/commit/{commitSha}" target="_blank" class="text-xs">
-	Build <span class="font-mono">{commitSha.slice(0, 7)}</span>
+Build <span class="font-mono">{commitSha.slice(0, 7)}</span>
 </a>{/if}
 
 </MarkdownContent>

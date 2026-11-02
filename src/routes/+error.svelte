@@ -19,7 +19,7 @@
 		class="size-16 {notFound ? 'text-neutral-200' : 'text-red-400'}"
 		aria-hidden="true"
 	/>
-	<h1 class="text-xl md:text-2xl font-bold text-white">
+	<h1 class="text-xl font-bold text-white md:text-2xl">
 		{notFound ? 'Page not found' : `Error ${page.status}`}
 	</h1>
 	{#if message}
