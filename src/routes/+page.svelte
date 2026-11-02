@@ -16,6 +16,7 @@
 	import { toast } from 'svelte-sonner';
 	import { isMediaDrag, isMediaType } from '#lib/util/common.js';
 	import { settings } from '#lib/util/settings.svelte.js';
+	import { PUBLIC_ORIGIN } from '$app/env/public';
 	import PageMeta, { toDiscordComponent } from '#lib/seo.svelte';
 
 	let source = $derived(queue.source);
@@ -166,26 +167,26 @@
 	}
 
 	const componentEmbed = {
-      "type": 17,
-      "accent_color": 8141549,
-      "components": [
-        {
-          "type": 10,
-          "content": "# <:catcut:1565032010815381644> [catcut](https://catcut.snazzah.workers.dev/)\nin-browser media viewer & editor"
-        },
-        {
-          "type": 12,
-          "items": [
-            {
-              "media": {
-                "url": "https://get.snaz.in/48Ejjhe.jpg"
-              }
-            }
-          ]
-        }
-      ]
-    };
-
+		type: 17,
+		accent_color: 8141549,
+		components: [
+			{
+				type: 10,
+				content:
+					'# <:catcut:1565032010815381644> [catcut](https://catcut.snazzah.workers.dev/)\nin-browser media viewer & editor'
+			},
+			{
+				type: 12,
+				items: [
+					{
+						media: {
+							url: `${PUBLIC_ORIGIN}/images/social-cover.jpg`
+						}
+					}
+				]
+			}
+		]
+	};
 </script>
 
 <svelte:window
