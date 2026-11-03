@@ -6,8 +6,8 @@
 
 **catcut** is a webapp that allows you to quickly trim and edit videos in browser without uploading to a server, processed using [ffmpeg.wasm](https://github.com/ffmpegwasm/ffmpeg.wasm).
 
-![](/static/images/screenshots/desktop-video.png)
-![](/static//images/screenshots/desktop-audio.png)
+![](/static/images/screenshots/desktop-video.jpg)
+![](/static/images/screenshots/desktop-audio.png)
 
 ## Contributing
 
