@@ -1,84 +1,125 @@
 <script lang="ts">
-	import Icon from '@iconify/svelte';
-	import upIcon from '@iconify-icons/mdi/menu-up';
 	import downIcon from '@iconify-icons/mdi/menu-down';
-	import { createEventDispatcher } from 'svelte';
-	import { clamp } from '$lib/util';
+	import upIcon from '@iconify-icons/mdi/menu-up';
+	import Icon from '@iconify/svelte';
 
-	export let value = 0;
-	export let seconds = false;
-	export let noPad = false;
-	export let min = 0;
-	export let max: number | undefined = undefined;
-	const defaultMax = seconds ? 59.99 : 59;
-	const dispatch = createEventDispatcher();
+	let {
+		value,
+		label,
+		seconds = false,
+		noPad = false,
+		min = 0,
+		max,
+		onchange,
+		onpaste,
+		onstep,
+		atLowerBound,
+		atUpperBound
+	}: {
+		value: number;
+		label: string;
+		seconds?: boolean;
+		noPad?: boolean;
+		min?: number;
+		max?: number;
+		onchange: (value: number) => void;
+		onpaste: (text: string) => boolean;
+		onstep: (value: number, delta: -1 | 1) => void;
+		atLowerBound: boolean;
+		atUpperBound: boolean;
+	} = $props();
+
 	let input: HTMLInputElement;
+	let defaultMax = $derived(seconds ? 59.99 : 59);
+	let resolvedMax = $derived(max ?? defaultMax);
+	let inputValue = $derived(formatValue(value));
 
-	// aw this kinda sucks, doing this to not needlessly rerender values
-	$: iValue = fixValue(value);
-	$: iMin = fixPlaces(min);
-	$: iMax = fixPlaces(max ?? defaultMax);
-
-	// .toFixed rounds up, but i dont want that
-	function fixPlaces(num: number) {
-		return seconds ? Math.floor(num * 100) / 100 : Math.trunc(num);
+	function clamp(number: number) {
+		return Math.max(min, Math.min(number, resolvedMax));
 	}
 
-	function fixNumber(num: number) {
-		const maxNumber = fixPlaces(max ?? defaultMax);
-		const minNumber = fixPlaces(min);
-		const clampedNumber = Math.abs(clamp(num, minNumber, maxNumber));
-		return fixPlaces(clampedNumber);
+	function truncate(number: number) {
+		return seconds ? Math.floor(number * 100) / 100 : Math.trunc(number);
 	}
 
-	function fixValue(num: number) {
-		let numberString = String(seconds ? fixNumber(num).toFixed(2) : fixNumber(num));
-		if (!noPad) numberString = numberString.padStart(seconds ? 5 : 2, '0');
-		return numberString.slice(0, seconds ? 5 : 2);
+	function formatValue(number: number) {
+		const fixed = truncate(Math.abs(clamp(Number.isFinite(number) ? number : 0)));
+		let result = seconds ? fixed.toFixed(2) : String(fixed);
+		if (!noPad) result = result.padStart(seconds ? 5 : 2, '0');
+		return result;
 	}
 
-	function setNumber(num: number) {
-		const number = fixNumber(isNaN(num) ? 0 : num);
-		input.value = fixValue(number);
-		dispatch('set', number);
+	function setValue(number: number) {
+		const next = truncate(clamp(Number.isFinite(number) ? number : 0));
+		input.value = formatValue(next);
+		onchange(next);
 	}
 
-	function onPaste(e: ClipboardEvent) {
-		const pasteInfo = e.clipboardData?.getData('text');
-		if (pasteInfo) dispatch('paste', pasteInfo);
+	function step(delta: -1 | 1) {
+		const current = Number.isFinite(input.valueAsNumber) ? input.valueAsNumber : value;
+		onstep(current, delta);
+	}
+
+	function handleKeydown(event: KeyboardEvent) {
+		if (event.key === 'Enter') {
+			event.preventDefault();
+			input.blur();
+			return;
+		}
+		if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
+		event.preventDefault();
+		step(event.key === 'ArrowUp' ? 1 : -1);
+	}
+
+	function handlePaste(event: ClipboardEvent) {
+		const text = event.clipboardData?.getData('text');
+		if (text && onpaste(text)) event.preventDefault();
 	}
 </script>
 
-<div class="relative number-input" class:seconds-input={seconds}>
+<div class:seconds class="time-part relative">
 	<input
 		bind:this={input}
-		value={iValue}
-		min={iMin}
-		max={iMax}
 		type="number"
-		on:input={() => setNumber(input.valueAsNumber)}
-		on:paste={onPaste}
+		{min}
+		max={resolvedMax}
+		value={inputValue}
+		aria-label={label}
+		class="h-7 appearance-none bg-transparent text-right text-sm text-neutral-100 tabular-nums transition-colors outline-none hover:bg-violet-500/10 focus:bg-violet-500/20"
+		onblur={() => setValue(input.valueAsNumber)}
+		onpaste={handlePaste}
+		onkeydown={handleKeydown}
 	/>
 	<button
-		class="-top-2 rounded-t"
-		disabled={iMax === parseFloat(iValue)}
-		on:click={() => setNumber(input.valueAsNumber + 1)}
+		type="button"
+		tabindex="-1"
+		class="stepper -top-2 rounded-t-sm"
+		disabled={atUpperBound}
+		aria-label={`Increase ${label}`}
+		onclick={() => step(1)}
 	>
-		<Icon icon={upIcon} class="w-5 h-5" />
+		<Icon icon={upIcon} class="size-4" aria-hidden="true" />
 	</button>
 	<button
-		class="-bottom-2 rounded-b"
-		disabled={iMin === parseFloat(iValue)}
-		on:click={() => setNumber(input.valueAsNumber - 1)}
+		type="button"
+		tabindex="-1"
+		class="stepper -bottom-2 rounded-b-sm"
+		disabled={atLowerBound}
+		aria-label={`Decrease ${label}`}
+		onclick={() => step(-1)}
 	>
-		<Icon icon={downIcon} class="w-5 h-5" />
+		<Icon icon={downIcon} class="size-4" aria-hidden="true" />
 	</button>
 </div>
 
-<style lang="scss">
+<style>
+	.time-part input {
+		width: 2ch;
+	}
+
 	input::-webkit-outer-spin-button,
 	input::-webkit-inner-spin-button {
-		-webkit-appearance: none;
+		appearance: none;
 		margin: 0;
 	}
 
@@ -86,36 +127,33 @@
 		appearance: textfield;
 	}
 
-	.number-input {
-		&:hover input {
-			@apply bg-violet-600/10 text-white;
-		}
+	.time-part.seconds input {
+		width: 4.25ch;
+	}
 
-		input {
-			@apply w-6 bg-transparent h-7 text-right transition-colors;
+	.stepper {
+		position: absolute;
+		left: 0;
+		display: flex;
+		height: 0.5rem;
+		width: 100%;
+		pointer-events: none;
+		align-items: center;
+		justify-content: center;
+		background: var(--color-violet-600);
+		color: white;
+		opacity: 0;
+		transition: opacity 120ms ease;
+	}
 
-			&:hover,
-			&:focus {
-				@apply outline-none bg-violet-600/25 text-white;
-			}
-		}
+	.stepper:disabled {
+		background: var(--color-violet-950);
+		color: var(--color-neutral-400);
+	}
 
-		&.seconds-input input {
-			width: 60px;
-		}
-
-		button {
-			@apply absolute w-full h-2 bg-violet-600 transition-all left-0 flex justify-center items-center text-white opacity-0 pointer-events-none;
-
-			&:disabled {
-				@apply bg-violet-950 text-neutral-400;
-			}
-		}
-
-		&:hover button,
-		& input:focus + button,
-		& input:focus + button + button {
-			@apply opacity-100 pointer-events-auto;
-		}
+	.time-part:hover .stepper,
+	.time-part:focus-within .stepper {
+		pointer-events: auto;
+		opacity: 1;
 	}
 </style>

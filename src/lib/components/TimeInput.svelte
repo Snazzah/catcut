@@ -1,112 +1,171 @@
 <script lang="ts">
-	import Icon from '@iconify/svelte';
 	import pinIcon from '@iconify-icons/mdi/map-marker';
+	import Icon from '@iconify/svelte';
 	import TimeInputPart from './TimeInputPart.svelte';
-	import { createEventDispatcher } from 'svelte';
-	import { clamp } from '$lib/util';
 
-	export let value: number;
-	export let min = 0;
-	export let max = Infinity;
-	export let largestPossible: number | undefined = undefined;
-	export let currentTimeButton = true;
-	const dispatch = createEventDispatcher();
-	const TIME_REGEX = /^\s*(?:(?<h>\d{1,2}):)?(?<m>\d{1,2}):(?<s>\d{1,2}(?:\.(?:\d+)?)?)\s*$/;
-	const HUMAN_TIME_REGEX =
-		/^\s*(?:(?<h>\d{1,2})h *)?(?:(?<m>\d{1,2})m *)?(?:(?<s>\d{1,2}(?:\.(?:\d+))?)s)?\s*$/;
+	const CLOCK_TIME = /^\s*(?:(\d+):)?(\d+):(\d+(?:[.,]\d*)?)\s*$/;
+	const HUMAN_TIME = /^\s*(?:(\d+)\s*h\s*)?(?:(\d+)\s*m\s*)?(?:(\d+(?:[.,]\d*)?)\s*s)?\s*$/i;
 
-	$: days = Math.trunc(value / 86400);
-	$: hours = Math.trunc((value / 3600) % 24);
-	$: minutes = Math.trunc((value / 60) % 60);
-	$: seconds = value % 60;
+	let {
+		value,
+		min = 0,
+		max = Number.POSITIVE_INFINITY,
+		largestPossible,
+		label,
+		onchange,
+		onUseCurrentTime
+	}: {
+		value: number;
+		min?: number;
+		max?: number;
+		largestPossible?: number;
+		label: string;
+		onchange: (value: number) => void;
+		onUseCurrentTime?: () => void;
+	} = $props();
 
-	$: maxDays = Math.trunc(max / 86400);
-	$: maxHours = Math.trunc((max / 3600) % 24);
-	$: maxMinutes = Math.trunc((max / 60) % 60);
-	$: maxSeconds = max % 60;
+	let resolvedMin = $derived(Number.isFinite(min) ? Math.max(0, min) : 0);
+	let resolvedMax = $derived(
+		Number.isFinite(max) ? Math.max(resolvedMin, max) : Number.POSITIVE_INFINITY
+	);
+	let clampedValue = $derived(clamp(value));
+	let hours = $derived(Math.trunc(clampedValue / 3600));
+	let minutes = $derived(Math.trunc((clampedValue / 60) % 60));
+	let seconds = $derived(clampedValue % 60);
+	let minHours = $derived(Math.trunc(resolvedMin / 3600));
+	let minMinutes = $derived(Math.trunc((resolvedMin / 60) % 60));
+	let minSeconds = $derived(resolvedMin % 60);
+	let maxHours = $derived(
+		Number.isFinite(resolvedMax) ? Math.trunc(resolvedMax / 3600) : Number.POSITIVE_INFINITY
+	);
+	let maxMinutes = $derived(
+		Number.isFinite(resolvedMax) ? Math.trunc((resolvedMax / 60) % 60) : 59
+	);
+	let maxSeconds = $derived(Number.isFinite(resolvedMax) ? resolvedMax % 60 : 59.99);
+	let minuteMin = $derived(hours === minHours ? minMinutes : 0);
+	let minuteMax = $derived(hours === maxHours ? maxMinutes : 59);
+	let secondMin = $derived(hours === minHours && minutes === minMinutes ? minSeconds : 0);
+	let secondMax = $derived(hours === maxHours && minutes === maxMinutes ? maxSeconds : 59.99);
+	let largest = $derived(
+		largestPossible ?? (Number.isFinite(resolvedMax) ? resolvedMax : clampedValue)
+	);
+	let showHours = $derived(largest >= 3600);
+	let atLowerBound = $derived(clampedValue <= resolvedMin);
+	let atUpperBound = $derived(clampedValue >= resolvedMax);
 
-	$: minDays = Math.trunc(min / 86400);
-	$: minHours = Math.trunc((min / 3600) % 24);
-	$: minMinutes = Math.trunc((min / 60) % 60);
-	$: minSeconds = min % 60;
-
-	$: largest = largestPossible ?? isFinite(max) ? max : value;
-	$: showHours = largest >= 3600;
-
-	function combineNumber(parts: Record<string, number>) {
-		return (
-			(parts.second ?? seconds) +
-			(parts.minute ?? minutes) * 60 +
-			(parts.hour ?? hours) * 3600 +
-			(parts.day ?? days) * 86400
-		);
+	function clamp(number: number) {
+		const finiteNumber = Number.isFinite(number) ? number : resolvedMin;
+		return Math.max(resolvedMin, Math.min(finiteNumber, resolvedMax));
 	}
 
-	function update(part: string, value: number) {
-		dispatch('set', clamp(combineNumber({ [part]: value }), min, max));
+	function update(parts: { hour?: number; minute?: number; second?: number }) {
+		const next =
+			(parts.hour ?? hours) * 3600 + (parts.minute ?? minutes) * 60 + (parts.second ?? seconds);
+		onchange(clamp(next));
 	}
 
-	function onPaste(text: string) {
-		const match = TIME_REGEX.exec(text) ?? HUMAN_TIME_REGEX.exec(text);
-		if (
-			!match ||
-			(match.groups!.h === undefined &&
-				match.groups!.m === undefined &&
-				match.groups!.s === undefined)
-		)
+	function toNumber(part: string | undefined) {
+		return part === undefined ? 0 : Number(part.replace(',', '.'));
+	}
+
+	function parseTime(text: string) {
+		const match = CLOCK_TIME.exec(text) ?? HUMAN_TIME.exec(text);
+		if (!match || match.slice(1).every((part) => part === undefined)) return null;
+		const total = toNumber(match[1]) * 3600 + toNumber(match[2]) * 60 + toNumber(match[3]);
+		return Number.isFinite(total) ? total : null;
+	}
+
+	function handlePaste(text: string) {
+		const parsed = parseTime(text);
+		if (parsed === null) return false;
+		onchange(clamp(parsed));
+		return true;
+	}
+
+	function snapToBoundary(boundary: 'min' | 'max') {
+		onchange(boundary === 'max' ? resolvedMax : resolvedMin);
+	}
+
+	function stepPart(
+		partValue: number,
+		delta: -1 | 1,
+		partMin: number,
+		partMax: number,
+		apply: (value: number) => void
+	) {
+		const next = partValue + delta;
+		if (next > partMax) {
+			snapToBoundary('max');
 			return;
-		const result = clamp(
-			combineNumber({
-				day: 0,
-				hour: clamp(Math.trunc(parseInt(match.groups!.h ?? '0')), 0, 24),
-				minute: clamp(Math.trunc(parseInt(match.groups!.m ?? '0')), 0, 60),
-				second: clamp(parseFloat(match.groups!.s ?? '0'), 0, 60)
-			}),
-			min,
-			max
-		);
-		dispatch('set', result);
+		}
+		if (next < partMin) {
+			snapToBoundary('min');
+			return;
+		}
+		apply(next);
 	}
 </script>
 
-<div class="flex items-center gap-1 rounded bg-neutral-900 px-4 py-2 text-neutral-200 font-mono">
-	<div class="flex">
+<div
+	class="flex h-9 shrink-0 items-center gap-1 rounded-sm border border-neutral-600 bg-neutral-950 px-2 text-neutral-200 tabular-nums focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-400/30 sm:px-2"
+	role="group"
+	aria-label={label}
+>
+	<div class="flex items-center">
 		{#if showHours}
 			<TimeInputPart
 				value={hours}
+				label={`${label} hours`}
 				noPad
-				min={days === minDays ? minHours : 0}
-				max={days >= maxDays ? maxHours : 24}
-				on:set={(e) => update('hour', e.detail)}
-				on:paste={(e) => onPaste(e.detail)}
+				min={minHours}
+				max={maxHours}
+				onchange={(hour) => update({ hour })}
+				onpaste={handlePaste}
+				onstep={(hour, delta) =>
+					stepPart(hour, delta, minHours, maxHours, (next) => update({ hour: next }))}
+				{atLowerBound}
+				{atUpperBound}
 			/>
-			<span>:</span>
+			<span aria-hidden="true">:</span>
 		{/if}
 		<TimeInputPart
 			value={minutes}
+			label={`${label} minutes`}
 			noPad={!showHours}
-			min={hours === minHours ? minMinutes : 0}
-			max={hours >= maxHours ? maxMinutes : undefined}
-			on:set={(e) => update('minute', e.detail)}
-			on:paste={(e) => onPaste(e.detail)}
+			min={minuteMin}
+			max={minuteMax}
+			onchange={(minute) => update({ minute })}
+			onpaste={handlePaste}
+			onstep={(minute, delta) =>
+				stepPart(minute, delta, minuteMin, minuteMax, (next) => update({ minute: next }))}
+			{atLowerBound}
+			{atUpperBound}
 		/>
-		<span>:</span>
+		<span aria-hidden="true">:</span>
 		<TimeInputPart
 			value={seconds}
+			label={`${label} seconds`}
 			seconds
-			min={minutes === minMinutes ? minSeconds : 0}
-			max={minutes >= maxMinutes ? maxSeconds : undefined}
-			on:set={(e) => update('second', e.detail)}
-			on:paste={(e) => onPaste(e.detail)}
+			min={secondMin}
+			max={secondMax}
+			onchange={(second) => update({ second })}
+			onpaste={handlePaste}
+			onstep={(second, delta) =>
+				stepPart(second, delta, secondMin, secondMax, (next) => update({ second: next }))}
+			{atLowerBound}
+			{atUpperBound}
 		/>
 	</div>
-	{#if currentTimeButton}
+
+	{#if onUseCurrentTime}
 		<button
-			title="Set to current time"
-			class="transition-colors w-6 h-6 flex justify-center items-center text-white hover:text-violet-400"
-			on:click={() => dispatch('usecurrenttime')}
+			type="button"
+			title="Use playhead"
+			aria-label={`Use playhead for ${label.toLowerCase()}`}
+			class="size-7 shrink-0 cursor-pointer place-items-center rounded-sm text-neutral-300 hover:bg-white/10 hover:text-violet-300 focus-visible:ring-2 focus-visible:ring-violet-200 focus-visible:outline-none"
+			onclick={onUseCurrentTime}
 		>
-			<Icon icon={pinIcon} class="w-5 h-5" />
+			<Icon icon={pinIcon} class="size-4" aria-hidden="true" />
 		</button>
 	{/if}
 </div>

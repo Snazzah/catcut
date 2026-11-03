@@ -4,24 +4,91 @@
 	"id": "catcut",
 	"description": "quick in-browser media editing with no uploads",
 	"start_url": "/",
+	"share_target": {
+		"action": "/?share-target=1",
+		"method": "POST",
+		"enctype": "multipart/form-data",
+		"params": {
+			"files": [{ "name": "media", "accept": ["video/*", "audio/*"] }]
+		}
+	},
+	"file_handlers": [
+		{
+			"action": "/",
+			"name": "Audio or video file",
+			"accept": {
+				"audio/*": [
+					".aac",
+					".adts",
+					".flac",
+					".m4a",
+					".mka",
+					".mp3",
+					".oga",
+					".ogg",
+					".opus",
+					".wav",
+					".weba"
+				],
+				"video/*": [
+					".3g2",
+					".3gp",
+					".m2ts",
+					".m4v",
+					".mkv",
+					".mov",
+					".mp4",
+					".mts",
+					".ogv",
+					".qt",
+					".ts",
+					".webm"
+				]
+			}
+		}
+	],
   "screenshots": [
     {
-      "src": "/images/screenshots/desktop-main.png",
-      "sizes": "1293x826",
-      "type": "image/png",
+      "src": "/images/screenshots/desktop-video.jpg",
+      "sizes": "1920x1080",
+      "type": "image/jpeg",
       "form_factor": "wide"
     },
     {
-      "src": "/images/screenshots/desktop-video.png",
-      "sizes": "1293x826",
+      "src": "/images/screenshots/desktop-video-editing.png",
+      "sizes": "1920x1080",
       "type": "image/png",
       "form_factor": "wide"
     },
     {
       "src": "/images/screenshots/desktop-audio.png",
-      "sizes": "1293x826",
+      "sizes": "1920x1080",
       "type": "image/png",
       "form_factor": "wide"
+    },
+    {
+      "src": "/images/screenshots/desktop-audio-metadata.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/images/screenshots/mobile-audio.jpg",
+      "sizes": "1080x2101",
+      "type": "image/jpeg",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/images/screenshots/mobile-audio-editing.jpg",
+      "sizes": "1080x2101",
+      "type": "image/jpeg",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/images/screenshots/mobile-audio-metadata.jpg",
+      "sizes": "1080x2101",
+      "type": "image/jpeg",
+      "form_factor": "narrow"
     }
 	],
 	"icons": [

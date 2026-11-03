@@ -1,5 +1,4 @@
 User-agent: *
 Allow: /
-Allow: /policy
-Deny: /dropbox
-Deny: /googledrive
+
+Sitemap: https://catcut.snaz.in/sitemap.xml

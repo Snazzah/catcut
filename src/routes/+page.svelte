@@ -1,71 +1,270 @@
 <script lang="ts">
-	import FileSelect from './FileSelect.svelte';
-	import VideoEditor from './VideoEditor.svelte';
-	import Footer from './Footer.svelte';
-	import { RemoteFile } from '$lib/util';
-	import { catcut } from '$lib/icons';
+	import FileDrop from '#lib/components/FileDrop.svelte';
+	import CloudPickers from '#lib/components/CloudPickers.svelte';
+	import UpdateNotice from '#lib/components/UpdateNotice.svelte';
+	import MediaWorkspace from '#lib/components/MediaWorkspace.svelte';
+	import ResponsiveModal from '#lib/components/common/ResponsiveModal.svelte';
+	import { catcut } from '#lib/icons.js';
+	import {
+		queue,
+		createRemoteMediaSource,
+		createLocalMediaSource,
+		type MediaSource
+	} from '#lib/store.svelte.js';
 	import Icon from '@iconify/svelte';
-	import AudioEditor from './AudioEditor.svelte';
-	import Bulletin from './Bulletin.svelte';
+	import { BitsConfig } from 'bits-ui';
+	import { onMount, tick } from 'svelte';
+	import { toast } from 'svelte-sonner';
+	import { isMediaDrag, isMediaType } from '#lib/util/common.js';
+	import { settings } from '#lib/util/settings.svelte.js';
+	import { PUBLIC_ORIGIN } from '$app/env/public';
+	import PageMeta, { toDiscordComponent } from '#lib/seo.svelte';
 
-	let inputFile: File | RemoteFile | undefined = undefined;
-	let blobURL: string | undefined;
-	$: blobURL = inputFile
-		? inputFile instanceof RemoteFile
-			? inputFile.url
-			: URL.createObjectURL(inputFile)
-		: undefined;
+	let source = $derived(queue.source);
+	let editing = $state(false);
+	let draggingMedia = $state(false);
+	let addingToQueue = $state(false);
+	let loadError = $state<string | null>(null);
 
-	function closeFile() {
-		if (inputFile instanceof RemoteFile) inputFile.release();
-		else if (blobURL) URL.revokeObjectURL(blobURL);
-		inputFile = undefined;
+	$effect(() => {
+		if (!source) editing = false;
+	});
+
+	function openMedia(sources: (MediaSource | null)[], append = false) {
+		const validSources = sources.filter((source) => source !== null);
+		if (!validSources.length) return;
+
+		settings.v2NoticeDismissed = true;
+
+		const opensNewSource = !append || !source;
+		if (opensNewSource && settings.startWithEditor) editing = true;
+		else if (opensNewSource && !settings.askAboutEditor) promptStartWithEditor();
+
+		if (append) queue.add(...validSources);
+		else queue.replace(...validSources);
 	}
+
+	function promptStartWithEditor() {
+		settings.askAboutEditor = true;
+		toast('Always open files in the editor?', {
+			description: 'You can change this later in settings.',
+			duration: 15_000,
+			action: {
+				label: 'Yes',
+				onClick: () => {
+					settings.startWithEditor = true;
+					if (source) editing = true;
+				}
+			},
+			cancel: { label: 'No', onClick: () => {} }
+		});
+	}
+
+	function closeMedia() {
+		queue.clear();
+		editing = false;
+	}
+
+	async function showLoadError(message: string) {
+		await tick();
+		loadError = message;
+	}
+
+	function handleLoadError(message: string) {
+		if (queue.activeEntry) queue.remove(queue.activeEntry.id);
+		editing = false;
+		showLoadError(message);
+	}
+
+	async function openLaunchFile(launchParams: LaunchParams) {
+		const handles = launchParams.files.filter(
+			(h: FileSystemHandle): h is FileSystemFileHandle => h.kind === 'file'
+		);
+		if (!handles.length) return;
+
+		try {
+			const files = (await Promise.all(handles.map((handle) => handle.getFile()))).filter((file) =>
+				isMediaType(file.type)
+			);
+			openMedia(files.map(createLocalMediaSource), true);
+		} catch (error) {
+			showLoadError(error instanceof Error ? error.message : String(error));
+		}
+	}
+
+	onMount(() => {
+		const location = new URL(window.location.href);
+		const mediaUrl = location.searchParams.get('url');
+		if (mediaUrl) openMedia([createRemoteMediaSource(mediaUrl)]);
+		const sharedMediaId = location.searchParams.get('shared-media');
+		if (sharedMediaId) openSharedMedia(sharedMediaId);
+		const shareError = location.searchParams.get('share-error');
+		if (shareError) {
+			const messages: Record<string, string> = {
+				parse: 'Chrome could not read the shared file data.',
+				invalid: 'The share did not contain an accepted media file.',
+				missing: 'The share did not contain a media file.',
+				storage: 'Chrome could not store the shared file on this device.'
+			};
+			const mime = location.searchParams.get('mime');
+			showLoadError(
+				shareError === 'type'
+					? `The shared file has an unsupported type: ${mime || '(empty)'}.`
+					: (messages[shareError] ?? 'Could not import the shared media.')
+			);
+
+			location.searchParams.delete('share-error');
+			location.searchParams.delete('mime');
+			window.history.replaceState(window.history.state, '', location);
+		}
+
+		window.launchQueue?.setConsumer((launchParams) => openLaunchFile(launchParams));
+	});
+
+	async function openSharedMedia(id: string) {
+		let failure = 'The shared media link is invalid.';
+		try {
+			if (!/^[0-9a-f-]{36}$/.test(id)) throw new Error('Invalid share ID');
+			failure = 'Chrome could not open the shared file storage.';
+			const cache = await caches.open('catcut-shared-media');
+			failure = 'The shared file was not found in browser storage.';
+			const key = new URL(`/__shared-media/${id}`, window.location.origin);
+			const response = await cache.match(key);
+			if (!response) throw new Error('Shared media missing');
+			failure = 'Chrome could not read the saved shared file.';
+			const name = decodeURIComponent(response.headers.get('X-File-Name') ?? 'shared-media');
+			const file = new File([await response.blob()], name, {
+				type: response.headers.get('Content-Type') ?? ''
+			});
+			openMedia([createLocalMediaSource(file)]);
+			await cache.delete(key).catch(() => undefined);
+		} catch {
+			showLoadError(failure);
+		} finally {
+			const url = new URL(window.location.href);
+			url.searchParams.delete('shared-media');
+			window.history.replaceState(window.history.state, '', url);
+		}
+	}
+
+	function handleDrag(event: DragEvent) {
+		if (!isMediaDrag(event.dataTransfer)) return;
+
+		event.preventDefault();
+		draggingMedia = true;
+		addingToQueue = event.shiftKey;
+		if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+	}
+
+	function handleDrop(event: DragEvent) {
+		draggingMedia = false;
+		if (!isMediaDrag(event.dataTransfer)) return;
+
+		event.preventDefault();
+
+		const sources = [...(event.dataTransfer?.files ?? [])]
+			.filter((file) => isMediaType(file.type))
+			.map(createLocalMediaSource);
+
+		openMedia(sources, event.shiftKey);
+	}
+
+	const componentEmbed = {
+		type: 17,
+		accent_color: 8141549,
+		components: [
+			{
+				type: 10,
+				content:
+					'# <:catcut:1565032010815381644> [catcut](https://catcut.snaz.in/)\nin-browser media viewer & editor'
+			},
+			{
+				type: 12,
+				items: [
+					{
+						media: {
+							url: `${PUBLIC_ORIGIN}/images/social-cover.jpg`
+						}
+					}
+				]
+			}
+		]
+	};
 </script>
+
+<svelte:window
+	ondragenter={handleDrag}
+	ondragover={handleDrag}
+	ondragleave={(event) => {
+		if (event.relatedTarget === null) draggingMedia = false;
+	}}
+	ondrop={handleDrop}
+	ondragend={() => (draggingMedia = false)}
+	onblur={() => (draggingMedia = false)}
+	onkeydown={(event) => {
+		if (draggingMedia) addingToQueue = event.shiftKey;
+	}}
+	onkeyup={(event) => {
+		if (draggingMedia) addingToQueue = event.shiftKey;
+	}}
+/>
 
 <svelte:head>
 	<title>catcut</title>
-	<link href="https://catcut.snaz.in/" rel="canonical" />
+	<PageMeta path="/" />
+	<!-- eslint-disable-next-line svelte/no-at-html-tags -->
+	{@html toDiscordComponent(componentEmbed)}
 </svelte:head>
 
 <main
-	class={`flex flex-col items-center min-h-screen overflow-x-hidden ${!inputFile ? ' justify-center px-6 py-4 gap-4' : ''}`}
-	class:justify-center={!inputFile}
+	class={source
+		? 'h-svh w-full overflow-hidden'
+		: 'flex min-h-svh flex-col items-center justify-center gap-2 p-6'}
 >
-	<header
-		class={`flex items-center justify-center select-none ${inputFile ? 'px-6 py-4 w-full gap-2 bg-black' : 'flex-col'}`}
-	>
-		<h1
-			class="text-3xl font-extrabold text-violet-500 flex items-center gap-1"
-			class:flex-col={!inputFile}
-		>
-			<Icon
-				icon={catcut}
-				class={!inputFile
-					? 'w-16 h-16 transition-all hover:scale-110 active:scale-90 cursor-pointer'
-					: ''}
+	{#if source}
+		<BitsConfig defaultPortalTo="#catcut-player">
+			<MediaWorkspace
+				{source}
+				bind:editing
+				{draggingMedia}
+				{addingToQueue}
+				onloaderror={handleLoadError}
+				onclose={closeMedia}
 			/>
-			<div class="flex items-center gap-2">
-				<span>catcut</span>
-				<small class="text-black bg-violet-500 px-2 rounded text-sm font-extrabold">alpha</small>
+		</BitsConfig>
+	{:else}
+		<div class="flex flex-col">
+			<div class="text-accent flex items-center justify-center gap-2 text-xl font-black">
+				<Icon icon={catcut} class="size-6" />
+				<h1>catcut</h1>
 			</div>
-		</h1>
-		{#if !inputFile}
-			<p>in-browser media editing</p>
-		{/if}
-	</header>
+			<span class="text-sm">in-browser media viewer & editor</span>
+		</div>
 
-	{#if !inputFile}
-		<Bulletin />
-		<FileSelect on:file={(e) => (inputFile = e.detail)} />
-		<Footer />
-	{/if}
-
-	{#if inputFile && blobURL}
-		{#if inputFile.type.startsWith('video/')}
-			<VideoEditor file={inputFile} {blobURL} on:close={closeFile} />
-		{:else if inputFile.type.startsWith('audio/')}
-			<AudioEditor file={inputFile} {blobURL} on:close={closeFile} />
+		<FileDrop dragging={draggingMedia} onselect={(sources) => openMedia(sources)} />
+		<CloudPickers onselect={(sources) => openMedia(sources)} />
+		{#if !settings.v2NoticeDismissed}
+			<UpdateNotice
+				text="catcut has been renovated!"
+				href="https://snazzah.blog/p/catcut"
+				onclose={() => (settings.v2NoticeDismissed = true)}
+			/>
 		{/if}
 	{/if}
 </main>
+
+<ResponsiveModal
+	open={loadError !== null}
+	title="Could not load file"
+	onOpenChange={(open) => {
+		if (!open) loadError = null;
+	}}
+>
+	<p class="text-sm wrap-break-word whitespace-pre-wrap text-neutral-300">{loadError}</p>
+	{#snippet buttons()}
+		<button
+			class="cursor-pointer rounded-lg bg-neutral-700 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-600"
+			onclick={() => (loadError = null)}>Okay</button
+		>
+	{/snippet}
+</ResponsiveModal>
