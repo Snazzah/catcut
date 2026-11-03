@@ -25,6 +25,7 @@
 	let draggingMedia = $state(false);
 	let addingToQueue = $state(false);
 	let loadError = $state<string | null>(null);
+	let hydrated = $state(false);
 
 	$effect(() => {
 		if (!source) editing = false;
@@ -93,6 +94,7 @@
 	}
 
 	onMount(() => {
+		hydrated = true;
 		const location = new URL(window.location.href);
 		const mediaUrl = location.searchParams.get('url');
 		if (mediaUrl) openMedia([createRemoteMediaSource(mediaUrl)]);
@@ -243,7 +245,7 @@
 
 		<FileDrop dragging={draggingMedia} onselect={(sources) => openMedia(sources)} />
 		<CloudPickers onselect={(sources) => openMedia(sources)} />
-		{#if !settings.v2NoticeDismissed}
+		{#if hydrated && !settings.v2NoticeDismissed}
 			<UpdateNotice
 				text="catcut has been renovated!"
 				href="https://snazzah.blog/p/catcut"
