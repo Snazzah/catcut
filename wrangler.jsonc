@@ -7,7 +7,8 @@
 	"vars": {
 		"PUBLIC_DROPBOX_CLIENT_ID": "gckh0f9o51dl0vf",
 		"PUBLIC_GOOGLE_CLIENT_ID": "404284548268-gi0kcfb4v0n81vdth18oph04vcs3qobp.apps.googleusercontent.com",
-		"PUBLIC_GOOGLE_KEY": "AIzaSyDJu9S6Wht3-whdOXlF1pJA0iRNa4Vn13Q"
+		"PUBLIC_GOOGLE_KEY": "AIzaSyDJu9S6Wht3-whdOXlF1pJA0iRNa4Vn13Q",
+		"PUBLIC_PLAUSIBLE_HOSTNAME": "p.snaz.in"
 	},
 	"assets": {
 		"binding": "ASSETS",
