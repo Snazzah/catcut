@@ -6,12 +6,14 @@ export type Settings = {
 	analytics: boolean;
 	startWithEditor: boolean;
 	askAboutEditor: boolean;
+	v2NoticeDismissed: boolean;
 };
 
 const defaults: Settings = {
 	analytics: true,
 	startWithEditor: false,
-	askAboutEditor: false
+	askAboutEditor: false,
+	v2NoticeDismissed: false
 };
 
 function read(): Settings {

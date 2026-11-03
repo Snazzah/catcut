@@ -30,9 +30,7 @@
 
 <PageContent>
 	<h1 class="text-2xl font-bold text-white">Tools</h1>
-	<p class="mb-3 text-neutral-300">
-		Here's a list of one-off tools you can use for simple things.
-	</p>
+	<p class="mb-3 text-neutral-300">Here's a list of one-off tools you can use for simple things.</p>
 
 	<div class="flex flex-col gap-2">
 		{#each tools as tool (tool.path)}

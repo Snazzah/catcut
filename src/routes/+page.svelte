@@ -1,6 +1,7 @@
 <script lang="ts">
 	import FileDrop from '#lib/components/FileDrop.svelte';
 	import CloudPickers from '#lib/components/CloudPickers.svelte';
+	import UpdateNotice from '#lib/components/UpdateNotice.svelte';
 	import MediaWorkspace from '#lib/components/MediaWorkspace.svelte';
 	import ResponsiveModal from '#lib/components/common/ResponsiveModal.svelte';
 	import { catcut } from '#lib/icons.js';
@@ -32,6 +33,8 @@
 	function openMedia(sources: (MediaSource | null)[], append = false) {
 		const validSources = sources.filter((source) => source !== null);
 		if (!validSources.length) return;
+
+		settings.v2NoticeDismissed = true;
 
 		const opensNewSource = !append || !source;
 		if (opensNewSource && settings.startWithEditor) editing = true;
@@ -173,7 +176,7 @@
 			{
 				type: 10,
 				content:
-					'# <:catcut:1565032010815381644> [catcut](https://catcut.snazzah.workers.dev/)\nin-browser media viewer & editor'
+					'# <:catcut:1565032010815381644> [catcut](https://catcut.snaz.in/)\nin-browser media viewer & editor'
 			},
 			{
 				type: 12,
@@ -240,6 +243,13 @@
 
 		<FileDrop dragging={draggingMedia} onselect={(sources) => openMedia(sources)} />
 		<CloudPickers onselect={(sources) => openMedia(sources)} />
+		{#if !settings.v2NoticeDismissed}
+			<UpdateNotice
+				text="catcut has been renovated!"
+				href="https://snazzah.blog/p/catcut"
+				onclose={() => (settings.v2NoticeDismissed = true)}
+			/>
+		{/if}
 	{/if}
 </main>
 
