@@ -41,6 +41,7 @@
 				{ name: 'AC-3', codecs: ['ac3'] },
 				{ name: 'E-AC-3', codecs: ['eac3'] },
 				{ name: 'DTS', codecs: ['dts'] },
+				{ name: 'Dolby TrueHD', codecs: ['truehd'] },
 				{
 					name: 'Linear PCM',
 					codecs: [

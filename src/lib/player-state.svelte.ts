@@ -23,6 +23,7 @@ import { registerFlacEncoder } from '@mediabunny/flac-encoder';
 import { registerMp3Encoder } from '@mediabunny/mp3-encoder';
 import { registerProresDecoder } from '@mediabunny/prores';
 import { registerHevcDecoder, registerHevcEncoder } from '@snazzah/mediabunny-hevc';
+import { registerTrueHdDecoder, registerTrueHdEncoder } from '@mediabunny/truehd';
 import soundTouchProcessorUrl from '@soundtouchjs/audio-worklet/processor?url';
 import type { SoundTouchNode } from '@soundtouchjs/audio-worklet';
 import type { SpeedAdjustment, TimelineRange, VideoSize } from '#lib/util/editing.js';
@@ -49,6 +50,7 @@ async function registerCodecs(): Promise<CodecRegistration> {
 	registerDtsDecoder();
 	registerProresDecoder();
 	if (!nativelyDecodable.has('hevc')) registerHevcDecoder();
+	if (!nativelyDecodable.has('truehd')) registerTrueHdDecoder();
 
 	registerDtsEncoder();
 	registerAc3Encoder();
@@ -56,6 +58,7 @@ async function registerCodecs(): Promise<CodecRegistration> {
 	if (!nativelyEncodable.has('aac')) registerAacEncoder();
 	if (!nativelyEncodable.has('flac')) registerFlacEncoder();
 	if (!nativelyEncodable.has('mp3')) registerMp3Encoder();
+	if (!nativelyEncodable.has('truehd')) registerTrueHdEncoder();
 
 	return { nativelyDecodable, nativelyEncodable };
 }
