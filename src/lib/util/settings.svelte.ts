@@ -1,19 +1,49 @@
 import { browser } from '$app/env';
+import type { AudioCodec, VideoCodec } from 'mediabunny';
 
 const STORAGE_KEY = 'catcut-settings';
+
+export const VIDEO_CODEC_PREFERENCES = [
+	{ value: 'auto', label: 'Auto' },
+	{ value: 'avc', label: 'H.264 (AVC)' },
+	{ value: 'hevc', label: 'H.265 (HEVC)' },
+	{ value: 'vp9', label: 'VP9' },
+	{ value: 'av1', label: 'AV1' }
+] as const satisfies readonly Readonly<{ value: 'auto' | VideoCodec; label: string }>[];
+
+export const AUDIO_CODEC_PREFERENCES = [
+	{ value: 'auto', label: 'Auto' },
+	{ value: 'aac', label: 'AAC' },
+	{ value: 'opus', label: 'Opus' },
+	{ value: 'mp3', label: 'MP3' },
+	{ value: 'flac', label: 'FLAC' }
+] as const satisfies readonly Readonly<{ value: 'auto' | AudioCodec; label: string }>[];
+
+export type VideoCodecPreference = (typeof VIDEO_CODEC_PREFERENCES)[number]['value'];
+export type AudioCodecPreference = (typeof AUDIO_CODEC_PREFERENCES)[number]['value'];
 
 export type Settings = {
 	analytics: boolean;
 	startWithEditor: boolean;
 	askAboutEditor: boolean;
 	v2NoticeDismissed: boolean;
+	videoCodec: VideoCodecPreference;
+	audioCodec: AudioCodecPreference;
 };
 
 const defaults: Settings = {
 	analytics: true,
 	startWithEditor: false,
 	askAboutEditor: false,
-	v2NoticeDismissed: false
+	v2NoticeDismissed: false,
+	videoCodec: 'auto',
+	audioCodec: 'auto'
+};
+
+// Settings limited to a fixed set of values
+const choices: Partial<Record<keyof Settings, readonly unknown[]>> = {
+	videoCodec: VIDEO_CODEC_PREFERENCES.map(({ value }) => value),
+	audioCodec: AUDIO_CODEC_PREFERENCES.map(({ value }) => value)
 };
 
 function read(): Settings {
@@ -27,7 +57,9 @@ function read(): Settings {
 
 		const result = { ...defaults };
 		for (const key of Object.keys(defaults) as (keyof Settings)[]) {
-			if (key in parsed && typeof parsed[key] === typeof defaults[key]) result[key] = parsed[key];
+			if (!(key in parsed) || typeof parsed[key] !== typeof defaults[key]) continue;
+			if (choices[key] && !choices[key].includes(parsed[key])) continue;
+			(result as Record<keyof Settings, unknown>)[key] = parsed[key];
 		}
 		return result;
 	} catch {

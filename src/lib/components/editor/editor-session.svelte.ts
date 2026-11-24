@@ -25,6 +25,7 @@ import {
 import type { PlayerState } from '#lib/player-state.svelte.js';
 import { createInputSource } from '#lib/store.svelte.js';
 import { isAbort } from '#lib/util/common.js';
+import { settings } from '#lib/util/settings.svelte.js';
 import {
 	ExportTask,
 	createExportDestination,
@@ -181,9 +182,17 @@ export class EditorSession {
 			destination = await createExportDestination({ format, suggestedName, extension });
 			if (this.#job !== job) return null;
 			const output = new Output({ format, target: destination.target });
+			// Codec preferences only apply when changing the container
+			const converting = selectedFormat !== undefined || matchingFormat === null;
 			const task = new ExportTask({
 				input,
 				output,
+				preferredCodecs: converting
+					? {
+							video: settings.videoCodec === 'auto' ? undefined : settings.videoCodec,
+							audio: settings.audioCodec === 'auto' ? undefined : settings.audioCodec
+						}
+					: undefined,
 				video: editStateIntoVideoOptions({ state: edits, videoSize: this.player.videoSize }),
 				audio: editStateIntoAudioOptions(edits),
 				trim: edits.trim,

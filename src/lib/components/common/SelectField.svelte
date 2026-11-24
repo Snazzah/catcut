@@ -15,6 +15,7 @@
 
 	let {
 		label,
+		showLabel = true,
 		icon,
 		value,
 		options,
@@ -22,6 +23,7 @@
 		onchange
 	}: {
 		label: string;
+		showLabel?: boolean;
 		disabled?: boolean;
 		icon?: IconifyIcon;
 		value: Value;
@@ -49,7 +51,9 @@
 		{#if icon}
 			<Icon {icon} class="size-4 shrink-0 text-neutral-300" aria-hidden="true" />
 		{/if}
-		<span class="mr-1 font-bold text-neutral-300">{label}</span>
+		{#if showLabel}
+			<span class="mr-1 font-bold text-neutral-300">{label}</span>
+		{/if}
 		<Select.Value class="min-w-0 flex-1 truncate text-left font-medium" />
 		<Icon icon={chevronDownIcon} class="size-4 shrink-0 text-neutral-400" aria-hidden="true" />
 	</Select.Trigger>

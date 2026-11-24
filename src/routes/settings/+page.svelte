@@ -2,7 +2,13 @@
 	import { resolve } from '$app/paths';
 	import PageContent from '#lib/components/PageContent.svelte';
 	import SwitchField from '#lib/components/common/SwitchField.svelte';
-	import { resetSettings, settings } from '#lib/util/settings.svelte.js';
+	import SelectField from '#lib/components/common/SelectField.svelte';
+	import {
+		AUDIO_CODEC_PREFERENCES,
+		VIDEO_CODEC_PREFERENCES,
+		resetSettings,
+		settings
+	} from '#lib/util/settings.svelte.js';
 	import { GOOGLE_TOKEN_KEY, googleAllowed } from '#lib/cloud-pickers.js';
 	import { onMount } from 'svelte';
 
@@ -37,6 +43,36 @@
 				Automatically open the editor when selecting a file.
 			{/snippet}
 		</SwitchField>
+		<div class="flex items-center justify-between gap-4">
+			<div class="flex flex-col gap-0.5">
+				<span class="font-medium text-neutral-200">Preferred video codec</span>
+				<p class="text-sm text-neutral-400">
+					The preferred video codec to use when converting to another format. "Auto" keeps the original codec when possible.
+				</p>
+			</div>
+			<SelectField
+				label="Video codec"
+				showLabel={false}
+				value={settings.videoCodec}
+				options={VIDEO_CODEC_PREFERENCES}
+				onchange={(value) => (settings.videoCodec = value)}
+			/>
+		</div>
+		<div class="flex items-center justify-between gap-4">
+			<div class="flex flex-col gap-0.5">
+				<span class="font-medium text-neutral-200">Preferred audio codec</span>
+				<p class="text-sm text-neutral-400">
+					The preferred audio codec to use when converting to another format. "Auto" keeps the original codec when possible.
+				</p>
+			</div>
+			<SelectField
+				label="Audio codec"
+				showLabel={false}
+				value={settings.audioCodec}
+				options={AUDIO_CODEC_PREFERENCES}
+				onchange={(value) => (settings.audioCodec = value)}
+			/>
+		</div>
 		<SwitchField title="Plausible Analytics" bind:checked={settings.analytics}>
 			{#snippet description()}
 				This uses <a

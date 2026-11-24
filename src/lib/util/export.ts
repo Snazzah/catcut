@@ -8,6 +8,8 @@ import {
 	Quality,
 	StreamTarget,
 	type StreamTargetChunk,
+	canEncodeAudio,
+	canEncodeVideo,
 	getEncodableAudioCodecs,
 	type AudioCodec,
 	type AudioEncodingConfig,
@@ -16,6 +18,8 @@ import {
 	type ConversionOptions,
 	type ConversionVideoOptions,
 	type InputAudioTrack,
+	type InputVideoTrack,
+	type VideoCodec,
 	ADTS,
 	FLAC,
 	MATROSKA,
@@ -187,10 +191,35 @@ type ExportOptions = Pick<ConversionOptions, 'input' | 'output' | 'tags' | 'copy
 	adjustment: SpeedAdjustment;
 	video?: ConversionVideoOptions;
 	audio?: ConversionAudioOptions;
+	/**
+	 * Codecs to encode with when the output format supports them and the environment can encode them.
+	 * Otherwise the codec is kept when possible or chosen automatically.
+	 */
+	preferredCodecs?: { video?: VideoCodec; audio?: AudioCodec };
 	onProgress?: (progress: number) => void;
 };
 
 const compressedAudioCodecs: ReadonlySet<AudioCodec> = new Set(NON_PCM_AUDIO_CODECS);
+
+const ceilToEven = (value: number) => Math.ceil(value / 2) * 2;
+
+/** Estimates the encoded size of a video track the same way mediabunny's conversion does */
+async function estimateOutputVideoSize(track: InputVideoTrack, options: ConversionVideoOptions) {
+	const sourceWidth = options.crop?.width ?? (await track.getDisplayWidth());
+	const sourceHeight = options.crop?.height ?? (await track.getDisplayHeight());
+	const aspectRatio = sourceWidth / sourceHeight;
+	if (options.width !== undefined && options.height !== undefined)
+		return { width: ceilToEven(options.width), height: ceilToEven(options.height) };
+	if (options.width !== undefined) {
+		const width = ceilToEven(options.width);
+		return { width, height: ceilToEven(Math.round(width / aspectRatio)) };
+	}
+	if (options.height !== undefined) {
+		const height = ceilToEven(options.height);
+		return { width: ceilToEven(Math.round(height * aspectRatio)), height };
+	}
+	return { width: sourceWidth, height: sourceHeight };
+}
 
 export class ExportTask {
 	#conversion: Conversion | null = null;
@@ -250,6 +279,16 @@ export class ExportTask {
 			const video: ConversionVideoOptions = discardVideo
 				? { discard: true }
 				: { ...this.options.video };
+			if (videoTrack && !discardVideo && !video.codec) {
+				const codec = await this.#resolvePreferredVideoCodec(videoTrack, video);
+				if (codec) video.codec = codec;
+			}
+			let audio = this.options.audio;
+			if (audioTrack && !audio?.discard && !audio?.codec) {
+				const codec = await this.#resolvePreferredAudioCodec(audioTrack, audio);
+				if (codec) audio = { ...audio, codec };
+			}
+			this.#checkCanceled();
 			if (videoTrack && !discardVideo && adjustment.speed !== 1) {
 				if (video.frameRate !== undefined) video.frameRate /= adjustment.speed;
 				const process = video.process;
@@ -266,7 +305,7 @@ export class ExportTask {
 
 			const manualAudio =
 				audioTrack &&
-				!this.options.audio?.discard &&
+				!audio?.discard &&
 				(adjustment.speed !== 1 || adjustment.pitchSemitones !== 0);
 			if (!manualAudio) {
 				const conversion = await this.#initConversion({
@@ -274,7 +313,7 @@ export class ExportTask {
 					output,
 					trim,
 					video,
-					audio: this.options.audio,
+					audio,
 					tags,
 					copy
 				});
@@ -297,7 +336,7 @@ export class ExportTask {
 								composable: true
 							})
 						: null;
-				await this.#executeComposed(audioTrack, conversion);
+				await this.#executeComposed(audioTrack, conversion, audio);
 			}
 			this.#checkCanceled();
 			this.#complete = true;
@@ -309,6 +348,37 @@ export class ExportTask {
 			this.#stretch?.dispose();
 			input.dispose();
 		}
+	}
+
+	async #resolvePreferredVideoCodec(track: InputVideoTrack, options: ConversionVideoOptions) {
+		const codec = this.options.preferredCodecs?.video;
+		const { output, copy } = this.options;
+		if (!codec || (copy && copy.mode === 'forced')) return;
+		if (!output.format.getSupportedVideoCodecs().includes(codec)) return;
+		// Switching codecs requires transcoding
+		if (codec !== (await track.getCodec()) && !(await track.canDecode())) return;
+		const size = await estimateOutputVideoSize(track, options);
+		const quality = options.quality ?? new Quality('high');
+		if (await canEncodeVideo(codec, { ...size, quality })) return codec;
+	}
+
+	async #resolvePreferredAudioCodec(track: InputAudioTrack, options: ConversionAudioOptions = {}) {
+		const codec = this.options.preferredCodecs?.audio;
+		const { output, copy } = this.options;
+		if (!codec || (copy && copy.mode === 'forced')) return;
+		if (!output.format.getSupportedAudioCodecs().includes(codec)) return;
+		// Switching codecs requires transcoding
+		if (codec !== (await track.getCodec()) && !(await track.canDecode())) return;
+		const quality = options.quality ?? new Quality('high');
+		const sampleRate = options.sampleRate ?? (await track.getSampleRate());
+		const numberOfChannels = options.numberOfChannels ?? (await track.getNumberOfChannels());
+		if (await canEncodeAudio(codec, { sampleRate, numberOfChannels, quality })) return codec;
+		// Compressed codecs fall back to resampling to 48kHz stereo during conversion
+		if (
+			compressedAudioCodecs.has(codec) &&
+			(await canEncodeAudio(codec, { sampleRate: 48000, numberOfChannels: 2, quality }))
+		)
+			return codec;
 	}
 
 	async #initConversion(options: ConversionOptions) {
@@ -337,13 +407,12 @@ export class ExportTask {
 		return conversion;
 	}
 
-	async #resolveAudio(track: InputAudioTrack) {
+	async #resolveAudio(track: InputAudioTrack, options: ConversionAudioOptions) {
 		if (!(await track.canDecode())) throw new Error('This audio track cannot be decoded.');
 		const sourceSampleRate = await track.getSampleRate();
 		const sourceNumberOfChannels = await track.getNumberOfChannels();
 		const sourceCodec = await track.getCodec();
 		const sourceBitrate = await track.getBitrate();
-		const options = this.options.audio ?? {};
 		let sampleRate = options.sampleRate ?? sourceSampleRate;
 		let numberOfChannels = options.numberOfChannels ?? sourceNumberOfChannels;
 		const bitrate = options.bitrate ?? sourceBitrate;
@@ -388,9 +457,16 @@ export class ExportTask {
 		return { sourceSampleRate, sourceNumberOfChannels, encoding };
 	}
 
-	async #executeComposed(track: InputAudioTrack, conversion: Conversion | null) {
+	async #executeComposed(
+		track: InputAudioTrack,
+		conversion: Conversion | null,
+		audio: ConversionAudioOptions = {}
+	) {
 		const { input, output, tags, trim, adjustment } = this.options;
-		const { sourceSampleRate, sourceNumberOfChannels, encoding } = await this.#resolveAudio(track);
+		const { sourceSampleRate, sourceNumberOfChannels, encoding } = await this.#resolveAudio(
+			track,
+			audio
+		);
 		this.#checkCanceled();
 		const source = new AudioSampleSource(encoding);
 		const language = await track.getLanguageCode();
@@ -398,7 +474,7 @@ export class ExportTask {
 			languageCode: /^[a-z]{3}$/.test(language) ? language : undefined,
 			name: (await track.getName()) ?? undefined,
 			disposition: await track.getDisposition(),
-			group: this.options.audio?.group
+			group: audio.group
 		});
 		const inputTags = await input.getMetadataTags();
 		const outputTags = {
@@ -416,7 +492,7 @@ export class ExportTask {
 			numberOfChannels: sourceNumberOfChannels,
 			adjustment,
 			trim,
-			audioProcess: this.options.audio?.process
+			audioProcess: audio.process
 		});
 		this.#checkCanceled();
 		await output.start();
